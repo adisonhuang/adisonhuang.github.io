@@ -2,22 +2,27 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://adisonhuang.github.io/</loc>
-         <lastmod>2021-07-11</lastmod>
+         <lastmod>2021-07-26</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://adisonhuang.github.io/android/</loc>
-         <lastmod>2021-07-11</lastmod>
+         <lastmod>2021-07-26</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://adisonhuang.github.io/android/perf/top/</loc>
+         <lastmod>2021-07-26</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://adisonhuang.github.io/books/</loc>
-         <lastmod>2021-07-11</lastmod>
+         <lastmod>2021-07-26</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://adisonhuang.github.io/python/</loc>
-         <lastmod>2021-07-11</lastmod>
+         <lastmod>2021-07-26</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>

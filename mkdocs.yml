@@ -117,10 +117,11 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Android:
-     - Changing the colors: android/index.md
+     - 性能分析命令:
+       - top命令: android/perf/top.md
   - Python:  
-    - Changing the colors: python/index.md
+    - index: python/index.md
   - Books:  
-    - Changing the colors: books/index.md
+    - index: books/index.md
 
   
