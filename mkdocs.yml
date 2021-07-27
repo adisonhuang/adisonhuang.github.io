@@ -118,6 +118,7 @@ nav:
   - Home: index.md
   - Android:
      - 性能分析命令:
+       - dumpsys: android/perf/dumpsys.md
        - top命令: android/perf/top.md
   - Python:  
     - index: python/index.md
