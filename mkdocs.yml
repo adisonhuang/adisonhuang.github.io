@@ -56,7 +56,7 @@ theme:
 plugins:
   - search:
       lang:
-        - en
+        - jp
 
 
  # Customization
@@ -64,7 +64,7 @@ extra:
   analytics:
     provider: google
     property: UA-112420326-1
-  disqus: blog-lelele-ltd
+  #disqus: blog-lelele-ltd
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/adisonhuang
@@ -120,6 +120,9 @@ nav:
      - 性能分析命令:
        - dumpsys: android/perf/dumpsys.md
        - top命令: android/perf/top.md
+     - 性能工具:
+       - MAT入门: android/perf/MAT-Startup.md
+       - MAT进阶: android/perf/MAT-Advanced.md  
   - Python:  
     - index: python/index.md
   - Books:  
