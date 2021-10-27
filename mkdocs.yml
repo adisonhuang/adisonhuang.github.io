@@ -123,6 +123,8 @@ nav:
      - 性能工具:
        - MAT入门: android/perf/MAT-Startup.md
        - MAT进阶: android/perf/MAT-Advanced.md  
+     - 性能分析:
+       - Android句柄泄漏分析: android/perf/Android_fd_leak.md    
   - Python:  
     - index: python/index.md
   - Books:  
