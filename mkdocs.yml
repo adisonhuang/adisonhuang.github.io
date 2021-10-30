@@ -6,7 +6,7 @@ site_description: >-
 
 
 # Copyright
-copyright: Copyright &copy; 2021 - 2026 Adison Huang
+copyright: Copyright &copy; 2020 - 2026 Adison
 
 
 # Configuration
@@ -115,8 +115,7 @@ markdown_extensions:
 
 # Page tree
 nav:
-  - Home: index.md
-  - Android:
+  - 性能优化:
      - 性能分析命令:
        - dumpsys: android/perf/dumpsys.md
        - top命令: android/perf/top.md
@@ -124,10 +123,15 @@ nav:
        - MAT入门: android/perf/MAT-Startup.md
        - MAT进阶: android/perf/MAT-Advanced.md  
      - 性能分析:
-       - Android句柄泄漏分析: android/perf/Android_fd_leak.md    
+       - Android句柄泄漏分析: android/perf/Android_fd_leak.md  
+  - Android日常:
+     - Mac10.14编译Android 8.1源码及刷入nexus 6p: android/daily/flask_android_8.md
+     - APK文件分析: android/daily/apk_analyze.md
+     - Android ClassLoader机制: android/daily/Android_classloader.md               
   - Python:  
-    - index: python/index.md
-  - Books:  
-    - index: books/index.md
+    - python函数执行时间分析: python/python_func_time.md
+    - CentOS部署flask项目: python/centos_flask.md
+    - Pycharm远程调试: python/pycharm_remote_debug.md
+    - 以Root权限运行/调试 PyCharm: python/PyCharm_root_debug.md
 
   
