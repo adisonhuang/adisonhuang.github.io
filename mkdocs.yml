@@ -138,5 +138,8 @@ nav:
     - CentOS部署flask项目: python/centos_flask.md
     - Pycharm远程调试: python/pycharm_remote_debug.md
     - 以Root权限运行/调试 PyCharm: python/PyCharm_root_debug.md
+  - 其他:  
+    - shell核心语法: other/shell.md
+
 
   
