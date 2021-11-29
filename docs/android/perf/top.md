@@ -1,3 +1,5 @@
+# top命令
+
 top命令是Linux下常用的性能分析工具，能够实时显示系统中各个进程的资源占用状况，包括进程ID、内存占用率、CPU占用率等,类似于Windows的任务管理器。top命令提供了实时的对系统处理器的状态监视.它将显示系统中CPU最“敏感”的任务列表.该命令可以按CPU使用.内存使用和执行时间对任务进行排序。在Android中，我们可以通过`adb shell`来执行linux相关命令。
 
 Android 提供了大多数常见的 Unix 命令行工具。如需查看可用工具的列表，请使用以下命令:
@@ -67,7 +69,7 @@ Tasks: 829 total,   1 running, 828 sleeping,   0 stopped,   0 zombie
 ```
 ### 输出说明
 * 第一行: `Tasks` — 任务（进程），具体信息说明如下：
-    
+  
    | 展示项 | 说明|
    |:---:|:----:|
    | 829 total | 共有829个进程 |
@@ -109,7 +111,7 @@ Tasks: 829 total,   1 running, 828 sleeping,   0 stopped,   0 zombie
    |0%host | ？|
 
 * 第五行以下：各进程（任务）的状态监控，项目列信息说明如下：
-    
+  
     | 展示项 | 说明|
     |:---:|:----:|
     | PID | 进程id |
@@ -129,8 +131,9 @@ Tasks: 829 total,   1 running, 828 sleeping,   0 stopped,   0 zombie
 ### 补充说明
 
 1. swap分区：当系统的物理内存不够用的时候，就需要将物理内存中的一部分空间释放出来，以供当前运行的程序使用。 那些被释放的空间可能来自一些很长时间没有什么操作的程序，这些被释放的空间被临时保存到Swap空间中，等到那些程序要运行时，再从Swap中恢复保存的数据到内存中。
+   
    > 关于swap分区，可以参考[swap 分区](https://cloud.tencent.com/developer/article/1648858)
-
+   
 2. 第二行中使用中的内存总量（used）指的是现在系统内核控制的内存数，空闲内存总量（free）是内核还未纳入其管控范围的数量。纳入内核管理的内存不见得都在使用中，还包括过去使用过的现在可以被重复利用的内存，内核并不把这些可被重新使用的内存交还到free中去，因此在android上free内存会越来越少，但不用为此担心。
 
 3. 如果出于习惯去计算可用内存数，这里有个近似的计算公式：第二行的free + 第二行的buffers + 第三行的cached，按这个公式此台设备的可用内存：605128K +1585152K +1160664K = 3.2GB左右。
@@ -168,7 +171,7 @@ User 2 + Nice 0 + Sys 12 + Idle 284 + IOW 0 + IRQ 0 + SIRQ 0 = 298
     3 root     20   0   0% S     1      0K      0K  fg ksoftirqd/0
   387 root     20   0   0% S     1      0K      0K  fg kworker/u16:4
 ```
-    
+
 ## 代码通过top命令获取cpu使用率
 在Android O之前可以通过读取伪文件`/proc/stat`和`/proc/<pid>/stat`，然后计算得到cpu使用率，Android O之后有权限限制，但可以通过`top -n 1`获取cpu使用率，代码如下
 ```kotlin
@@ -217,5 +220,4 @@ User 2 + Nice 0 + Sys 12 + Idle 284 + IOW 0 + IRQ 0 + SIRQ 0 = 298
 
 ## 参考链接
 [每天一个linux命令（44）：top命令](https://www.cnblogs.com/peida/archive/2012/12/24/2831353.html)
-
 
