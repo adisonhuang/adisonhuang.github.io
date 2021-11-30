@@ -130,7 +130,10 @@ nav:
        - APK文件分析: android/daily/apk_analyze.md
        - Android ClassLoader机制: android/daily/Android_classloader.md     
      - Kotlin:
-       - Kotlin中inline, noinline, crossinline的区别: android/koltin/Kotlin_nline, noinline, crossinline.md  
+       - Kotlin中inline, noinline, crossinline的区别: android/koltin/Kotlin_nline, noinline, crossinline.md
+       - 使用Kotlin takeIf（或takeUnless）: android/koltin/Kotlin-takeIf-or-takeUnless.md
+       - 掌握Kotlin标准函数：run, with, let, also and apply: android/koltin/Mastering Kotlin standard functions.md          
+
   - C/C++:
      - C基础知识: C++/Cbasic.md
      - C++基础知识: C++/C++basic.md 

@@ -246,6 +246,4 @@ public static final void higherOrderFunction(@NotNull Function0 aLambda1, @NotNu
 
 本文主要介绍`inline`, `noinline`, `crossinline`的区别。为了减少使用高阶函数带来的一些运行时的效率损失，可以使用`inline`来标记一个函数为内联函数，内联函数在编译后会把代码都插入到调用函数的地方，所以可能导致最终的代码增加，所以必须避免内联过大函数才能使内联函数性能提升。另外我们可以用`noinline`和`crossinline`来限制内联函数中的lambda直接调用return返回，避免出现预料之外的结果。
 
-### 参考
-
-- [Kotlin中inline, noinline, crossinline的区别](https://zhooker.github.io/2018/10/15/Kotlin%E4%B8%ADinline-noinline-crossinline%E7%9A%84%E5%8C%BA%E5%88%AB/)
+[原文链接](https://zhooker.github.io/2018/10/15/Kotlin%E4%B8%ADinline-noinline-crossinline%E7%9A%84%E5%8C%BA%E5%88%AB/)
