@@ -123,7 +123,9 @@ nav:
        - MAT入门: android/perf/MAT-Startup.md
        - MAT进阶: android/perf/MAT-Advanced.md  
      - 性能分析:
-       - Android句柄泄漏分析: android/perf/Android_fd_leak.md  
+       - Android句柄泄漏分析: android/perf/Android_fd_leak.md 
+     - 内存:
+       - Android内存管理: android/perf/memory/Android_memory_manager.md    
   - Android:
      - 日常:
        - Mac10.14编译Android 8.1源码及刷入nexus 6p: android/daily/flask_android_8.md
