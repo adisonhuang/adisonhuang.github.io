@@ -128,6 +128,7 @@ nav:
        - Android句柄泄漏分析: android/perf/Android_fd_leak.md    
   - Android:
      - 日常:
+       - Android 动画原理: android/daily/Android_animation.md   
        - Mac10.14编译Android 8.1源码及刷入nexus 6p: android/daily/flask_android_8.md
        - APK文件分析: android/daily/apk_analyze.md
        - Android ClassLoader机制: android/daily/Android_classloader.md     
