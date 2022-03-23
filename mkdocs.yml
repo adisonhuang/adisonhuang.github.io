@@ -155,6 +155,8 @@ nav:
       - 单例: design-patterns/singleton.md
   - 其他:  
     - shell核心语法: other/shell.md
+    - 《数据结构与算法之美》笔记:
+      - 复杂度分析: algo/Complexity Analysis.md
 
 
   
