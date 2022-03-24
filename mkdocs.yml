@@ -151,6 +151,7 @@ nav:
     - 以Root权限运行/调试 PyCharm: python/PyCharm_root_debug.md
   - 设计&架构:
     - 架构设计: design-patterns/framework design.md  
+    - 六大设计原则: design-patterns/Design Principles.md
     - 设计模式概述: design-patterns/design-patterns.md
     - 创建型模式: 
       - 单例: design-patterns/singleton.md
