@@ -127,6 +127,8 @@ nav:
        - Android 内存分析工具(MAT进阶): android/perf/MAT-Advanced.md  
        - Android句柄泄漏分析: android/perf/Android_fd_leak.md    
   - Android:
+     - 系统:
+       - Android 开机流程: android/system/bootloader.md   
      - 日常:
        - Android 动画原理: android/daily/Android_animation.md   
        - Mac10.14编译Android 8.1源码及刷入nexus 6p: android/daily/flask_android_8.md
