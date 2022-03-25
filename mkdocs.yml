@@ -151,6 +151,7 @@ nav:
     - CentOS部署flask项目: python/centos_flask.md
     - Pycharm远程调试: python/pycharm_remote_debug.md
     - 以Root权限运行/调试 PyCharm: python/PyCharm_root_debug.md
+    
   - 设计&架构:
     - 架构设计: design-patterns/framework design.md  
     - 六大设计原则: design-patterns/Design Principles.md
