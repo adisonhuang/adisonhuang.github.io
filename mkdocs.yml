@@ -151,13 +151,19 @@ nav:
     - CentOS部署flask项目: python/centos_flask.md
     - Pycharm远程调试: python/pycharm_remote_debug.md
     - 以Root权限运行/调试 PyCharm: python/PyCharm_root_debug.md
-    
+
   - 设计&架构:
-    - 架构设计: design-patterns/framework design.md  
-    - 六大设计原则: design-patterns/Design Principles.md
-    - 设计模式概述: design-patterns/design-patterns.md
+    - 架构设计: design/framework design.md  
+    - 六大设计原则: design/Design Principles.md
+    - 设计模式概述: design/design-patterns.md
     - 创建型模式: 
-      - 单例: design-patterns/singleton.md
+      - 单例: design/singleton.md
+      - 工厂模式: design/factory.md
+      - 原型模式: design/prototype.md
+      - 建造者模式: design/builder.md
+    - 其他: 
+      - fail-fast&fail-safe: design/fail-fast&fail-safe.md
+      - 各种单例写法: design/singleton_extra.md
   - 其他:  
     - shell核心语法: other/shell.md
     - 《数据结构与算法之美》笔记:
