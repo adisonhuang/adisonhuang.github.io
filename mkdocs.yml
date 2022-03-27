@@ -168,6 +168,11 @@ nav:
     - shell核心语法: other/shell.md
     - 《数据结构与算法之美》笔记:
       - 复杂度分析: algo/Complexity Analysis.md
+      - 数组: algo/array.md
+    - 算法必知必会:  
+      - 数组-实现一个支持动态扩容的数组: algo/array_algo_1.md
+      - 数组-实现一个大小固定的有序数组，支持动态增删改操作: algo/array_algo_2.md
+      - 数组-合并两个有序数组: algo/array_algo_3.md
 
 
   
