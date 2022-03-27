@@ -140,12 +140,17 @@ nav:
        - 使用Kotlin takeIf（或takeUnless）: android/koltin/Kotlin-takeIf-or-takeUnless.md
        - 掌握Kotlin标准函数：run, with, let, also and apply: android/koltin/Mastering Kotlin standard functions.md          
 
-  - C/C++:
-     - C基础知识: C++/Cbasic.md
-     - C++基础知识: C++/C++basic.md 
-     - 编译原理基础: C++/compilation-principle.md
-     - 深度长文教你彻底掌握C++/C指针(一):基石: C++/pointer(1).md
-     - 深度长文教你彻底掌握C++/C指针(二):指针和数组与字符串: C++/pointer(2).md
+  - Native:
+     - C/C++:
+       - C基础知识: native/Cbasic.md
+       - C++基础知识: native/C++basic.md 
+       - 编译原理基础: native/compilation-principle.md
+       - 深度长文教你彻底掌握C++/C指针(一):基石: native/pointer(1).md
+       - 深度长文教你彻底掌握C++/C指针(二):指针和数组与字符串: native/pointer(2).md
+     - JNI:
+       - JNI优化: native/JNI-op.md   
+     - 疑难问题:
+       - dlopen时找不到__emutls_get_address符号: native/__emutls_get_address.md
              
   - Python:  
     - python函数执行时间分析: python/python_func_time.md
