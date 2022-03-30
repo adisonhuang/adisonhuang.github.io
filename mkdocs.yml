@@ -163,10 +163,14 @@ nav:
     - 六大设计原则: design/Design Principles.md
     - 设计模式概述: design/design-patterns.md
     - 创建型模式: 
+      - 概述: design/index_creational.md
       - 单例: design/singleton.md
       - 工厂模式: design/factory.md
       - 原型模式: design/prototype.md
       - 建造者模式: design/builder.md
+    - 结构型模式: 
+      - 概述: design/index_structural.md
+      - 适配器模式: design/adapter.md
     - 其他: 
       - fail-fast&fail-safe: design/fail-fast&fail-safe.md
       - 各种单例写法: design/singleton_extra.md
