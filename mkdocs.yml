@@ -128,7 +128,8 @@ nav:
        - Android 内存分析工具(MAT进阶): android/perf/MAT-Advanced.md  
        - Android句柄泄漏分析: android/perf/Android_fd_leak.md
      - 崩溃:
-       - native 崩溃信号介绍: android/perf/crash/native-crash-signal.md  
+       - Android 平台 Native 代码的崩溃捕获机制及实现: android/perf/crash/native-catch.md
+       - native 崩溃信号介绍: android/perf/crash/native-crash-signal.md   
        - 为啥Android子线程抛出异常主线程会崩溃: android/perf/crash/KillApplicationHandler.md    
   - Android:
      - 系统:
