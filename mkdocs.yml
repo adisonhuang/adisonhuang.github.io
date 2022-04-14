@@ -132,6 +132,8 @@ nav:
        - Android 平台 Native 代码的崩溃捕获机制及实现: android/perf/crash/native-catch.md
        - native 崩溃信号介绍: android/perf/crash/native-crash-signal.md   
        - 为啥Android子线程抛出异常主线程会崩溃: android/perf/crash/KillApplicationHandler.md    
+     - 并发:
+       - 进程与线程的一个简单解释: android/daily/concurrency/process and thread.md     
   - Android:
      - 系统:
        - Android 开机流程: android/system/bootloader.md   
