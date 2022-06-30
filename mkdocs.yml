@@ -178,6 +178,9 @@ nav:
     - 结构型模式: 
       - 概述: design/index_structural.md
       - 适配器模式: design/adapter.md
+    - 行为模式: 
+      - 概述: design/index_behavioral.md
+      - 策略模式: design/strategy.md  
     - 其他: 
       - fail-fast&fail-safe: design/fail-fast&fail-safe.md
       - 各种单例写法: design/singleton_extra.md
