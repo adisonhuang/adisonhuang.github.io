@@ -12,6 +12,22 @@ copyright: Copyright &copy; 2020 - 2026 Adison
 # Configuration
 theme:
   name: material
+  custom_dir: overrides
+  icon:
+    admonition:
+      note: octicons/tag-16
+      abstract: octicons/checklist-16
+      info: octicons/info-16
+      tip: octicons/squirrel-16
+      success: octicons/check-16
+      question: octicons/question-16
+      warning: octicons/alert-16
+      failure: octicons/x-circle-16
+      danger: octicons/zap-16
+      bug: octicons/bug-16
+      example: octicons/beaker-16
+      quote: octicons/quote-16
+
 
   # Static files
   static_templates:
@@ -23,16 +39,18 @@ theme:
 
   # Default values, taken from mkdocs_theme.yml
   language: zh
+  
   features:
     - content.tabs.link
     # - navigation.instant
     - navigation.sections
     - navigation.tabs
     - navigation.top
-    - search.highlight
     - search.share
     - search.suggest
     - search.highlight
+    # - toc.integrate
+    - header.autohide
   palette:
     - scheme: default
       primary: white
@@ -80,6 +98,7 @@ markdown_extensions:
   - attr_list
   - def_list
   - footnotes
+  - tables
   - meta
   - md_in_html
   - toc:
@@ -94,7 +113,6 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
-  - pymdownx.highlight
   - pymdownx.inlinehilite
   - pymdownx.keys
   - pymdownx.magiclink:
@@ -113,42 +131,52 @@ markdown_extensions:
   - pymdownx.tasklist:
       custom_checkbox: true
   - pymdownx.tilde 
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+
 
 # Page tree
-nav:
-  - 性能优化:
-     - 性能分析命令:
-       - dumpsys: android/perf/dumpsys.md
-       - top命令: android/perf/top.md
-     - 内存:
-       - Android内存管理: android/perf/memory/Android_memory_manager.md 
-       - Android 内存分析工具(命令行): android/perf/memory/Android_memory_tools.md
-       - Android 内存分析工具(查看GC): android/perf/memory/Android_memory_tools_gc.md
-       - Android 内存分析工具(MAT入门): android/perf/MAT-Startup.md
-       - Android 内存分析工具(MAT进阶): android/perf/MAT-Advanced.md  
-       - Android句柄泄漏分析: android/perf/Android_fd_leak.md
-     - 崩溃:
-       - Android 崩溃优化: android/perf/crash/crash_op.md
-       - Android 平台 Native 代码的崩溃捕获机制及实现: android/perf/crash/native-catch.md
-       - native 崩溃信号介绍: android/perf/crash/native-crash-signal.md   
-       - 为啥Android子线程抛出异常主线程会崩溃: android/perf/crash/KillApplicationHandler.md 
-     - 启动优化:
-       - Android启动优化: android/perf/launch/Android-launch-opt.md               
-     - 并发:
-       - 进程与线程的一个简单解释: android/daily/concurrency/process and thread.md   
+nav:  
   - Android:
-     - 系统:
-       - Android 开机流程: android/system/bootloader.md   
-     - 日常:
+     - 性能优化:
+        - 内存优化:
+          - Android内存管理: android/perf/memory/Android_memory_manager.md 
+          - Android 内存分析工具(命令行): android/perf/memory/Android_memory_tools.md
+          - Android 内存分析工具(查看GC): android/perf/memory/Android_memory_tools_gc.md
+          - Android 内存分析工具(MAT入门): android/perf/MAT-Startup.md
+          - Android 内存分析工具(MAT进阶): android/perf/MAT-Advanced.md  
+          - Android句柄泄漏分析: android/perf/Android_fd_leak.md
+        - 崩溃优化:
+          - Android 崩溃优化: android/perf/crash/crash_op.md
+          - Android 平台 Native 代码的崩溃捕获机制及实现: android/perf/crash/native-catch.md
+          - native 崩溃信号介绍: android/perf/crash/native-crash-signal.md   
+          - 为啥Android子线程抛出异常主线程会崩溃: android/perf/crash/KillApplicationHandler.md 
+        - 启动优化:
+          - Android启动优化: android/perf/launch/Android-launch-opt.md               
+        - 并发:
+          - 进程与线程的一个简单解释: android/daily/concurrency/process and thread.md 
+        - 性能分析命令:
+          - dumpsys: android/perf/dumpsys.md
+          - top命令: android/perf/top.md                 
+     - Android:
        - Android 动画原理: android/daily/Android_animation.md   
        - Mac10.14编译Android 8.1源码及刷入nexus 6p: android/daily/flask_android_8.md
        - APK文件分析: android/daily/apk_analyze.md
-       - Android ClassLoader机制: android/daily/Android_classloader.md     
+       - Android ClassLoader机制: android/daily/Android_classloader.md  
+       - Android 开机流程: android/system/bootloader.md    
      - Kotlin:
        - Kotlin中inline, noinline, crossinline的区别: android/koltin/Kotlin_nline, noinline, crossinline.md
        - 使用Kotlin takeIf（或takeUnless）: android/koltin/Kotlin-takeIf-or-takeUnless.md
        - 掌握Kotlin标准函数：run, with, let, also and apply: android/koltin/Mastering Kotlin standard functions.md          
-
+  - 后端:
+    - Python:  
+      - python函数执行时间分析: python/python_func_time.md
+      - CentOS部署flask项目: python/centos_flask.md
+      - Pycharm远程调试: python/pycharm_remote_debug.md
+      - 以Root权限运行/调试 PyCharm: python/PyCharm_root_debug.md
   - Native:
      - C/C++:
        - C基础知识: native/Cbasic.md
@@ -161,31 +189,32 @@ nav:
      - 疑难问题:
        - dlopen时找不到__emutls_get_address符号: native/__emutls_get_address.md
              
-  - Python:  
-    - python函数执行时间分析: python/python_func_time.md
-    - CentOS部署flask项目: python/centos_flask.md
-    - Pycharm远程调试: python/pycharm_remote_debug.md
-    - 以Root权限运行/调试 PyCharm: python/PyCharm_root_debug.md
-
   - 设计&架构:
     - 架构设计: design/framework design.md  
     - 六大设计原则: design/Design Principles.md
     - 设计模式概述: design/design-patterns.md
-    - 创建型模式: 
-      - 概述: design/index_creational.md
-      - 单例: design/singleton.md
-      - 工厂模式: design/factory.md
-      - 原型模式: design/prototype.md
-      - 建造者模式: design/builder.md
-    - 结构型模式: 
-      - 概述: design/index_structural.md
-      - 适配器模式: design/adapter.md
-    - 行为模式: 
-      - 概述: design/index_behavioral.md
-      - 策略模式: design/strategy.md  
+    - 设计模式:
+      - 创建型模式: 
+        - 概述: design/index_creational.md
+        - 单例: design/singleton.md
+        - 工厂模式: design/factory.md
+        - 原型模式: design/prototype.md
+        - 建造者模式: design/builder.md
+      - 结构型模式: 
+        - 概述: design/index_structural.md
+        - 适配器模式: design/adapter.md
+      - 行为模式: 
+        - 概述: design/index_behavioral.md
+        - 策略模式: design/strategy.md  
     - 其他: 
       - fail-fast&fail-safe: design/fail-fast&fail-safe.md
       - 各种单例写法: design/singleton_extra.md
+  - Interview: 
+    - 概述: interview/index.md
+    - Android:
+      - Android 四大组件: interview/android_components.md
+
+
   - 其他:  
     - shell核心语法: other/shell.md
     - 《数据结构与算法之美》笔记:
