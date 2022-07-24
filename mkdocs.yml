@@ -213,8 +213,6 @@ nav:
     - 概述: interview/index.md
     - Android:
       - Android 四大组件: interview/android_components.md
-
-
   - 其他:  
     - shell核心语法: other/shell.md
     - 《数据结构与算法之美》笔记:
