@@ -12,7 +12,6 @@ copyright: Copyright &copy; 2020 - 2026 Adison
 # Configuration
 theme:
   name: material
-  custom_dir: overrides
   icon:
     admonition:
       note: octicons/tag-16
