@@ -86,8 +86,8 @@
     
 !!! question "activity被系统杀死，是否走destory流程？"
 ??? note "回答"
-    * **任务栏主动杀死** 只会走启动Activity的onDestroy的生命周期，其他activity的onDestroy不会回调到（测试机器：Nexus 6p） 
-    * **系统资源不足意外杀死**	应用只有在进程存活的情况下才会按照正常的生命周期进行执行，如果进程突然被kill掉，相当于System.exit(0); 进程被杀死，根本不会走（activity，fragment）生命周期。只有在进程不被kill掉，正常情况下才会执行ondestory（）方法
+    * **主动杀死(从最近任务划掉)** 只会走启动Activity的onDestroy的生命周期，其他activity的onDestroy不会回调到（测试机器：Nexus 6p） 
+    * **意外杀死(系统资源不足、强制停止）** 应用只有在进程存活的情况下才会按照正常的生命周期进行执行，如果进程突然被kill掉，相当于System.exit(0); 进程被杀死，根本不会走（activity，fragment）生命周期。只有在进程不被kill掉，正常情况下才会执行ondestory（）方法
     
 !!! question "说下Activity的四种启动模式？"
 ??? note "回答"
