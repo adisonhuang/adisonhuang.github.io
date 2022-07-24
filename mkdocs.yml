@@ -155,6 +155,8 @@ nav:
           - 为啥Android子线程抛出异常主线程会崩溃: android/perf/crash/KillApplicationHandler.md 
         - 启动优化:
           - Android启动优化: android/perf/launch/Android-launch-opt.md               
+        - 包体积优化 :
+          - 从 Class 字节码入手精简 DEX 体积: android/perf/size/douyin.md  
         - 并发:
           - 进程与线程的一个简单解释: android/daily/concurrency/process and thread.md 
         - 性能分析命令:
