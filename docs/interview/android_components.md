@@ -26,6 +26,7 @@
         ~attach()
         +getApplication()
       }
+    ```
 
      class ContextThemeWrapper{
         -mTheme:Resources.Theme
@@ -58,19 +59,85 @@
 ## Activity相关
 !!! question "说下Activity的生命周期"
 ??? note "回答"
-		test
-!!! question "如何避免配置改变时Activity重建？优先级低的Activity在内存不足被回收后怎样做可以恢复到销毁前状态"
+    - onCreate()表示Activity 正在创建，常做初始化工作，如setContentView界面资源、初始化数据
+    - onStart()表示Activity 正在启动，这时Activity 可见但不在前台，无法和用户交互，可以做一些资源准备工作，如开启轮播图自动无限轮播
+    - onResume()表示Activity 获得焦点，此时Activity 可见且在前台并开始活动
+    - onPause()表示Activity 正在停止，可做 数据存储、停止动画等操作
+    - onStop()表示activity 即将停止，可做稍微重量级回收工作，如取消网络连接、注销广播接收器，暂停轮播图无限轮播等
+    - onDestroy()表示Activity 即将销毁，常做回收工作、资源释放
+    - onRestart()表示当Activity由后台切换到前台，由不可见到可见时会调用，表示Activity 重新启动
+
+
+		
+
+!!! question "说一下onSaveInstanceState()和onRestoreInstanceState()"
 ??? note "回答"
-		test
-!!! question "app切换到后台，当前activity会走onDestory方法吗？一般在onstop方法里做什么？什么情况会导致app会被杀死？"
+    * Activity的 onSaveInstanceState()和onRestoreInstanceState()并不是生命周期方法，它们不同于onCreate()、onPause()等生命周期方法，它们并不一定会被触发。
+	 * **什么时候会触发走这两个方法？** 当应用遇到意外情况（如：内存不足、用户直接按Home键）由系统销毁一个Activity，`onSaveInstanceState()` 会被调用。但是当用户主动去销毁一个Activity时，例如在应用中按返回键，`onSaveInstanceState()`就不会被调用。通常onSaveInstanceState()只适合用于保存一些临时性的状态，而onPause()适合用于数据的持久化保存。
+	 * **onSaveInstanceState()被执行的场景有哪些？**
+        * 长按HOME键，选择运行其他的程序时
+        * 锁屏时
+    	  * 从activity A中启动一个新的activity时
+    	  * 屏幕方向切换时
+
+!!! question "app切换到后台，当前activity会走onDestory方法吗？"
 ??? note "回答"
-		test
-!!! question "说下Activity的四种启动模式？singleTop和singleTask的区别以及应用场景？"
+    不会走onDestory方法，会先后走onPause和onStop方法。
+    
+!!! question "activity被系统杀死，是否走destory流程？"
 ??? note "回答"
-		test
-!!! question "任务栈的作用是什么？同一程序不同的Activity是否可以放在不同的Task任务栈中？"	
+    * **任务栏主动杀死** 只会走启动Activity的onDestroy的生命周期，其他activity的onDestroy不会回调到（测试机器：Nexus 6p） 
+    * **系统资源不足意外杀死**	应用只有在进程存活的情况下才会按照正常的生命周期进行执行，如果进程突然被kill掉，相当于System.exit(0); 进程被杀死，根本不会走（activity，fragment）生命周期。只有在进程不被kill掉，正常情况下才会执行ondestory（）方法
+    
+!!! question "说下Activity的四种启动模式？"
 ??? note "回答"
-		test
+    * Activity的四种启动模式
+        * **standard标准模式**：每次启动一个Activity就会创建一个新的实例
+        * **singleTop栈顶复用模式**：如果新Activity已经位于任务栈的栈顶，就不会重新创建，并回调 onNewIntent(intent) 方法；为防止快速点击时多次startActivity，可以将目标Activity设置为singleTop，如APP接收到多条推送消息，点开不同消息，均由同一实例展示。
+        * **singleTask栈内复用模式**：只要该Activity在一个任务栈中存在，都不会重新创建，并回调 onNewIntent(intent) 方法。如果不存在，系统会先寻找是否存在需要的栈，如果不存在该栈，就创建一个任务栈，并把该Activity放进去；如果存在，就会创建到已经存在的栈中，并且会clearTop，即会把栈顶所有Activity清除；常用于主页和登陆页，无论哪种业务场景下再次回到此页，都不应保留之上Activity。**但当我们主页同时也是启动页时，这样会导致无论我们打开多少页面，应用进入后台再启动会直接回到主页。这种情况有两种解决方面：1.增加闪屏页作为启动页，桥接到主页（大部分app做法），2.主页设置为SingleTop，自行建立栈管理系统（这样的好处是减少一个Activity，提高启动速度**
+        * **singleInstance单实例模式**：具有此模式的Activity只能单独位于一个任务栈中，且此任务栈中只有唯一一个实例。如APP经常调用的拨打电话、系统通讯录、地图类APP 等页面，不同APP调用此类Activity 时，首次创建实例，之后其他APP只能复用此实例。
+        
+!!! question "Activity任务栈的作用是什么？同一程序不同的Activity是否可以放在不同的Task任务栈中？"	
+??? note "回答"
+    * 什么是Activity Stack
+        * Activity承担了大量的显示和交互工作，从某种角度上将，我们看见的应用程序就是许多个Activity的组合。为了让这许多 Activity协同工作而不至于产生混乱，Android平台设计了一种堆栈机制用于管理Activity，其遵循先进后出的原则，系统总是显示位于栈 顶的Activity 
+    * 什么是Task
+        * Task是指将相关的Activity组合到一起，以Activity Stack的方式进行管理，Task实际上是一个Activity栈，通常用户感受的一个Application就是一个Task，但是从根本上讲，一个Task是可以有一个或多个Android Application组成的。（如拍照流程，先跳转到相机应用Activity，当完成拍照功能后再返回当前Activity获取结果，这是一个`task`）。
+    * 同一程序不同的Activity是否可以放在不同的Task任务栈中？
+        * 可以的。比如：启动模式里有个Singleinstance，可以运行在另外的单独的任务栈里面。用这个模式启动的activity，在内存中只有一份，这样就不会重复的开启。
+        * 也可以在激活一个新的activity时候,给intent设置flag，Intent的flag添加`FLAG_ACTIVITY_NEW_TASK`，这个被激活的activity就会在新的task栈里面
+
+        
 !!! question "两个Activity之间怎么传递数据？intent和bundle有什么区别？为什么有了intent还要设计bundle？"
 ??? note "回答"
-		test
+    * 两个Activity之间怎么传递数据？
+        * 基本数据类型可以通过Intent传递数据
+        * 把数据封装至intent对象中
+        ```java
+        Intent intent = new Intent(content, MeActivity.class);
+        intent.putExtra("goods_id", goods_id);
+        content.startActivity(intent);
+        ```
+        * 把数据封装至bundle对象中
+        * 把bundle对象封装至intent对象中
+        ```java
+        Bundle bundle = new Bundle();
+        bundle.putString("malename", "李志");
+        intent.putExtras(bundle);
+        startActivity(intent); 
+        ```
+    * intent和bundle有什么区别？
+        * Intent传递数据和Bundle传递数据是一回事，Intent传递时内部还是调用了Bundle。
+        ```java
+        public @NonNull Intent putExtra(String name, String value) {
+            if (mExtras == null) {
+                mExtras = new Bundle();
+            }
+            mExtras.putString(name, value);
+            return this;
+        }
+        ```
+    * 为什么有了intent还要设计bundle？
+        * Bundle只是一个信息的载体，内部其实就是维护了一个Map<String,Object>。
+        * Intent虽然内部也是通过持有一个Bundle来存储信息的，但Intent一方面作为一个高频使用的组件，更关注易用性，提供了可以直接操作Bundle的系列函数`putExtra(xxx)`，另一方面Intent作为一个消息传递对象，负责组件之间的数据通信，相当于组件之间的协议，有其特殊的”协议“语言，如可以使用 `setComponent()、setClass()、setClassName()`设置要启动的组件名称，另外还有`setAction() `、`setData()`、`setflags()`等
+        
