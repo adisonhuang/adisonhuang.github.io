@@ -99,4 +99,26 @@ APK 格式，其实质则是一个包含应用所有所需资源的 zip 包，�
 * 单纯去除无用的代码指令，包括**去除冗余赋值，无副作用代码删除**等
 * 除了能减少代码指令数量外，同时减少方法和字段的数量，从而有效减少 DEX 的数量。我们知道 DEX 中引用方法数、引用字段数等不能超过 65535，超过之后就需要新开一个 DEX 文件，因此减少 DEX 中方法数、字段数可以减少 DEX 文件数量，像**短方法内联、常量字段消除、R 常量内联**就属于这类优化。
 
-> []
+> [详细参见](http://blog.adison.top/android/perf/size/douyin/)
+
+#### 3.2.4 去掉 Debug 信息或者去掉行号
+
+某个应用通过相同的 ProGuard  规则生成一个 Debug 包和 Release 包，其中 Debug 包的大小是 4MB，Release 包只有 3.5MB。既然它们  ProGuard 的混淆与优化的规则是一样的，那它们之间的差异在哪里呢？那就是 `DebugItem`。
+
+![69ec4986053903876d55fbd37d47a710](./69ec4986053903876d55fbd37d47a710.webp)
+
+DebugItem 里面主要包含两种信息：
+
+* 调试的信息。函数的参数变量和所有的局部变量。
+
+* 排查问题的信息。所有的指令集行号和源文件行号的对应关系。
+
+事实上，在 ProGuard 配置中一般我们也会通过下面的方式保留行号信息。
+
+```she
+-keepattributes SourceFile, LineNumberTable
+```
+
+对于去除 debuginfo  以及行号信息更详细的分析，可以看一下支付宝的一篇文章 [Android  包大小极致压缩》](https://mp.weixin.qq.com/s/_gnT2kjqpfMFs0kqAg4Qig)。通过这个方法，我们可以实现既保留行号，但是又可以减少大约 5% 的 Dex 体积。事实上，支付宝参考的是 Facebook  的一个开源编译工具[ReDex](https://github.com/facebook/redex)。
+
+#### 3.2.5 dex 分包
