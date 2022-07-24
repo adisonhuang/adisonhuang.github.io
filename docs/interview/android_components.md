@@ -140,4 +140,53 @@
     * 为什么有了intent还要设计bundle？
         * Bundle只是一个信息的载体，内部其实就是维护了一个Map<String,Object>。
         * Intent虽然内部也是通过持有一个Bundle来存储信息的，但Intent一方面作为一个高频使用的组件，更关注易用性，提供了可以直接操作Bundle的系列函数`putExtra(xxx)`，另一方面Intent作为一个消息传递对象，负责组件之间的数据通信，相当于组件之间的协议，有其特殊的”协议“语言，如可以使用 `setComponent()、setClass()、setClassName()`设置要启动的组件名称，另外还有`setAction() `、`setData()`、`setflags()`等
-        
+     
+## Service相关
+!!! question " 介绍一下Service，启动Service有几种方式，生命周期是怎样的？"
+??? note "回答"
+    * Service分为两种
+        * 本地服务，属于同一个应用程序，通过startService来启动或者通过bindService来绑定并且获取代理对象。如果只是想开个服务在后台运行的话，直接startService即可，如果需要相互之间进行传值或者操作的话，就应该通过bindService。
+        * 远程服务（不同应用程序之间），通过bindService来绑定并且获取代理对象。
+    * 对应的生命周期如下：
+        * `context.startService()` -> `onCreate()`-> `onStartCommand()`->**Service running**----- 调用`context.stopService()` ->`onDestroy()`->**Service stop**-
+        * `context.bindService()`->`onCreate()`->`onBind()`->**Service running*----调用`context.unbindService`->`onUnbind()` -> `onDestroy()`->**Service stop**-
+    * Service生命周期解释
+        - onCreate（）：服务第一次被创建时调用
+        - onStartComand（）：服务启动时调用
+        - onBind（）：服务被绑定时调用
+        - onUnBind（）：服务被解绑时调用
+        - onDestroy（）：服务停止时调用
+
+!!! question "service如何杀不死?"
+??? note "回答"   
+    - onStartCommand方法，返回START_STICKY（粘性）当service因内存不足被kill，当内存又有的时候，service又被重新创建
+    - 设置优先级，在服务里的ondestory里发送广播 在广播里再次开启这个服务,双进程守护     
+
+!!! question "先start后bind操作service，此时如何做才能回调Service的destory()方法"
+??? note "回答" 
+    一个服务只要被启动或者被绑定了之后，就会一直处于运行状态，必须要让以上两种条件同时不满足，服务才能被销毁。这种情况下要同时调用`stopService()`和`unbindService()`方法，onDestroy()方法才会执行  
+
+!!! question "是否能在Service进行耗时操作?"
+??? note "回答"   
+    * 默认情况,如果没有显示的指定service所运行的进程,Service和Activity是运行在当前app所在进程的mainThread(UI主线程)里面。
+    * service里面不能执行耗时的操作(网络请求,拷贝数据库,大文件)，在Service里执行耗时操作，有可能出现主线程被阻塞（ANR）的情况  
+## BroadcastReceiver相关
+!!! question "广播有哪些注册方式？有什么区别？"
+??? note "回答"
+    - **静态注册**：常驻系统，不受组件生命周期影响，即便应用退出，广播还是可以被接收，耗电、占内存。
+    - **动态注册**：非常驻，跟随组件的生命变化，组件结束，广播结束。在组件结束前，需要先移除广播，否则容易造成内存泄漏。
+!!! question "广播使用注意事项"
+??? note "回答"
+    - BroadCastReceiver 的生命周期很短暂，当接收到广播的时候创建，当onReceive()方法结束后销毁
+    - 因为BroadCastReceiver的声明周期很短暂，所以不要在广播接收器中去创建子线程做耗时的操作，因为广播接受者被销毁后，这个子进程就会成为空进程，很容易被杀死
+    - BroadCastReceiver是运行在主线程的，所以不能直接在BroadCastReceiver中去做耗时的操作，否则就会出现ANR异常 
+## ContentProvider相关
+!!! question "Android 设计 ContentProvider 的目的是什么呢？"
+??? note "回答"
+    * 隐藏数据的实现方式，对外提供统一的数据访问接口；
+    * 更好的数据访问权限管理。ContentProvider 可以对开发的数据进行权限设置，不同的 URI 可以对应不同的权限，只有符合权限要求的组件才能访问到 ContentProvider 的具体操作。
+    * ContentProvider 封装了跨进程共享的逻辑，我们只需要 Uri 即可访问数据。由系统来管理 ContentProvider 的创建、生命周期及访问的线程分配，简化我们在应用间共享数据（ 进程间通信 ）的方式。我们只管通过 ContentResolver 访问 ContentProvider 所提示的数据接口，而不需要担心它所在进程是启动还是未启动。
+
+!!! question "运行在主线程的 ContentProvider 为什么不会影响主线程的 UI 操作?"
+??? note "回答"
+    * `ContentProvider` 的 `onCreate()` 是运行在 `UI` 线程的，而 `query()` ，`insert()` ，`delete()` ，`update()` 访问实质上是通过`Binder`方式调用，运行在binder线程池，所以调用这个方法并不会阻塞 `ContentProvider` 所在进程的主线程，但可能会阻塞调用者所在的进程的 `UI` 线程！所以，调用 `ContentProvider` 的操作仍然要放在子线程中去做。    
