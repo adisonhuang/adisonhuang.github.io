@@ -121,4 +121,4 @@ DebugItem 里面主要包含两种信息：
 
 对于去除 debuginfo  以及行号信息更详细的分析，可以看一下支付宝的一篇文章 [Android  包大小极致压缩》](https://mp.weixin.qq.com/s/_gnT2kjqpfMFs0kqAg4Qig)。通过这个方法，我们可以实现既保留行号，但是又可以减少大约 5% 的 Dex 体积。事实上，支付宝参考的是 Facebook  的一个开源编译工具[ReDex](https://github.com/facebook/redex)。
 
-#### 3.2.5 dex 分包
+### 3.3 资源优化
