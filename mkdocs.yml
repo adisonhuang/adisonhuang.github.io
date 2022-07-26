@@ -140,6 +140,7 @@ markdown_extensions:
 # Page tree
 nav:  
   - Android:
+     # - android/index.md
      - 性能优化:
         - 内存优化:
           - Android内存管理: android/perf/memory/Android_memory_manager.md 
@@ -158,6 +159,7 @@ nav:
         - 包体积优化 :
           - 从 Class 字节码入手精简 DEX 体积: android/perf/size/douyin.md  
           - Android 包体积优化: android/perf/size/Android-apk-size-opt.md
+          - Android对so体积优化的探索与实践: android/perf/size/Android-so-opt.md
         - 并发:
           - 进程与线程的一个简单解释: android/daily/concurrency/process and thread.md 
         - 性能分析命令:
@@ -212,7 +214,7 @@ nav:
       - fail-fast&fail-safe: design/fail-fast&fail-safe.md
       - 各种单例写法: design/singleton_extra.md
   - Interview: 
-    - 概述: interview/index.md
+    - interview/index.md
     - Android:
       - Android 四大组件: interview/android_components.md
       - Android 系统原理: interview/android_sys.md 
