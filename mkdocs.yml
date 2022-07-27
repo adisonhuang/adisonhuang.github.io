@@ -157,8 +157,8 @@ nav:
         - 启动优化:
           - Android启动优化: android/perf/launch/Android-launch-opt.md               
         - 包体积优化 :
-          - 从 Class 字节码入手精简 DEX 体积: android/perf/size/douyin.md  
           - Android 包体积优化: android/perf/size/Android-apk-size-opt.md
+          - 从 Class 字节码入手精简 DEX 体积: android/perf/size/douyin.md  
           - Android对so体积优化的探索与实践: android/perf/size/Android-so-opt.md
         - 并发:
           - 进程与线程的一个简单解释: android/daily/concurrency/process and thread.md 
