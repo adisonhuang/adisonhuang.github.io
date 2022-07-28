@@ -218,6 +218,7 @@ nav:
       - Android 系统原理: interview/android_sys.md 
     - Java:
       - Java 基础问题: interview/java_basic.md  
+      - Java 容器问题: interview/java_collection.md  
   - 其他:  
     - shell核心语法: other/shell.md
     - 《数据结构与算法之美》笔记:
