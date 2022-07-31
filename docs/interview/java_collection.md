@@ -148,13 +148,42 @@
 
 !!! question "说一下LinkedHashMap"
 ??? noet "回答"
+    * 继承自 HashMap，因此具有和 HashMap 一样的快速查找特性。
+    * 内部维护了一个双向链表，用来维护插入顺序或者 LRU 顺序。
+    * 当维护 LRU 顺序时可以实现LRU缓存
+        * 当一个节点被访问时，通过`afterNodeAccess`方法保证在每次访问一个节点时，会将这个节点移到链表尾部，保证链表尾部是最近访问的节点，那么链表首部就是最近最久未使用的节点。
+        * `afterNodeInsertion`在 put 等操作之后执行，当 `removeEldestEntry()` 方法返回 true 时会移除最晚的节点，也就是链表首部节点 first
+    * LRU 示例
+    ```java
+    class LRUCache<K, V> extends LinkedHashMap<K, V> {
+        private static final int MAX_ENTRIES = 3;
+
+        protected boolean removeEldestEntry(Map.Entry eldest) {
+            return size() > MAX_ENTRIES;
+        }
+
+        LRUCache() {
+            super(MAX_ENTRIES, 0.75f, true);
+        }
+    }
+    ```
 
 
 !!! question "说一下CopyOnWriteArrayList"
-??? noet "回答"
-
-!!! question "说一下BlockingQueue"
-??? noet "回答"
+??? noet "回答" 
+    * 读写分离
+    写操作在一个复制的数组上进行，读操作还是在原始数组中进行，读写分离，互不影响。
+    写操作需要加锁，防止并发写入时导致写入数据丢失。
+    写操作结束之后需要把原始数组指向新的复制数组。
+    * 适用场景
+    CopyOnWriteArrayList 在写操作的同时允许读操作，大大提高了读操作的性能，因此很适合读多写少的应用场景。
+    但是 CopyOnWriteArrayList 有其缺陷：
+        * 内存占用：在写操作时需要复制一个新的数组，使得内存占用为原来的两倍左右；
+        * 数据不一致：读操作不能读取实时性的数据，因为部分写操作的数据还未同步到读数组中。
+    > 所以 CopyOnWriteArrayList 不适合内存敏感以及对实时性要求很高的场景。
 
 !!! question "比较 HashSet、LinkedHashSet 和 TreeSet 三者的异同"
 ??? noet "回答"
+    * **TreeSet**：基于红黑树实现，支持有序性操作，例如根据一个范围查找元素的操作。但是查找效率不如 HashSet，HashSet 查找的时间复杂度为 O(1)，TreeSet 则为 O(logN)。
+    * **HashSet**：基于哈希表实现，支持快速查找，但不支持有序性操作。并且失去了元素的插入顺序信息，也就是说使用 Iterator 遍历 HashSet 得到的结果是不确定的。
+    * **LinkedHashSet**：具有 HashSet 的查找效率，并且内部使用双向链表维护元素的插入顺序。
