@@ -26,7 +26,6 @@
         ~attach()
         +getApplication()
       }
-    ```
 
      class ContextThemeWrapper{
         -mTheme:Resources.Theme
@@ -148,8 +147,8 @@
         * 本地服务，属于同一个应用程序，通过startService来启动或者通过bindService来绑定并且获取代理对象。如果只是想开个服务在后台运行的话，直接startService即可，如果需要相互之间进行传值或者操作的话，就应该通过bindService。
         * 远程服务（不同应用程序之间），通过bindService来绑定并且获取代理对象。
     * 对应的生命周期如下：
-        * `context.startService()` -> `onCreate()`-> `onStartCommand()`->**Service running**----- 调用`context.stopService()` ->`onDestroy()`->**Service stop**-
-        * `context.bindService()`->`onCreate()`->`onBind()`->**Service running*----调用`context.unbindService`->`onUnbind()` -> `onDestroy()`->**Service stop**-
+        * `context.startService()` -> `onCreate()`-> `onStartCommand()`->**Service running**----- 调用`context.stopService()` ->`onDestroy()`->**Service stop**
+        * `context.bindService()`->`onCreate()`->`onBind()`->**Service running**----调用`context.unbindService`->`onUnbind()` -> `onDestroy()`->**Service stop**
     * Service生命周期解释
         - onCreate（）：服务第一次被创建时调用
         - onStartComand（）：服务启动时调用
