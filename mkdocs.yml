@@ -207,9 +207,13 @@ nav:
       - 结构型模式: 
         - 概述: design/index_structural.md
         - 适配器模式: design/adapter.md
+        - 代理模式: design/proxy.md
+        - 外观模式: design/facade.md
+        - 装饰模式: design/wrapper.md
       - 行为模式: 
         - 概述: design/index_behavioral.md
         - 策略模式: design/strategy.md  
+      - 总结: design/summary.md  
     - 其他: 
       - fail-fast&fail-safe: design/fail-fast&fail-safe.md
       - 各种单例写法: design/singleton_extra.md
@@ -232,6 +236,3 @@ nav:
       - 数组-合并两个有序数组: algo/array_algo_3.md
     - GIT:  
       - Git submodule 子模块的管理和使用: other/git_submodule.md
-
-
-  
