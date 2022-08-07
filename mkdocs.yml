@@ -160,8 +160,6 @@ nav:
           - Android 包体积优化: android/perf/size/Android-apk-size-opt.md
           - 从 Class 字节码入手精简 DEX 体积: android/perf/size/douyin.md  
           - Android对so体积优化的探索与实践: android/perf/size/Android-so-opt.md
-        - 并发:
-          - 进程与线程的一个简单解释: android/daily/concurrency/process and thread.md 
         - 性能分析命令:
           - dumpsys: android/perf/dumpsys.md
           - top命令: android/perf/top.md                 
@@ -174,7 +172,10 @@ nav:
      - Kotlin:
        - Kotlin中inline, noinline, crossinline的区别: android/koltin/Kotlin_nline, noinline, crossinline.md
        - 使用Kotlin takeIf（或takeUnless）: android/koltin/Kotlin-takeIf-or-takeUnless.md
-       - 掌握Kotlin标准函数：run, with, let, also and apply: android/koltin/Mastering Kotlin standard functions.md          
+       - 掌握Kotlin标准函数：run, with, let, also and apply: android/koltin/Mastering Kotlin standard functions.md 
+     - 并发:
+       - 进程与线程的一个简单解释: android/daily/concurrency/process and thread.md 
+       - 并发基础总结: android/daily/concurrency/basic.md               
   - 后端:
     - Python:  
       - python函数执行时间分析: python/python_func_time.md
