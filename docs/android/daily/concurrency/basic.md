@@ -236,6 +236,91 @@ CAS的实现需要硬件指令集的支撑，在JDK1.5后虚拟机才可以使�
 3. **只能保证一个共享变量的原子操作**
 当对一个共享变量执行操作时CAS能保证其原子性，如果对多个共享变量进行操作,CAS就不能保证其原子性。有一个解决方案是利用对象整合多个共享变量，即一个类中的成员变量就是这几个共享变量。然后将这个对象做CAS操作就可以保证其原子性。atomic中提供了AtomicReference来保证引用对象之间的原子性。
 
+## 5. AQS
+AQS 是一个用来构建锁和同步器的框架，使用 AQS 能简单且高效地构造出应用广泛的大量的同步器，比如我们提到的 `ReentrantLock`，`Semaphore`，其他的诸如 `ReentrantReadWriteLock`，`SynchronousQueue`，`FutureTask` 等等皆是基于 AQS 的。当然，我们自己也能利用 AQS 非常轻松容易地构造出符合我们自己需求的同步器。
+### 5.1 AQS 原理
+**AQS 核心思想是，如果被请求的共享资源空闲，则将当前请求资源的线程设置为有效的工作线程，并且将共享资源设置为锁定状态。如果被请求的共享资源被占用，那么就需要一套线程阻塞等待以及被唤醒时锁分配的机制，这个机制 AQS 是用 CLH 队列锁实现的，即将暂时获取不到锁的线程加入到队列中。**
+
+> CLH(Craig,Landin,and Hagersten)队列是一个虚拟的双向队列（虚拟的双向队列即不存在队列实例，仅存在结点之间的关联关系）。AQS 是将每条请求共享资源的线程封装成一个 CLH 锁队列的一个结点（Node）来实现锁的分配。
+![AQS原理图](./AQS原理图.png)
+
+AQS 使用一个 int 成员变量来表示同步状态，通过内置的 FIFO 队列来完成获取资源线程的排队工作。AQS 使用 CAS 对该同步状态进行原子操作实现对其值的修改。
+
+```java
+private volatile int state;//共享变量，使用volatile修饰保证线程可见性
+```
+
+状态信息通过 protected 类型的 getState，setState，compareAndSetState 进行操作
+
+```java
+//返回同步状态的当前值
+protected final int getState() {
+        return state;
+}
+ // 设置同步状态的值
+protected final void setState(int newState) {
+        state = newState;
+}
+//原子地（CAS操作）将同步状态值设置为给定值update如果当前同步状态的值等于expect（期望值）
+protected final boolean compareAndSetState(int expect, int update) {
+        return unsafe.compareAndSwapInt(this, stateOffset, expect, update);
+}
+```
+### 5.2 AQS 对资源的共享方式
+**AQS 定义两种资源共享方式**
+
+- **Exclusive**（独占）：只有一个线程能执行，如 `ReentrantLock`。又可分为公平锁和非公平锁：
+  - 公平锁：按照线程在队列中的排队顺序，先到者先拿到锁
+  - 非公平锁：当线程要获取锁时，无视队列顺序直接去抢锁，谁抢到就是谁的
+- **Share**（共享）：多个线程可同时执行，如`CountDownLatch`、`Semaphore`、`CountDownLatch`、 `CyclicBarrier`、`ReadWriteLock` 我们都会在后面讲到。
+
+`ReentrantReadWriteLock` 可以看成是组合式，因为 `ReentrantReadWriteLock` 也就是读写锁允许多个线程同时对某一资源进行读。
+
+不同的自定义同步器争用共享资源的方式也不同。自定义同步器在实现时只需要实现共享资源 state 的获取与释放方式即可，至于具体线程等待队列的维护（如获取资源失败入队/唤醒出队等），AQS 已经在顶层实现好了。
+
+### 5.3 CountDownLatch的使用
+`CountDownLatch` 的作用就是 允许 count 个线程阻塞在一个地方，直至所有线程的任务都执行完毕。
+
+例如，我们要读取处理 6 个文件，这 6 个任务都是没有执行顺序依赖的任务，但是我们需要返回给用户的时候将这几个文件的处理的结果进行统计整理。
+
+为此我们定义了一个线程池和 count 为 6 的`CountDownLatch`对象 。使用线程池处理读取任务，每一个线程处理完之后就将 count-1，调用`CountDownLatch`对象的 `await()`方法，直到所有文件读取完之后，才会接着执行后面的逻辑。
+
+伪代码是下面这样的：
+```java
+public class CountDownLatchExample1 {
+  // 处理文件的数量
+  private static final int threadCount = 6;
+
+  public static void main(String[] args) throws InterruptedException {
+    // 创建一个具有固定线程数量的线程池对象（推荐使用构造方法创建）
+    ExecutorService threadPool = Executors.newFixedThreadPool(10);
+    final CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+    for (int i = 0; i < threadCount; i++) {
+      final int threadnum = i;
+      threadPool.execute(() -> {
+        try {
+          //处理文件的业务操作
+          ......
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        } finally {
+          //表示一个文件已经被完成
+          countDownLatch.countDown();
+        }
+
+      });
+    }
+    countDownLatch.await();
+    threadPool.shutdown();
+    System.out.println("finish");
+  }
+
+}
+```
+
+**有没有可以改进的地方呢？**
+
+可以使用 `CompletableFuture` 类来改进！Java8 的 `CompletableFuture` 提供了很多对多线程友好的方法，使用它可以很方便地为我们编写多线程程序，什么异步、串行、并行或者等待所有线程执行完任务什么的都非常方便。
 
 
 
