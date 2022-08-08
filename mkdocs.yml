@@ -160,9 +160,11 @@ nav:
           - Android 包体积优化: android/perf/size/Android-apk-size-opt.md
           - 从 Class 字节码入手精简 DEX 体积: android/perf/size/douyin.md  
           - Android对so体积优化的探索与实践: android/perf/size/Android-so-opt.md
+        - 卡顿优化:
+          - Android卡顿掉帧问题分析之原理篇: android/perf/jank/jank-principle.md    
         - 性能分析命令:
           - dumpsys: android/perf/dumpsys.md
-          - top命令: android/perf/top.md                 
+          - top命令: android/perf/top.md 
      - Android:
        - Android 动画原理: android/daily/Android_animation.md   
        - 解析Binder框架: android/daily/binder.md   
