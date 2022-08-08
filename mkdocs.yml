@@ -165,6 +165,7 @@ nav:
           - top命令: android/perf/top.md                 
      - Android:
        - Android 动画原理: android/daily/Android_animation.md   
+       - 解析Binder框架: android/daily/binder.md   
        - Mac10.14编译Android 8.1源码及刷入nexus 6p: android/daily/flask_android_8.md
        - APK文件分析: android/daily/apk_analyze.md
        - Android ClassLoader机制: android/daily/Android_classloader.md  
