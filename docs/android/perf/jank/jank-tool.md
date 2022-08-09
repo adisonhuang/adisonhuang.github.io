@@ -1,14 +1,14 @@
-> 摘自https://www.jianshu.com/p/cf531a3af828
+> 摘自 https://www.jianshu.com/p/cf531a3af828
 
 # Android卡顿掉帧问题分析之工具篇
 
 上一篇文章中我们完整的分析了`Android`系统中应用上帧显示的系统运行机制和流程，了解了卡顿问题的基本定义，也就具备了分析卡顿掉帧性能问题的理论知识。但是俗话说“工欲善其事，必先利其器”，在开始着手分析卡顿问题之前，我们还必须要掌握一些分析性能问题的工具与手段，也就是掌握分析问题所使用的“器”，才能帮助我们更好的观测系统运行的状态，找到性能问题的原因。`Systrace` 是谷歌提供的最常用的`Android` 系统级性能分析工具。它以视觉化的方式将系统内所有的**“工作线程”**（内核+框架+应用）与**系统模块状态**（如 `CPU` 调度、`IO` 活动、`Binder` 调用等信息）按**时间轴**铺开展示，并支持在 `Chrome` 浏览器中显示出来。在 `Perfetto` 出现之前，它是最实用、分析最精准、最专业的性能分析工具，是分析`Android`性能问题的首选。本文我们就来详细分析一下这个`Systrace`工具 。
 
-# 1 Systrace内容结构
+## 1 Systrace内容结构
 
 `Systrace` 可以收集Android关键子系统（如`CPU`调度、`SurfaceFlinger`渲染系统、`System Server`系统框架、`Input`系统等）的运行信息，并以图像的形式按照时间轴铺开展示出来，帮助开发者直观的看到整个系统的运行状态，从而分析出系统的性能问题瓶颈所在。其界面展示的主要信息区域如下：
 
-## 1.1 CPU Trace信息区域
+### 1.1 CPU Trace信息区域
 
 
 
@@ -44,7 +44,7 @@
 3. 我的任务对性能要求比较高，比如指纹解锁，能不能把我这个任务持续放到`CPU`超大核去运行？
 4. 我的前台应用任务线程长时间处于`Runnable`状态无法执行而卡顿，当前到底是什么任务在抢占了`CPU`资源在运行？
 
-## 1.2 渲染显示系统信息区域
+### 1.2 渲染显示系统信息区域
 
 在上一篇文章中我们完整的分析了`Android`应用上帧显示的全部流程，其中包含了`Android`渲染显示系统的核心逻辑，这部分内容在`Systrace`上也有完整的展示，如下图所示：
 
@@ -68,9 +68,9 @@
 
 
 
-## 1.3 System Server框架进程信息区域
+### 1.3 System Server框架进程信息区域
 
-### 1.3.1 Input
+#### 1.3.1 Input
 
 `Input` 是 `System Server` 进程中非常重要的一部分，主要是由 `InputReader` 和 `InputDispatcher` 这两个 `Native` 子线程组成，关于这一部分在上一篇文章中已经从原理机制并结合`Systrace`详细分析过，这里就不再展开分析。我们回顾一下这边部分内容在`Systrace`上的表现：
 
@@ -80,7 +80,7 @@
 
 
 
-### 1.3.2 ActivityManagerService
+#### 1.3.2 ActivityManagerService
 
 `ActivityManagerService`（以下简称`AMS`）属于系统框架`System Server`中运行的核心服务之一，主要负责应用进程和四大组件的管理。是与应用`App`进程之间产生`Binder`交互最多的系统服务之一。谷歌原生的`AOSP`代码中就在`AMS`服务管理的进程和四大组件的各种场景下有对应的`Trace`点来记录，比如大家熟悉的 `ActivityStart`、`ActivityResume`、`activityStop` 等，与`AMS`相关的`Trace`一般会用`TRACE_TAG_ACTIVITY_MANAGER`这个`TAG`，在 `Systrace` 中对应的名字是 `ActivityManager` 。以桌面打开应用冷启动场景为例，`AMS`需要为应用创建一个新的进程，此过程在`AOSP`代码中就有相关的`AMS`相关的`Trace`埋点记录，如下图所示：
 
@@ -95,7 +95,7 @@
 
 
 
-### 1.3.3 WindowManagerService
+#### 1.3.3 WindowManagerService
 
 `WindowManagerService`（以下简称`WMS`） 属于系统框架`System Server`中运行的核心服务之一，主要负责应用窗口管理、窗口动画管理、`Surface`管理和`Input`触控事件的管理。也是与应用`App`进程之间产生`Binder`交互最多的系统服务之一。谷歌原生的`AOSP`代码中就在`WMS`窗口管理等核心流程上有对应的`Trace Tag`埋点来记录。与`WMS` 相关的 `Trace` 一般会用 `TRACE_TAG_WINDOW_MANAGER` 这个 `TAG`， 在 `Systrace` 中对应的名字是 `WindowManager` 。继续以上面的桌面打开应用冷启动场景为例，应用启动后创建第一个`Activity`界面后，在绘制第一帧画面时需要通过`Binder`访问框架`WMS`服务的`relayoutWindow`接口，以实现计算应用窗口的大小和申请一张可用`Surface`画布等逻辑，关于这块详细的分析请参考笔者之前的文章https://www.jianshu.com/p/37370c1d17fc。从`Systrace`上看如下图所示：
 
@@ -103,7 +103,7 @@
 
 
 
-### 1.3.4 HandlerThread核心工作线程
+#### 1.3.4 HandlerThread核心工作线程
 
 上面描述的`AMS`、`WMS`等系统框架核心管理服务，其具体逻辑最终都需要运行在具体的线程中。为此`system_server`进程中设计了很多继承于`HandlerThread`（自带`Looper`消息循环的线程）的核心工作线程，负责执行不同分类业务的逻辑。比如有专门负责系统`UI`展示的`UiThread`线程（源码实现位于`framework/base/services/core/java/com/android/server/UiThread.java`），线程名为“`android.ui`”，在`Systrace`上的显示如下图所示：
 
@@ -114,7 +114,7 @@
 
 比如负责窗口动画展示的`AnimationThread`，线程名为“`android.anim`”，在`Systrace`上的显示如下图所示：
 
-![img](/Users/huangyahong/Downloads/26874665-12d242c98c8e9912.webp)
+![img](./26874665-12d242c98c8e9912.webp)
 
 
 
@@ -161,7 +161,7 @@ private Watchdog() {
     }
 ```
 
-### 1.3.5 Binder与锁竞争机制
+#### 1.3.5 Binder与锁竞争机制
 
 a.**`Binder`是`Android`系统中最广泛使用的跨进程通信机制，应用进程与系统框架`system_server`进程之间的大部分跨进程通信机制都是通过`Binder`来实现的**，它就像“神经网络”一样遍布于`Android`系统的整个运行体系中。例如应用通过`startActvity`启动一个新的`Activity`页面，或者`sendBroadcast`发送一条广播，都需要通过`Binder`发送相关的请求到框架`system_server`进程中具体处理与实现。所以框架`system_server`进程中很多时候都在处理应用进程的各种`Binder`请求与响应的逻辑。关于`Binder`的详细实现原理与架构设计可以参考这篇文章[https://juejin.cn/post/6955298955307515917](https://links.jianshu.com/go?to=https%3A%2F%2Fjuejin.cn%2Fpost%2F6955298955307515917)，本节内容重点在于描述其在`Systrace`上的表现，就不再详细展开分析。在抓取`Systrace`时注意选择开启`binder_lock`和`binder_driver`两个追踪选项，就能在`Systrace`上看到完整的`Binder`调用事件信息流。我们还是以从桌面打开应用冷启动的场景为例，桌面应用中需要启动三方应用时，通过`Binder`调用框架`AMS`服务中的`startActivity`接口来实现，相关`Binder`调用过程在`Systrace`上看如下图所示：
 
@@ -178,13 +178,8 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 其实`Systrace`上显示的锁相关的信息（谷歌通过在`art`虚拟机的`monitor`对象锁实现的源码流程中增加相关的`Trace TAG`埋点实现，相关源码位于`art/runtime/monitor.cc`中，感兴趣的读者可以自行去阅读一下），已经基本上包含了我们分析锁竞争等待问题所需要的全部有效信息。上图中展示的这段锁相关信息翻译一下描述如下：
 
-
-
 1. `system_server`进程中的当前线程（`tgid`为`4147`）正在执行的函数`android.content.res.CompatibilityInfo com.android.server.wm.ActivityTaskManagerService$LocalService.compatibilityInfoForPackage(android.content.pm.ApplicationInfo)(ActivityTaskManagerService.java:6227)`时需要申请持有某个对象锁；当前由于有其它线程正在持有此对象锁，所以本线程进入该对象的锁池中阻塞等待线程释放锁，且对象的锁池中已经有两个线程已经在等待，加上本线程共计有三个线程正在等待该锁对象的释放（**虚拟机为每个`java`对象维护了两个“队列池”，一个叫`Entry Set`（入口集），另外一个叫`Wait Set`（等待集）**；对于任意的对象`objectX`，`objectX`的`Entry Set`用于存储等待获取`objectX`这个锁的所有线程，也就是**锁池**，`objectX`的`Wait Set`用于存储执行了`objectX.wait()/wait(long)`的线程，也就是**等待池**。）。
-
-   
-
-   ```java
+```java
    /*frameworks/base/services/core/java/com/android/server/wm/ActivityTaskManagerService.java*/
    ...
    @Override
@@ -194,13 +189,9 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
         }
    }
    ...
-   ```
-
+```
 2. 当前对象锁正在被`system_server`进程中名为`Binder:2323_1C`的线程所（`tgid`为`8289`）持有，且该线程中当前正在持锁执行如下函数调用： `void com.android.server.wm.ActivityClientController.activityPaused(android.os.IBinder)(ActivityClientController.java:169)` 。
-
-   
-
-   ```java
+```java
    /*frameworks/base/services/core/java/com/android/server/wm/ActivityClientController.java*/
        ...
        @Override
@@ -217,7 +208,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
            Binder.restoreCallingIdentity(origId);
        }
        ....
-   ```
+```
 
 然后我们再从`Systarce`上总体来看看这个`mGlobalLock`对象锁的竞争等待状态：
 
@@ -261,11 +252,11 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 **`Systrace`的分析重经验，在深入理解系统运行的基本流程和原理的基础上，无论是系统开发者或应用开发者都需要在平时工作中不断练习与积累**，才能在真正遇到问题时，用`Systrace`工具去分析时做到游刃有余。
 
-# 2 Systrace分析技巧
+## 2 Systrace分析技巧
 
 上一小节中我们详细分析介绍了`Systrace`上显示的各主要信息区域内容的静态构成，但是整个系统的运行往往是一个动态且相互影响的过程。在实际上手使用`Systrace`分析性能问题之前，我们还有一些实用的分析和调试的技巧也是需要掌握的。
 
-## 2.1 线程运行排程状态转换分析
+### 2.1 线程运行排程状态转换分析
 
 我们先用一张图来总体看看线程运行状态的变化以及引起变化的原因：
 
@@ -276,7 +267,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 
 
-### 2.1.1 Running -> Sleeping
+#### 2.1.1 Running -> Sleeping
 
 
 
@@ -287,7 +278,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 
 
-### 2.1.2 Sleeping -> Runnable
+#### 2.1.2 Sleeping -> Runnable
 
 
 
@@ -298,7 +289,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 
 
-### 2.1.3 Running->Runnable->Running
+#### 2.1.3 Running->Runnable->Running
 
 
 
@@ -311,7 +302,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 
 
-### 2.1.4 Running -> Uninterruptible Sleeping -> Runnable
+#### 2.1.4 Running -> Uninterruptible Sleeping -> Runnable
 
 
 
@@ -322,7 +313,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 
 
-### 2.1.5 Runnable -> Running
+#### 2.1.5 Runnable -> Running
 
 
 
@@ -335,7 +326,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 
 
-## 2.2 线程等待唤醒关系分析
+### 2.2 线程等待唤醒关系分析
 
 有了上面的分析基础，本小节中我们还是以桌面打开应用冷启动的场景为例，看看如何通过`Systrace`来分析观察线程之间的唤醒等待关系，从而看清应用进程与系统框架`system_server`进程之间是如何交互的。**只有掌握了如何用`Systrace`分析线程之间的唤醒等待关系，我们才能去追踪并理清系统内跑在各个进程或线程中的各个功能模块之间是如何相互交互配合去完成一次系统事件流程的处理，个人理解这也就是使用`Systrace`工具分析问题的精髓所在**。
 
@@ -357,11 +348,11 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 
 
-## 2.3 添加自定义Systrace tag
+### 2.3 添加自定义Systrace tag
 
 从上面的分析可以看到，谷歌原生在`Android`系统的很多系统关键流程上都添加了相关的`Systrace tag`，以观察这些流程执行的耗时情况。但是这些信息覆盖的范围毕竟是有限的，有时候并不能满足我们的分析需求。比如我们开发者想观察自己的一些代码逻辑执行的耗时情况，就需要自己定义一些`Systrace tag`去度量，这个`Systrace`机制本身是支持的。如何在代码中添加自定义的`Systrace tag`信息呢？主要有以下几种场景：
 
-## 2.3.1 在APP应用Java代码中添加Systrace tag
+#### 2.3.1 在APP应用Java代码中添加Systrace tag
 
 在 `Android 4.3`（`API` 级别 `18`）及更高版本中，您可以在代码中使用 `android.os.Trace`类来定义随后会出现在 `Perfetto` 和 `Systrace` 报告中的自定义事件，如以下谷歌官方代码段所示：
 
@@ -426,7 +417,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 - 不能在一个线程上调用 `beginSection()`，而在另一个线程上结束它；您必须在同一个线程上调用这两个方法。如果就有需要在不同的线程开始和结束一个方法的追踪，请使用`Trace.beginAsyncSection()`和`Trace.endAsyncSection()`。
 
-## 2.3.2 在APP应用Native代码中添加Systrace tag
+#### 2.3.2 在APP应用Native代码中添加Systrace tag
 
 `Android 6.0`（`API` 级别 `23`）及更高版本支持原生跟踪 `API` `trace.h`，用于将跟踪事件写入系统缓冲区，以供您随后使用 `Perfetto` 或 `Systrace` 进行分析。此 `API` 的常见用例包括观察特定代码块的执行时间以及确定引起不良系统行为的代码块。
 在自定义事件的开头和结尾分别调用 `ATrace_beginSection()` 和 `ATrace_endSection()`，看看谷歌官方给出的用法示例：
@@ -446,7 +437,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 **注意使用`pthread_setname_np`函数为自己的工作线程命名，以便让`Systrace`能识别并显示出来**。详细使用规则请参见`Android`官方文档：[https://developer.android.google.cn/topic/performance/tracing/custom-events](https://links.jianshu.com/go?to=https%3A%2F%2Fdeveloper.android.google.cn%2Ftopic%2Fperformance%2Ftracing%2Fcustom-events)
 
-## 2.3.3 在Framework的Java代码中添加Systrace tag
+#### 2.3.3 在Framework的Java代码中添加Systrace tag
 
 在`Framework`的`Java`层代码里面添加`Systrace`跟踪方式：
 
@@ -468,7 +459,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 
 
-## 2.3.4 在Framework的Native代码中添加Systrace tag
+#### 2.3.4 在Framework的Native代码中添加Systrace tag
 
 在`Framework`的`Native`层代码里面添加`Systrace`跟踪方式：
 
@@ -513,15 +504,15 @@ void myExpensiveFunction() {
 
 
 
-# 3 Systrace原理简介
+## 3 Systrace原理简介
 
 本着知其然、知其所以然的态度，本小节中我们来简单分析一下系统`Systrace`机制的原理，看看一份`Systrace`文件到底是怎么生成的？我们知道`Android`系统底层是基于`Linux`内核的，所以`Systrace`机制的实现其实也是基于`Linux`内核调试器`ftrace`的。 下面我们从`ftrace`机制开始入手分析。
 
-## 3.1 Linux内核调试器之ftrace机制
+### 3.1 Linux内核调试器之ftrace机制
 
 `ftrace`，全称`function tracer`，用于帮助开发人员了解 `Linux` 内核的运行时行为，以便进行故障调试或性能分析。最早 `ftrace` 仅能够记录内核的函数调用流程，如今 `ftrace` 已经成为一个 `framework`，采用 `plugin` 的方式支持开发人员添加更多种类的 `trace` 功能。
 
-### 3.1.1 Android系统上是如何开启并使用ftrace的
+#### 3.1.1 Android系统上是如何开启并使用ftrace的
 
 - 在编译`linux`内核时，需要增加对`ftrace`支持的相关配置选项。我们拿手头的一台手机，`adb shell`进去看看`proc/config.gz`下关于`linux`内核编译的相关配置项：
 
@@ -604,10 +595,7 @@ void myExpensiveFunction() {
   
 
 - 最后我们看看如何用`adb`命令开启使用`ftrace`跟踪`kernel event`事件，相关操作命令如下：
-
-  
-
-  ```csharp
+```csharp
   一、切换到trace目录：
      adb shell
      #cd sys/kernel/debug/tracing/
@@ -649,9 +637,9 @@ void myExpensiveFunction() {
             <idle>-0       [007] d..1   588.866989: cpu_idle: state=1 cpu_id=7
             <idle>-0       [007] .N.1   592.944497: cpu_idle: state=4294967295 cpu_id=7
             ...
-  ```
+```
 
-### 3.1.2 ftrace工具包含的功能介绍
+#### 3.1.2 ftrace工具包含的功能介绍
 
 - **`function trace`功能实现**：
 
@@ -813,7 +801,7 @@ void foo(void)
      atrace-18345 (18345) [006] .... 678.571926: tracing_mark_write: trace_event_clock_sync: realtime_ts=1596784581543
   ```
 
-### 3.1.3 利用ftrace分析线程唤醒关系
+#### 3.1.3 利用ftrace分析线程唤醒关系
 
 在前文中关于`Systrace`分析技巧中我们讲解了如何从`Systrace`的浏览器图形显示上分析线程之间的唤醒等待关系。其实`ftrace`数据是包含在`Systrace`网页源码中，所以本文再分享一种利用`ftrace`分析线程唤醒关系的方法：
 
@@ -835,7 +823,7 @@ void foo(void)
 
   用`Notepad++`工具打开`systrace`网页源代码, 利用正规表达式 `1234.*sched_wakeup`搜索，然后按时间戳匹配一下就能找到某次具体的唤醒关系。
 
-## 3.2 Android系统atrace运行原理
+### 3.2 Android系统atrace运行原理
 
 `atrace`是谷歌设计的一个可以实现基于`ftrace`抓取`Trace`文件的`Native`可执行程序，相关代码位于`frameworks/native/cmds/atrace/*`目录下，由于篇幅所限本文就不再展开分析其代码细节，感兴趣的读取可以自行阅读。
 
@@ -858,11 +846,11 @@ void foo(void)
 
 
 
-# 4 Systrace抓取方法
+## 4 Systrace抓取方法
 
 开发人员最常用方式是使用`Android`官方`sdk`中提供的名为`systrace.py`的`python`脚本工具抓取`Systrace`报告。
 
-## 4.1 运行环境准备
+### 4.1 运行环境准备
 
 如需运行 `Systrace`脚本，请先按照如下步骤配置相关运行环境：
 
@@ -871,7 +859,7 @@ void foo(void)
 3. 将 `android-sdk/platform-tools/` 添加到 `PATH` 环境变量。此目录包含由 `systrace` 程序调用的 Android 调试桥二进制文件 (`adb`)。
 4. 使用 [USB 调试连接](https://links.jianshu.com/go?to=https%3A%2F%2Fdeveloper.android.google.cn%2Ftools%2Fdevice%23setting-up)将搭载 `Android 4.3`（`API` 级别 `18`）或更高版本的设备连接到开发系统。
 
-## 4.2 命令语法
+### 4.2 命令语法
 
 如需为应用生成`Systrace`的 `HTML` 报告，您需要使用以下语法通过命令行运行 `systrace`：
 
