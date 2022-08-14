@@ -164,6 +164,8 @@ nav:
           - Android卡顿掉帧问题分析之原理篇: android/perf/jank/jank-principle.md
           - Android卡顿掉帧问题分析之工具篇: android/perf/jank/jank-tool.md     
           - Android卡顿掉帧问题分析之实战篇: android/perf/jank/jank-shizhan.md     
+          - Android卡顿优总结: android/perf/jank/jank-opt.md     
+          - Linux环境下进程的CPU占用率: android/perf/jank/cpu_use.md     
         - 性能分析命令:
           - dumpsys: android/perf/dumpsys.md
           - top命令: android/perf/top.md 
