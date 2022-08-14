@@ -193,9 +193,9 @@ Flame Chart 也就是大名鼎鼎的火焰图。它跟 Call Chart 不同的是�
 	
 	优化数据结构，建立内存缓存，尽量减少不必要的`I/O`；
 
-## 3. 卡顿监控
+## 4. 卡顿监控
 
-#### 3.1 **消息队列+插桩**
+#### 4.1 **消息队列+插桩**
 
 这里使用微信[Matrix](https://cloud.tencent.com/developer/article/1382771)方案
 
@@ -203,3 +203,12 @@ Flame Chart 也就是大名鼎鼎的火焰图。它跟 Call Chart 不同的是�
 
 
 
+## 5. 参考
+
+[Android 高手课](https://time.geekbang.org/column/article/73277)
+
+[Systrace 流畅性实战](https://androidperformance.com/2021/04/24/android-systrace-smooth-in-action-1/)
+
+[Matrix TraceCanary -- 初恋·卡顿](https://cloud.tencent.com/developer/article/1382771)
+
+[微信Android客户端的卡顿监控方案](https://cloud.tencent.com/developer/article/1846821)
