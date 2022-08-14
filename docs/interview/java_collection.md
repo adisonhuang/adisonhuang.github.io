@@ -30,14 +30,14 @@
         }
         ensureExplicitCapacity(minCapacity);
     }
-
+    
     private void ensureExplicitCapacity(int minCapacity) {
         modCount++;
         // overflow-conscious code
         if (minCapacity - elementData.length > 0)
             grow(minCapacity);
     }
-
+    
     private void grow(int minCapacity) {
         // overflow-conscious code
         int oldCapacity = elementData.length;
@@ -70,9 +70,9 @@
 
     **所谓扰动函数指的就是 HashMap 的 hash 方法。使用 hash 方法也就是扰动函数是为了防止一些实现比较差的 hashCode() 方法 换句话说使用扰动函数之后可以减少碰撞。**
     **JDK 1.8 HashMap 的 hash 方法源码:**
-
+    
     JDK 1.8 的 hash 方法 相比于 JDK 1.7 hash 方法更加简化，但是原理不变。
-
+    
     ```java
         static final int hash(Object key) {
         int h;
@@ -82,25 +82,25 @@
         return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
     }
     ```
-
+    
     对比一下 JDK1.7 的 HashMap 的 hash 方法源码.
-
+    
     ```java
     static int hash(int h) {
         // This function ensures that hashCodes that differ only by
         // constant multiples at each bit position have a bounded
         // number of collisions (approximately 8 at default load factor).
-
+    
         h ^= (h >>> 20) ^ (h >>> 12);
         return h ^ (h >>> 7) ^ (h >>> 4);
     }
     ```
-
+    
     相比于 JDK1.8 的 hash 方法 ，JDK 1.7 的 hash 方法的性能会稍差一点点，因为毕竟扰动了 4 次。
-
+    
     所谓 **“拉链法”** 就是：将链表和数组相结合。也就是说创建一个链表数组，数组中每一格就是一个链表。若遇到哈希冲突，则将冲突的值加到链表中即可。
     ![](./jdk1.8%E4%B9%8B%E5%89%8D%E7%9A%84%E5%86%85%E9%83%A8%E7%BB%93%E6%9E%84-HashMap.png)
-
+    
     * **JDK1.8 之后**
     相比于之前的版本， JDK1.8 之后在解决哈希冲突时有了较大的变化，当链表长度大于阈值（默认为 8）（将链表转换成红黑树前会判断，如果当前数组的长度小于 64，那么会选择先进行数组扩容，而不是转换为红黑树）时，将链表转化为红黑树，以减少搜索时间。
     ![](./jdk1.8%E4%B9%8B%E5%90%8E%E7%9A%84%E5%86%85%E9%83%A8%E7%BB%93%E6%9E%84-HashMap.png)
@@ -111,7 +111,7 @@
     为了能让 HashMap 存取高效，尽量较少碰撞，也就是要尽量把数据分配均匀。我们上面也讲到了过了，Hash 值的范围值-2147483648到2147483647，前后加起来大概40亿的映射空间，只要哈希函数映射得比较均匀松散，一般应用是很难出现碰撞的。但问题是一个40亿长度的数组，内存是放不下的。所以这个散列值是不能直接拿来用的。用之前还要先做对数组的长度取模运算，得到的余数才能用来要存放的位置也就是对应的数组下标。这个数组下标的计算方法是“ `(n - 1) & hash`”。（n代表数组长度）。这也就解释了 HashMap 的长度为什么是2的幂次方。
 
     **这个算法应该如何设计呢？**
-
+    
     我们首先可能会想到采用%取余的操作来实现。但是，重点来了：**“取余(%)操作中如果除数是2的幂次则等价于与其除数减一的与(&)操作（也就是说 hash%length==hash&(length-1)的前提是 length 是2的 n 次方；）。”** 并且 **采用二进制位操作 &，相对于%能够提高运算效率，这就解释了 HashMap 的长度为什么是2的幂次方。**
 
 !!! question "HashMap 多线程操作导致死循环问题"
@@ -161,7 +161,7 @@
         protected boolean removeEldestEntry(Map.Entry eldest) {
             return size() > MAX_ENTRIES;
         }
-
+    
         LRUCache() {
             super(MAX_ENTRIES, 0.75f, true);
         }
@@ -182,8 +182,133 @@
         * 数据不一致：读操作不能读取实时性的数据，因为部分写操作的数据还未同步到读数组中。
     > 所以 CopyOnWriteArrayList 不适合内存敏感以及对实时性要求很高的场景。
 
+!!! question "说一下CopyOnWriteArrayList和读写锁区别"
+??? noet "回答" 
+	* 相同点：1. 两者都是通过读写分离的思想实现；2.读线程间是互不阻塞的
+	* 不同点：**对读写锁而言，为了实现数据实时性，在写锁被获取后，读线程会等待或者当读锁被获取后，写线程会等待，从而解决“脏读”等问题。也就是说如果使用读写锁依然会出现读线程阻塞等待的情况。而 COW 则完全放开了牺牲数据实时性而保证数据最终一致性，即读线程对数据的更新是延时感知的，因此读线程不会存在等待的情况。**
+
+
 !!! question "比较 HashSet、LinkedHashSet 和 TreeSet 三者的异同"
 ??? noet "回答"
     * **TreeSet**：基于红黑树实现，支持有序性操作，例如根据一个范围查找元素的操作。但是查找效率不如 HashSet，HashSet 查找的时间复杂度为 O(1)，TreeSet 则为 O(logN)。
     * **HashSet**：基于哈希表实现，支持快速查找，但不支持有序性操作。并且失去了元素的插入顺序信息，也就是说使用 Iterator 遍历 HashSet 得到的结果是不确定的。
     * **LinkedHashSet**：具有 HashSet 的查找效率，并且内部使用双向链表维护元素的插入顺序。
+
+!!! question "说一下ThreadLocal"
+??? noet "回答"
+    * **使用**
+    
+	 通常情况下，我们创建的变量是可以被任何一个线程访问并修改的。**如果想实现每一个线程都有自己的专属本地变量该如何解决呢？** JDK 中提供的`ThreadLocal`类正是为了解决这样的问题。 **`ThreadLocal`类主要解决的就是让每个线程绑定自己的值，可以将`ThreadLocal`类形象的比喻成存放数据的盒子，盒子中可以存储每个线程的私有数据。**
+	 
+	 **ThreadLocal 不是用来解决共享对象的多线程访问问题的**，数据实质上是放在每个 thread 实例引用的 threadLocalMap,也就是说**每个不同的线程都拥有专属于自己的数据容器（threadLocalMap），彼此不影响**。因此 threadLocal 只适用于 **共享对象会造成线程安全** 的业务场景。
+	 
+	 * **实现原理**
+	 
+    我们先从最基本的get()方法说起：
+    ```java
+        public T get() {
+          //获得当前线程
+          Thread t = Thread.currentThread();
+          //每个线程 都有一个自己的ThreadLocalMap，
+          //ThreadLocalMap里就保存着所有的ThreadLocal变量
+          ThreadLocalMap map = getMap(t);
+          if (map != null) {
+              //ThreadLocalMap的key就是当前ThreadLocal对象实例，
+              //多个ThreadLocal变量都是放在这个map中的
+              ThreadLocalMap.Entry e = map.getEntry(this);
+              if (e != null) {
+                  @SuppressWarnings("unchecked")
+                  //从map里取出来的值就是我们需要的这个ThreadLocal变量
+                  T result = (T)e.value;
+                  return result;
+              }
+          }
+          // 如果map没有初始化，那么在这里初始化一下
+          return setInitialValue();
+      }
+    ```
+    可以看到，每个Thread中都具备一个`ThreadLocalMap`，而 **ThreadLocalMap可以存储以ThreadLocal为 key ，Object 对象为 value 的键值对**
+    
+    * **内存泄漏问题**
+    
+    ThreadLocal.ThreadLocalMap是一个比较特殊的Map，它的每个Entry的key都是一个弱引用：
+    ```java
+         static class Entry extends WeakReference<ThreadLocal<?>> {
+          /** The value associated with this ThreadLocal. */
+          Object value;
+          //key就是一个弱引用
+          Entry(ThreadLocal<?> k, Object v) {
+              super(k);
+              value = v;
+          }
+      }
+    ```
+    
+    这样设计的好处是，如果这个变量不再被其他对象使用时，可以自动回收这个ThreadLocal对象，避免可能的内存泄露。
+    
+    虽然ThreadLocalMap中的key是弱引用，当不存在外部强引用的时候，就会自动被回收，但是Entry中的value依然是强引用。
+    
+    这样一来，`ThreadLocalMap` 中就会出现 key 为 null 的 Entry。假如我们不做任何措施的话，value 永远无法被 GC 回收，这个时候就可能会产生内存泄露。ThreadLocalMap 实现中已经考虑了这种情况，在调用 `set()`、`get()`、`remove()` 方法的时候，会清理掉 key 为 null 的记录。
+    
+    以getEntry()为例：
+    
+    ```java
+     private Entry getEntry(ThreadLocal<?> key) {
+      int i = key.threadLocalHashCode & (table.length - 1);
+      Entry e = table[i];
+      if (e != null && e.get() == key)
+          //如果找到key，直接返回
+          return e;
+      else
+          //如果找不到，就会尝试清理，如果你总是访问存在的key，那么这个清理永远不会进来
+          return getEntryAfterMiss(key, i, e);
+    }
+    ```
+    
+    下面是getEntryAfterMiss()的实现：
+    
+    ```java
+    private Entry getEntryAfterMiss(ThreadLocal<?> key, int i, Entry e) {
+      Entry[] tab = table;
+      int len = tab.length;
+    
+      while (e != null) {
+          // 整个e是entry ，也就是一个弱引用
+          ThreadLocal<?> k = e.get();
+          //如果找到了，就返回
+          if (k == key)
+              return e;
+          if (k == null)
+              //如果key为null，说明弱引用已经被回收了
+              //那么就要在这里回收里面的value了
+              expungeStaleEntry(i);
+          else
+              //如果key不是要找的那个，那说明有hash冲突，这里是处理冲突，找下一个entry
+              i = nextIndex(i, len);
+          e = tab[i];
+      }
+      return null;
+    }
+    ```
+    
+    真正用来回收value的是expungeStaleEntry()方法，在remove()和set()方法中，都会直接或者间接调用到这个方法进行value的清理：
+    
+    从这里可以看到，ThreadLocal为了避免内存泄露，也算是花了一番大心思。不仅使用了弱引用维护key，还会在每个操作上检查key是否被回收，进而再回收value。
+    
+    但是从中也可以看到，ThreadLocal并不能100%保证不发生内存泄漏。
+    
+    比如，很不幸的，你的get()方法总是访问固定几个一直存在的ThreadLocal，那么清理动作就不会执行，如果你没有机会调用set()和remove()，那么这个内存泄漏依然会发生。
+    
+    因此，一个良好的习惯依然是：**当你不需要这个ThreadLocal变量时，主动调用remove()，这样对整个系统是有好处的**。
+    
+    * **Hash冲突处理**
+    
+    ThreadLocalMap作为一个HashMap和java.util.HashMap的实现是不同的。对于java.util.HashMap使用的是链表法来处理冲突：
+    
+    ![img](./23279d5d4f8740df89f560a49cf7a9b5_tplv-k3u1fbpfcp-zoom-in-crop-mark_3024_0_0_0.awebp)
+    
+    但是，对于ThreadLocalMap，它使用的是简单的线性探测法，如果发生了元素冲突，那么就使用下一个槽位存放：
+    
+    ![img](./995b0e0b75e04f01a4fe12089dcc9b8a_tplv-k3u1fbpfcp-zoom-in-crop-mark_3024_0_0_0.awebp)
+    
+    之所以采用不同的方式主要是因为：**在 ThreadLocalMap 中的散列值分散的十分均匀，很少会出现冲突。并且 ThreadLocalMap 经常需要清除无用的对象，使用纯数组更加方便。**
