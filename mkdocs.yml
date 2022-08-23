@@ -254,3 +254,5 @@ nav:
       - 数组-合并两个有序数组: algo/array_algo_3.md
     - GIT:  
       - Git submodule 子模块的管理和使用: other/git_submodule.md
+    - 读书笔记: 
+      - 《深入理解java虚拟机》阅读笔记: books/jvm.md  
