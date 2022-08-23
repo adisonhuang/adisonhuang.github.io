@@ -186,8 +186,7 @@ Total RAM: 7,789,196K (status normal)
   * **Mapped:** 是 Cached 中已经被 mapped 的部分。Cached 中有一部分是被 unmapped 的，但是没有马上释放。可以理解 Mapped 就是进程中的一些文件资源已经被 load 进内存里面的。
 
 * **free**
-
-​		是 /proc/meminfo 下的 MemFree
+是 /proc/meminfo 下的 MemFree
 
 从上面的统计内容来看，和一般 linux 理解的 free RAM 并不一样，一般的 linux 认为 Free RAM = free + Cached。也就是说 Cached 在内存充足的情况，缓存了进程运行所需要的资源，能加快进程的运行（对于app启动速度尤为明显）；当内存不足的情况，可以快速的交换出来。linux 认为这可以算作可用内存，所以 linux 的 Cached 一般都比较大，真正的 free 内存都很少。而 dumpsys meminfo 则认为 lmk 可以随时回收的 Pss 是可用内存，而 load 进内存的文件 Cached 则不算。
 
@@ -195,18 +194,18 @@ Total RAM: 7,789,196K (status normal)
 
 这个数值是当前系统已经使用内存的大小。它也是后面括号内那2项之和：
 
-* **used pss:** 是 Total PSS by OOM adjustment 除了 Cached 分类之外的进程的 Pss 之和。
+1. **used pss:** 是 Total PSS by OOM adjustment 除了 Cached 分类之外的进程的 Pss 之和。
 
-* **kernel**: 分2部分：
+2. **kernel**: 分2部分： 
 
-  第一部分是 /proc/meminfo 中： Shmem + SUnreclaim+ PageTables + KernelStack：
+第一部分是 /proc/meminfo 中： Shmem + SUnreclaim+ PageTables + KernelStack：
 
-  *  **Shmem:** Shared memory 即 kernel 中的共享内存，tmpfs 也会被统计为 Shmem。
+  * **Shmem:** Shared memory 即 kernel 中的共享内存，tmpfs 也会被统计为 Shmem。
   * **SUnreclaim:** Slab 中的不可回收部分。
   * **PageTables:** kernel 中用来转化虚拟地址和物理地址的。
-  *  **KernelStack:** 每个用户线程都会在 kernel 有个内核栈（kernel stack）。kernel stack 虽然属于用户态线程，但是用户态无法访问，只有 syscall、异常等进入到内核态才会调用到。所以这部分内存是内核代码使用的。
+  * **KernelStack:** 每个用户线程都会在 kernel 有个内核栈（kernel stack）。kernel stack 虽然属于用户态线程，但是用户态无法访问，只有 syscall、异常等进入到内核态才会调用到。所以这部分内存是内核代码使用的。
 
-  第二部分是 `VM_ALLOC_USED`，它是 kernel 中的模块通过 vmalloc 函数申请的内存，通过统计 /proc/vmallocinfo 中 “pages=” 数值之和得到（注意这里统计的单位是页面，一般Android上跑的 linux 一个页面都是 4Kb）
+第二部分是 `VM_ALLOC_USED`，它是 kernel 中的模块通过 vmalloc 函数申请的内存，通过统计 /proc/vmallocinfo 中 “pages=” 数值之和得到（注意这里统计的单位是页面，一般Android上跑的 linux 一个页面都是 4Kb）
 
 #### 1.1.4 ZRAM
 
@@ -302,7 +301,7 @@ Uptime: 891059163 Realtime: 4221638629
 *  **Heap Alloc**: Native Heap 是 mallinfo() 里面 uordblks 的值，表示当前 native heap 已经申请的内存大小。Dalvik Heap 是 Runtime 里面 totalMemory() - freeMemory() 的值。此值大于 `Pss Total` 和 `Private Dirty`，这是因为您的进程是从 Zygote 派生的，且包含您的进程与所有其他进程共享的分配。
 *  **Heap Free**: Native Heap 是 mallinfo() 里面 fordblks 的值，表示当前 native heap 空闲内存的大小。Dalvik Heap 是 Runtime 里面 freeMemory() 的值，表示虚拟机 heap 空闲内存大小。虚拟机 heap 的空闲内存小到一定程度会有一定程度的策略扩大 heap 的 total size，策略的阀值由上面说的属性控制
 
- #### 1.2.2 竖行项参数
+#### 1.2.2 竖行项参数
 
 只有 Pss Total、Private Dirty、Private Clean、SwapPss Dirty 区分竖直的分类（Heap Size、Heap Alloc、Heap Free 只区分 Native Heap 和 Dalvik Heap）
 
@@ -477,7 +476,7 @@ nh  - no-huge page advise flag
 mg  - mergable advise flag
 ```
 
-  ### 1.3 /proc/meminfo
+### 2.3 /proc/meminfo
 
 前面的 dumpsys meminfo  total 统计的部分的基础就来源于这个节点的数值：
 
