@@ -192,6 +192,7 @@ nav:
        - 线程的生命周期，真的没那么简单: android/daily/concurrency/thread-lifecycle.md 
        - 进程与线程的一个简单解释: android/daily/concurrency/process and thread.md 
        - 并发基础总结: android/daily/concurrency/basic.md               
+       - 线程池总结: android/daily/concurrency/thread-pool.md               
   - 后端:
     - Python:  
       - python函数执行时间分析: python/python_func_time.md
