@@ -31,6 +31,7 @@
 
 
 
+
 ## 3.线程池使用
 ### 3.1 创建
 我们可以通过`ThreadPoolExecutor`来创建一个线程池。
@@ -199,27 +200,6 @@ public void run() {
 }
 ```
 
-## 4.  如何合理配置线程池参数？
-
-要想合理的配置线程池，就必须首先分析任务特性，可以从以下几个角度来进行分析：
-
-- 任务的性质：CPU密集型任务，IO密集型任务和混合型任务。
-
-   **任务性质不同的任务可以用不同规模的线程池分开处理**。CPU密集型任务配置尽可能少的线程数量，如配置Ncpu+1个线程的线程池。IO密集型任务则由于需要等待IO操作，线程并不是一直在执行任务，则配置尽可能多的线程，如2*Ncpu。混合型的任务，如果可以拆分，则将其拆分成一个CPU密集型任务和一个IO密集型任务，只要这两个任务执行的时间相差不是太大，那么分解后执行的吞吐率要高于串行执行的吞吐率，如果这两个任务执行时间相差太大，则没必要进行分解。我们可以通过Runtime.getRuntime().availableProcessors()方法获得当前设备的CPU个数。
-
-- 任务的优先级：高，中和低。
-
-   **优先级不同的任务可以使用优先级队列PriorityBlockingQueue来处理**。它可以让优先级高的任务先得到执行，需要注意的是如果一直有优先级高的任务提交到队列里，那么优先级低的任务可能永远不能执行。
-
-- 任务的执行时间：长，中和短。
-
-   **执行时间不同的任务可以交给不同规模的线程池来处理**，或者也可以使用优先级队列，让执行时间短的任务先执行。
-
-- 任务的依赖性：是否依赖其他系统资源，如数据库连接。
-
-   依赖数据库连接池的任务，因为线程提交SQL后需要等待数据库返回结果，如果等待的时间越长CPU空闲时间就越长，那么线程数应该设置越大，这样才能更好的利用CPU。
-
-**建议使用有界队列**，有界队列能增加系统的稳定性和预警能力，可以根据需要设大一点，比如几千。有一次我们组使用的后台任务线程池的队列和线程池全满了，不断的抛出抛弃任务的异常，通过排查发现是数据库出现了问题，导致执行SQL变得非常缓慢，因为后台任务线程池里的任务全是需要向数据库查询和插入数据的，所以导致线程池里的工作线程全部阻塞住，任务积压在线程池里。如果当时我们设置成无界队列，线程池的队列就会越来越多，有可能会撑满内存，导致整个系统不可用，而不只是后台任务出现问题。当然我们的系统所有的任务是用的单独的服务器部署的，而我们使用不同规模的线程池跑不同类型的任务，但是出现这样问题时也会影响到其他任务。
 
 
 ## 5. 业务实践
@@ -236,9 +216,144 @@ public void run() {
 **通过扩展线程池进行监控**。通过继承线程池并重写线程池的beforeExecute，afterExecute和terminated方法，我们可以在任务执行前，执行后和线程池关闭前干一些事情。如监控任务的平均执行时间，最大执行时间和最小执行时间等。
 
 ### 5.2 线程收拢
+对于项目本身业务来说，可以要求开发者使用统一的线程池来管理线程；但对于第三方 SDK 中的线程要怎么管理呢？这里我们可以在编译期间 **通过字节码修改的方式将所有创建线程的指令在编译期间替换成自定义的方法调用**，从而达到统一管理的目的。*Android* 创建线程主要是通过以下几种方式：
 
-### 5.3 参数动态化
+- `Thread` 及其子类
+- `TheadPoolExecutor` 及其子类、`Executors`、`ThreadFactory` 实现类
+- `AsyncTask`（已过时，可以不考虑）
+- `Timer` 及其子类
 
+字节码修改我们可以使用[ASM](https://asm.ow2.io/)，核心代码如下
+
+**字节码修改**
+```java
+    private fun MethodInsnNode.transformInvokeSpecial(
+        klass: ClassNode,
+        method: MethodNode
+    ) {
+        if (this.name != "<init>") {
+            return
+        }
+        when (this.owner) {
+            //java.lang.Thread
+            THREAD -> transformThreadInvokeSpecial(klass, method)
+            //android.os.HandlerThread
+            HANDLER_THREAD -> transformHandlerThreadInvokeSpecial(klass, method)
+            //java.util.Timer
+            TIMER -> transformTimerInvokeSpecial(klass, method)
+            //java.util.concurrent.ThreadPoolExecutor
+            THREAD_POOL_EXECUTOR -> transformThreadPoolExecutorInvokeSpecial(klass, method)
+        }
+    }
+    
+    
+    // transformHandlerThreadInvokeSpecial
+    private fun MethodInsnNode.transformHandlerThreadInvokeSpecial(
+        klass: ClassNode,
+        method: MethodNode,
+        init: MethodInsnNode = this
+    ) {
+        when (this.desc) {
+            // HandlerThread(String)
+            "(Ljava/lang/String;)V" -> {
+                method.instructions.apply {
+                    insertBefore(init, LdcInsnNode(makeThreadName(klass.className)))
+                    insertBefore(
+                        init,
+                        MethodInsnNode(
+                            Opcodes.INVOKESTATIC,
+                            SHADOW_THREAD,
+                            "makeThreadName",
+                            "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+                            false
+                        )
+                    )
+                }
+                context.logger.i(" + $SHADOW_THREAD.makeThreadName(Ljava/lang/String;Ljava/lang/String;) => ${owner}.${name}${desc}: ${klass.name}.${method.name}${method.desc}")
+            }
+            // HandlerThread(String, int)
+            "(Ljava/lang/String;I)V" -> {
+                method.instructions.apply {
+                    // ..., name, priority => ..., priority, name
+                    insertBefore(init, InsnNode(Opcodes.SWAP))
+                    // ..., priority, name => ..., priority, name, prefix
+                    insertBefore(init, LdcInsnNode(makeThreadName(klass.className)))
+                    // ..., priority, name, prefix => ..., priority, name
+                    insertBefore(
+                        init,
+                        MethodInsnNode(
+                            Opcodes.INVOKESTATIC,
+                            SHADOW_THREAD,
+                            "makeThreadName",
+                            "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+                            false
+                        )
+                    )
+                    // ..., priority, name => ..., name, priority
+                    insertBefore(init, InsnNode(Opcodes.SWAP))
+                }
+                context.logger.i(" + $SHADOW_THREAD.makeThreadName(Ljava/lang/String;Ljava/lang/String;) => ${owner}.${name}${desc}: ${klass.name}.${method.name}${method.desc}")
+            }
+        }
+    }
+
+```
+**hook 入口代码片段**
+
+线程接管之后可以自行做一些定制和优化，当然这里最好通过动态配置来控制，避免一些无法预见的问题。
+```java
+    public static ScheduledExecutorService newScheduledThreadPool(final int corePoolSize,
+                                                                  final ThreadFactory factory,
+                                                                  final String name, final String tag) {
+        // 1. 直接换成业务线程池
+        ScheduledExecutorService hookExecutorService =
+            ThreadHookHelper.newScheduledThreadPool(corePoolSize, factory, tag);
+        if (hookExecutorService != null) return hookExecutorService;
+        if (ThreadHookHelper.allowCoreThreadTimeOut()) {
+            final ScheduledThreadPoolExecutor executor =
+                new ScheduledThreadPoolExecutor(min(max(1, corePoolSize), MAX_POOL_SIZE),
+                    new NamedThreadFactory(factory, name));
+            executor.setKeepAliveTime(DEFAULT_KEEP_ALIVE, TimeUnit.MILLISECONDS);
+            // 2. 做一些优化：如允许核心线程销毁
+            executor.allowCoreThreadTimeOut(true);
+            return executor;
+        }
+        // 3. 重命名线程，方便查找问题：name为对应三方库名称
+        return Executors.newScheduledThreadPool(corePoolSize, new NamedThreadFactory(factory, name));
+    }
+
+```
+
+## 5.3.  如何合理配置线程池参数？
+
+要想合理的配置线程池，就必须首先分析任务特性，可以从以下几个角度来进行分析：
+
+- 任务的性质：CPU密集型任务，IO密集型任务和混合型任务。
+
+  **任务性质不同的任务可以用不同规模的线程池分开处理**。CPU密集型任务配置尽可能少的线程数量，如配置Ncpu+1个线程的线程池。IO密集型任务则由于需要等待IO操作，线程并不是一直在执行任务，则配置尽可能多的线程，如2*Ncpu。混合型的任务，如果可以拆分，则将其拆分成一个CPU密集型任务和一个IO密集型任务，只要这两个任务执行的时间相差不是太大，那么分解后执行的吞吐率要高于串行执行的吞吐率，如果这两个任务执行时间相差太大，则没必要进行分解。我们可以通过Runtime.getRuntime().availableProcessors()方法获得当前设备的CPU个数。
+
+- 任务的优先级：高，中和低。
+
+  **优先级不同的任务可以使用优先级队列PriorityBlockingQueue来处理**。它可以让优先级高的任务先得到执行，需要注意的是如果一直有优先级高的任务提交到队列里，那么优先级低的任务可能永远不能执行。
+
+- 任务的执行时间：长，中和短。
+
+  **执行时间不同的任务可以交给不同规模的线程池来处理**，或者也可以使用优先级队列，让执行时间短的任务先执行。
+
+- 任务的依赖性：是否依赖其他系统资源，如数据库连接。
+
+  依赖数据库连接池的任务，因为线程提交SQL后需要等待数据库返回结果，如果等待的时间越长CPU空闲时间就越长，那么线程数应该设置越大，这样才能更好的利用CPU。
+
+**建议使用有界队列**，有界队列能增加系统的稳定性和预警能力，可以根据需要设大一点。如果我们设置成无界队列，线程池的队列就会越来越多，有可能会撑满内存，导致整个系统不可用，而使用有界队列可以在队列和线程池全满的时候可以抛出抛弃任务的异常，不会导致系统崩溃，然后我们可以通过监控发现问题并解决。
+
+### 5.3.1 参数动态化
+在实践过程中，即使像上面那样做了任务的区分，仍然不能够保证一次计算出来合适的参数，我们可以对于针对不同性能的手机和不同的任务线程池动态下发线程池配置；从而提高线程池的灵活性;
+
+线程池构造参数有8个，但是最核心的是3个：`corePoolSize`、`maximumPoolSize`，`workQueue`，它们最大程度地决定了线程池的任务分配和线程分配策略。考虑到在实际应用中我们获取并发性的场景主要是两种：（1）并行执行子任务，提高响应速度。这种情况下，应该使用同步队列，没有什么任务应该被缓存下来，而是应该立即执行。（2）并行执行大批次任务，提升吞吐量。这种情况下，应该使用有界队列，使用队列去缓冲大批量的任务，队列容量必须声明，防止任务无限制堆积。所以线程池只需要提供这三个关键参数的配置，并且提供两种队列的选择，就可以满足绝大多数的业务需求，Less is More。
+
+### 参考
+[Java线程池实现原理及其在美团业务中的实践](https://tech.meituan.com/2020/04/02/java-pooling-pratice-in-meituan.html)
+[Java线程池的分析和使用](http://ifeve.com/java-threadpool/)
 
 
 
