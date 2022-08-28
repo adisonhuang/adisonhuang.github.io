@@ -242,9 +242,10 @@ nav:
       - Android 四大组件: interview/android_components.md
       - Android 系统原理: interview/android_sys.md 
     - Java:
-      - Java 基础问题: interview/java_basic.md  
-      - Java 容器问题: interview/java_collection.md
-      - Java JVM问题: interview/java_jvm.md
+      - Java 基础: interview/java_basic.md  
+      - Java 容器: interview/java_collection.md
+      - Java 多线程: interview/java_thread.md
+      - Java JVM: interview/java_jvm.md
   - 计算机基础:  
     - basic/index.md
     - 操作系统:
