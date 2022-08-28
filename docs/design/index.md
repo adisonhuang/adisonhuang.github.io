@@ -1,4 +1,4 @@
-# 技术杂记 & 好文摘录
+# 设计 & 架构
 
 :octicons-heart-fill-24:{ .heart }释梵思
 

@@ -146,95 +146,91 @@ markdown_extensions:
 
 
 # Page tree
-nav:  
-  - Android:
-     # - android/index.md
-     - 性能优化:
-        - 内存优化:
-          - Android内存管理: android/perf/memory/Android_memory_manager.md 
-          - Android 内存分析工具(命令行): android/perf/memory/Android_memory_tools.md
-          - Android 内存分析工具(查看GC): android/perf/memory/Android_memory_tools_gc.md
-          - Android 内存分析工具(MAT入门): android/perf/MAT-Startup.md
-          - Android 内存分析工具(MAT进阶): android/perf/MAT-Advanced.md  
-          - Android句柄泄漏分析: android/perf/Android_fd_leak.md
-        - 崩溃优化:
-          - Android 崩溃优化: android/perf/crash/crash_op.md
-          - Android 平台 Native 代码的崩溃捕获机制及实现: android/perf/crash/native-catch.md
-          - native 崩溃信号介绍: android/perf/crash/native-crash-signal.md   
-          - 为啥Android子线程抛出异常主线程会崩溃: android/perf/crash/KillApplicationHandler.md 
-        - 启动优化:
-          - Android启动优化: android/perf/launch/Android-launch-opt.md               
-        - 包体积优化 :
-          - Android 包体积优化: android/perf/size/Android-apk-size-opt.md
-          - 从 Class 字节码入手精简 DEX 体积: android/perf/size/douyin.md  
-          - Android对so体积优化的探索与实践: android/perf/size/Android-so-opt.md
-        - 卡顿优化:
-          - Android卡顿掉帧问题分析之原理篇: android/perf/jank/jank-principle.md
-          - Android卡顿掉帧问题分析之工具篇: android/perf/jank/jank-tool.md     
-          - Android卡顿掉帧问题分析之实战篇: android/perf/jank/jank-shizhan.md     
-          - Android卡顿优总结: android/perf/jank/jank-opt.md     
-          - Linux环境下进程的CPU占用率: android/perf/jank/cpu_use.md     
-        - 性能分析命令:
-          - dumpsys: android/perf/dumpsys.md
-          - top命令: android/perf/top.md 
+nav:
+  - 大前端:
+     - front-end/index.md
      - Android:
-       - Android 动画原理: android/daily/Android_animation.md   
-       - 解析Binder框架: android/daily/binder.md   
-       - Mac10.14编译Android 8.1源码及刷入nexus 6p: android/daily/flask_android_8.md
-       - APK文件分析: android/daily/apk_analyze.md
-       - Android ClassLoader机制: android/daily/Android_classloader.md  
-       - Android 开机流程: android/system/bootloader.md    
+       - Android 动画原理: front-end/android/daily/Android_animation.md   
+       - 解析Binder框架: front-end/android/daily/binder.md   
+       - Mac10.14编译Android 8.1源码及刷入nexus 6p: front-end/android/daily/flask_android_8.md
+       - APK文件分析: front-end/android/daily/apk_analyze.md
+       - Android ClassLoader机制: front-end/android/daily/Android_classloader.md  
+       - Android 开机流程: front-end/android/system/bootloader.md    
      - Kotlin:
-       - Kotlin中inline, noinline, crossinline的区别: android/koltin/Kotlin_nline, noinline, crossinline.md
-       - 使用Kotlin takeIf（或takeUnless）: android/koltin/Kotlin-takeIf-or-takeUnless.md
-       - 掌握Kotlin标准函数：run, with, let, also and apply: android/koltin/Mastering Kotlin standard functions.md 
+       - Kotlin中inline, noinline, crossinline的区别: front-end/android/koltin/Kotlin_nline, noinline, crossinline.md
+       - 使用Kotlin takeIf（或takeUnless）: front-end/android/koltin/Kotlin-takeIf-or-takeUnless.md
+       - 掌握Kotlin标准函数：run, with, let, also and apply: front-end/android/koltin/Mastering Kotlin standard functions.md 
      - 并发:
-       - 线程的生命周期，真的没那么简单: android/daily/concurrency/thread-lifecycle.md 
-       - 进程与线程的一个简单解释: android/daily/concurrency/process and thread.md 
-       - 并发基础总结: android/daily/concurrency/basic.md               
-       - 线程池总结: android/daily/concurrency/thread-pool.md               
-  - 后端:
-    - Python:  
-      - python函数执行时间分析: python/python_func_time.md
-      - CentOS部署flask项目: python/centos_flask.md
-      - Pycharm远程调试: python/pycharm_remote_debug.md
-      - 以Root权限运行/调试 PyCharm: python/PyCharm_root_debug.md
+       - 线程的生命周期，真的没那么简单: front-end/android/concurrency/thread-lifecycle.md 
+       - 进程与线程的一个简单解释: front-end/android/concurrency/process and thread.md 
+       - 并发基础总结: front-end/android/concurrency/basic.md               
+       - 线程池总结: front-end/android/concurrency/thread-pool.md               
+  - Android性能优化:
+    - perf-opt/index.md
+    - 内存优化:
+      - Android内存管理: perf-opt/Android/memory/Android_memory_manager.md 
+      - Android 内存分析工具(命令行): perf-opt/Android/memory/Android_memory_tools.md
+      - Android 内存分析工具(查看GC): perf-opt/Android/memory/Android_memory_tools_gc.md
+      - Android 内存分析工具(MAT入门): perf-opt/Android/MAT-Startup.md
+      - Android 内存分析工具(MAT进阶): perf-opt/Android/MAT-Advanced.md  
+      - Android句柄泄漏分析: perf-opt/Android/Android_fd_leak.md
+    - 崩溃优化:
+      - Android 崩溃优化: perf-opt/Android/crash/crash_op.md
+      - Android 平台 Native 代码的崩溃捕获机制及实现: perf-opt/Android/crash/native-catch.md
+      - native 崩溃信号介绍: perf-opt/Android/crash/native-crash-signal.md   
+      - 为啥Android子线程抛出异常主线程会崩溃: perf-opt/Android/crash/KillApplicationHandler.md 
+    - 启动优化:
+      - Android启动优化: perf-opt/Android/launch/Android-launch-opt.md               
+    - 包体积优化 :
+      - Android 包体积优化: perf-opt/Android/size/Android-apk-size-opt.md
+      - 从 Class 字节码入手精简 DEX 体积: perf-opt/Android/size/douyin.md  
+      - Android对so体积优化的探索与实践: perf-opt/Android/size/Android-so-opt.md
+    - 卡顿优化:
+      - Android卡顿掉帧问题分析之原理篇: perf-opt/Android/jank/jank-principle.md
+      - Android卡顿掉帧问题分析之工具篇: perf-opt/Android/jank/jank-tool.md     
+      - Android卡顿掉帧问题分析之实战篇: perf-opt/Android/jank/jank-shizhan.md     
+      - Android卡顿优总结: perf-opt/Android/jank/jank-opt.md     
+      - Linux环境下进程的CPU占用率: perf-opt/Android/jank/cpu_use.md     
+    - 性能分析命令:
+      - dumpsys: perf-opt/Android/dumpsys.md
+      - top命令: perf-opt/Android/top.md     
   - Native:
+     - native/index.md
      - C/C++:
-       - C基础知识: native/Cbasic.md
-       - C++基础知识: native/C++basic.md 
-       - 编译原理基础: native/compilation-principle.md
-       - 深度长文教你彻底掌握C++/C指针(一):基石: native/pointer(1).md
-       - 深度长文教你彻底掌握C++/C指针(二):指针和数组与字符串: native/pointer(2).md
+       - C基础知识: native/basic/Cbasic.md
+       - C++基础知识: native/basic/C++basic.md 
+       - 编译原理基础: native/basic/compilation-principle.md
+       - 深度长文教你彻底掌握C++/C指针(一):基石: native/basic/pointer(1).md
+       - 深度长文教你彻底掌握C++/C指针(二):指针和数组与字符串: native/basic/pointer(2).md
      - JNI:
-       - JNI优化: native/JNI-op.md   
+       - JNI优化: native/JNI/JNI-op.md   
      - 疑难问题:
-       - dlopen时找不到__emutls_get_address符号: native/__emutls_get_address.md
-             
+       - dlopen时找不到__emutls_get_address符号: native/basic/__emutls_get_address.md      
   - 设计&架构:
-    - 架构设计: design/framework design.md  
-    - 六大设计原则: design/Design Principles.md
-    - 设计模式概述: design/design-patterns.md
+    - design/index.md
+    - 架构设计: design/design-patterns/framework design.md  
+    - 六大设计原则: design/design-patterns/Design Principles.md
+    - 设计模式概述: design/design-patterns/design-patterns.md
     - 设计模式:
       - 创建型模式: 
-        - 概述: design/index_creational.md
-        - 单例: design/singleton.md
-        - 工厂模式: design/factory.md
-        - 原型模式: design/prototype.md
-        - 建造者模式: design/builder.md
+        - 概述: design/design-patterns/index_creational.md
+        - 单例: design/design-patterns/singleton.md
+        - 工厂模式: design/design-patterns/factory.md
+        - 原型模式: design/design-patterns/prototype.md
+        - 建造者模式: design/design-patterns/builder.md
       - 结构型模式: 
-        - 概述: design/index_structural.md
-        - 适配器模式: design/adapter.md
-        - 代理模式: design/proxy.md
-        - 外观模式: design/facade.md
-        - 装饰模式: design/wrapper.md
+        - 概述: design/design-patterns/index_structural.md
+        - 适配器模式: design/design-patterns/adapter.md
+        - 代理模式: design/design-patterns/proxy.md
+        - 外观模式: design/design-patterns/facade.md
+        - 装饰模式: design/design-patterns/wrapper.md
       - 行为模式: 
-        - 概述: design/index_behavioral.md
-        - 策略模式: design/strategy.md  
-      - 总结: design/summary.md  
+        - 概述: design/design-patterns/index_behavioral.md
+        - 策略模式: design/design-patterns/strategy.md  
+      - 总结: design/design-patterns/summary.md  
     - 其他: 
-      - fail-fast&fail-safe: design/fail-fast&fail-safe.md
-      - 各种单例写法: design/singleton_extra.md
+      - fail-fast&fail-safe: design/other/fail-fast&fail-safe.md
+      - 各种单例写法: design/other/singleton_extra.md
   - Interview: 
     - interview/index.md
     - Android:
@@ -243,17 +239,33 @@ nav:
     - Java:
       - Java 基础问题: interview/java_basic.md  
       - Java 容器问题: interview/java_collection.md  
-  - 其他:  
-    - shell核心语法: other/shell.md
-    - 《数据结构与算法之美》笔记:
-      - 复杂度分析: algo/Complexity Analysis.md
-      - 数组: algo/array.md
-      - 链表: algo/linked-list.md
-    - 算法必知必会:  
-      - 数组-实现一个支持动态扩容的数组: algo/array_algo_1.md
-      - 数组-实现一个大小固定的有序数组，支持动态增删改操作: algo/array_algo_2.md
-      - 数组-合并两个有序数组: algo/array_algo_3.md
+  - 计算机基础:  
+    - basic/index.md
+    - 操作系统:
+      - shell核心语法: basic/system/shell.md
+    - 网络: basic/index.md
+    - 数据结构与算法:
+      - 数组:  
+        - 数组-实现一个支持动态扩容的数组: basic/algo/array_algo_1.md
+        - 数组-实现一个大小固定的有序数组，支持动态增删改操作: basic/algo/array_algo_2.md
+        - 数组-合并两个有序数组: basic/algo/array_algo_3.md
+  - 开发工具:
+    - tools/index.md  
     - GIT:  
-      - Git submodule 子模块的管理和使用: other/git_submodule.md
-    - 读书笔记: 
-      - 《深入理解java虚拟机》阅读笔记: books/jvm.md  
+      - Git submodule 子模块的管理和使用: tools/git/git_submodule.md 
+  - 后端&运维:
+    - back-end/index.md
+    - Python:  
+      - python函数执行时间分析: back-end/python/python_func_time.md
+      - CentOS部署flask项目: back-end/python/centos_flask.md
+      - Pycharm远程调试: back-end/python/pycharm_remote_debug.md
+      - 以Root权限运行/调试 PyCharm: back-end/python/PyCharm_root_debug.md      
+  - 游戏开发:   
+    - game/index.md          
+  - 读书笔记: 
+    - read/index.md 
+    - 《深入理解java虚拟机》阅读笔记: read/jvm/jvm.md
+    - 《数据结构与算法之美》笔记:
+      - 复杂度分析: read/beautiful-algo/Complexity Analysis.md
+      - 数组: read/beautiful-algo/array.md
+      - 链表: read/beautiful-algo/linked-list.md  
