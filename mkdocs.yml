@@ -150,21 +150,26 @@ nav:
   - 大前端:
      - front-end/index.md
      - Android:
-       - Android 动画原理: front-end/android/daily/Android_animation.md   
-       - 解析Binder框架: front-end/android/daily/binder.md   
-       - Mac10.14编译Android 8.1源码及刷入nexus 6p: front-end/android/daily/flask_android_8.md
-       - APK文件分析: front-end/android/daily/apk_analyze.md
-       - Android ClassLoader机制: front-end/android/daily/Android_classloader.md  
-       - Android 开机流程: front-end/android/system/bootloader.md    
-     - Kotlin:
-       - Kotlin中inline, noinline, crossinline的区别: front-end/android/koltin/Kotlin_nline, noinline, crossinline.md
-       - 使用Kotlin takeIf（或takeUnless）: front-end/android/koltin/Kotlin-takeIf-or-takeUnless.md
-       - 掌握Kotlin标准函数：run, with, let, also and apply: front-end/android/koltin/Mastering Kotlin standard functions.md 
-     - 并发:
-       - 线程的生命周期，真的没那么简单: front-end/android/concurrency/thread-lifecycle.md 
-       - 进程与线程的一个简单解释: front-end/android/concurrency/process and thread.md 
-       - 并发基础总结: front-end/android/concurrency/basic.md               
-       - 线程池总结: front-end/android/concurrency/thread-pool.md               
+       - 必知必会:
+         - Android 动画原理: front-end/android/daily/Android_animation.md   
+         - 解析Binder框架: front-end/android/daily/binder.md   
+         - APK文件分析: front-end/android/daily/apk_analyze.md 
+         - Android 开机流程: front-end/android/system/bootloader.md    
+       - Kotlin:
+         - Kotlin中inline, noinline, crossinline的区别: front-end/android/koltin/Kotlin_nline, noinline, crossinline.md
+         - 使用Kotlin takeIf（或takeUnless）: front-end/android/koltin/Kotlin-takeIf-or-takeUnless.md
+         - 掌握Kotlin标准函数：run, with, let, also and apply: front-end/android/koltin/Mastering Kotlin standard functions.md 
+       - 并发:
+         - 线程的生命周期，真的没那么简单: front-end/android/concurrency/thread-lifecycle.md 
+         - 进程与线程的一个简单解释: front-end/android/concurrency/process and thread.md 
+         - 并发基础总结: front-end/android/concurrency/basic.md               
+         - 线程池总结: front-end/android/concurrency/thread-pool.md 
+       - JVM:
+         - Java 内存区域详解: front-end/android/jvm/memory-area.md 
+         - JVM 垃圾回收详解: front-end/android/jvm/jvm-garbage-collection.md 
+         - Android ClassLoader机制: front-end/android/daily/Android_classloader.md
+       - 杂记:
+         - Mac10.14编译Android 8.1源码及刷入nexus 6p: front-end/android/daily/flask_android_8.md                
   - Android性能优化:
     - perf-opt/index.md
     - 内存优化:
@@ -231,14 +236,15 @@ nav:
     - 其他: 
       - fail-fast&fail-safe: design/other/fail-fast&fail-safe.md
       - 各种单例写法: design/other/singleton_extra.md
-  - Interview: 
+  - 面试: 
     - interview/index.md
     - Android:
       - Android 四大组件: interview/android_components.md
       - Android 系统原理: interview/android_sys.md 
     - Java:
       - Java 基础问题: interview/java_basic.md  
-      - Java 容器问题: interview/java_collection.md  
+      - Java 容器问题: interview/java_collection.md
+      - Java JVM问题: interview/java_jvm.md
   - 计算机基础:  
     - basic/index.md
     - 操作系统:
