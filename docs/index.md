@@ -1,6 +1,6 @@
 # 技术杂记 & 好文摘录
 
-:octicons-heart-fill-24:{ .heart }释梵思
+:octicons-heart-fill-24:{ .heart }释梵思 《颂古九首》
 
 ***春有百花秋有月，夏有凉风冬有雪。***
 
@@ -8,7 +8,7 @@
 
 -------------------------------------------------------
 
-:octicons-heart-fill-24:{ .heart }苏轼
+:octicons-heart-fill-24:{ .heart }苏轼 《定风波》
 
 莫听穿林打叶声，何妨吟啸且徐行。
 

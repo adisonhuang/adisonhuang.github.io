@@ -8,11 +8,13 @@
 
 https://unsplash.com/documentation api 文档
 
+## 前置知识
 
-
-## 网络请求
+### 网络请求
 
 在 Flutter 中，Http 网络编程的实现方式主要分为三种：`dart:io 里的 HttpClient 实现`、`Dart 原生 http 请求库实现`、`第三方库 dio 实现`。
+HttpClient 和 http 使用方式虽然简单，但其暴露的定制化能力都相对较弱，很多常用的功能都不支持（或者实现异常繁琐），比如取消请求、定制拦截器、Cookie 管理等。因此对于复杂的网络请求行为，我推荐使用目前在 Dart 社区人气较高的第三方 dio 来发起网络请求。
+https://pub.dev/packages/dio
 
 ### 依赖管理
 
@@ -42,11 +44,108 @@ dependencies:
 
 对于包，我们通常是指定版本区间，而很少直接指定特定版本，因为包升级变化很频繁，如果有其他的包直接或间接依赖这个包的其他版本时，就会经常发生冲突。而对于运行环境，如果是团队多人协作的工程，建议将 Dart 与 Flutter 的 SDK 环境写死，统一团队的开发环境，避免因为跨 SDK 版本出现的 API 差异进而导致工程问题。
 
+### 异步编程
+
+异步编程常用于网络请求、缓存数据加载、本地File图片加载、定时与延时任务等，在Flutter开发中 ，使用async开启一个异步开始处理，使用await来等待处理结果，如处理一个网络请求，代码如下：
+
+```js
+  //代码清单 1-1
+  //HTTP的get请求返回值为Future<String>类型，即其返回值未来是一个String类型的值
+  //async关键字声明该函数内部有代码需要延迟执行
+  Future<String> getData() async {    
+    //await关键字声明运算为延迟执行，然后return运算结果
+    return await http.get(Uri.encodeFull(url), headers: {"Accept": "application/json"});
+  }
+```
+
+或者可以这样来写：
+
+```js
+  //代码清单 1-2 
+  Future<String> getData() async {    
+    //await关键字声明运算为延迟执行，然后return运算结果
+    //异步执行 1-2-1
+    String  result = await http.get(Uri.encodeFull(url1), headers: {"Accept": "application/json"});
+     //异步执行 1-2-2
+    String result2 = await http.get(Uri.encodeFull(url2), headers: {"Accept": "application/json"});
+    return 
+  }
+```
+
+在代码清单1-2中执行了两个异步任务，这两个异步任务是串行的，也就是异步 1-2-1 执行完毕后，获取到结果 result ，然后再开启异步执行 1-2-2，在实际项目可应用于使用第一个网络请求的结果来动态加载第二个网络请求或者是其他分类别的异步任务，代码清单1-2也可以拆分成如下代码清单1-3中的写法
+
+```js
+  //代码清单 1-3
+  Future<String> getData() async {    
+    //await关键字声明运算为延迟执行，然后return运算结果
+    //异步执行 1-2-1
+    String  result = await getDataA();
+    String result2 = await getDataB();
+    return  Future.value(result2);
+  }
+ Future<String> getDataA() async {    
+    //await关键字声明运算为延迟执行，然后return运算结果
+    return await http.get(Uri.encodeFull(url1), headers: {"Accept": "application/json"});
+  }
+    Future<String> getDataB() async {    
+    //await关键字声明运算为延迟执行，然后return运算结果
+    return await http.get(Uri.encodeFull(url1), headers: {"Accept": "application/json"});
+  }
+```
+
+然后对于代码清单1-3中异步处理getDataA()与getDataB()可以分别加入异常捕捉机制（如下代码清单1-4），以确保在异步处理之间不会相互影响，如在在这的异步处理getDataA()与getDataB(),如果getDataA()方法出现了异常，在Flutter中就会直接报错，而不再执行异步处理getDataB()。
+
+```js
+//代码清单 1-4
+  Future<String> getDataA() async {
+    String result = "";
+    try {
+      return  await http.get(Uri.encodeFull(url1), headers: {"Accept": "application/json"});
+    } catch (e) {
+      result = "出现异常";
+    } finally {
+      return Future.value(result);
+    }
+  }
+    Future<String> getDataB() async {    
+      String result = "";
+	    try {
+	      return  await http.get(Uri.encodeFull(url2), headers: {"Accept": "application/json"});
+	    } catch (e) {
+	      result = "出现异常";
+	    } finally {
+	      return Future.value(result);
+	    }
+  }
+```
+
+串行调用 两个异步任务的一般写法如下代码清单1-5中所示
+
+```js
+///代码清单 1-5
+void test() async{
+   await getDataA();
+   await getDataB();
+}
+```
+
+也可以用另一种方式来写如下代码清单1-6
+
+```js
+///代码清单 1-6
+  void test() async {
+    getDataA().then((value1) {
+      ///值value1就是getDataA中返回的结果
+      getDataB().then((value2) {
+        ///值value2就是getDataB中返回的结果
+      });
+    });
+  }
+```
 
 
-### dio
 
-HttpClient 和 http 使用方式虽然简单，但其暴露的定制化能力都相对较弱，很多常用的功能都不支持（或者实现异常繁琐），比如取消请求、定制拦截器、Cookie 管理等。因此对于复杂的网络请求行为，我推荐使用目前在 Dart 社区人气较高的第三方 dio 来发起网络请求。
+## 实践
 
 我们首先需要把 dio 加到 pubspec 中的依赖里：
 
@@ -58,43 +157,103 @@ dependencies:
 
 
 
-
-
-## JSON解析
-
-
-
-由于 Flutter 不支持运行时反射，因此并没有提供像 Gson、Mantle 这样自动解析 JSON 的库来降低解析成本。在 Flutter 中，JSON 解析完全是手动的，开发者要做的事情多了一些，但使用起来倒也相对灵活。
-
-
-
-
-
-
-
-
-
-写dart会遇到一个代码风格问题：In new code, use`lowerCamelCase`for constant variables，强制要你使用小骆驼拼写法去定义常量，比如：
+我们对dio api简单封装下：
 
 ```dart
-const String ACCOUNTPW = 'account_pw';
+class Http {
+  late Dio _dio;
+  factory Http() => _instance;
+
+  static final Http _instance = Http._internal();
+  
+  Http._internal() {
+    BaseOptions options = BaseOptions(
+      baseUrl: Constants.BASE_URL,
+      connectTimeout: 5000,
+      receiveTimeout: 3000,
+      contentType: Headers.jsonContentType,
+      headers: {
+        "Authorization": "Client-ID ${Constants.ACCESS_KEY}",
+      },
+    );
+    _dio = Dio(options);
+  }
+
+  Future<Response> get(String url, {Map<String, dynamic>? queryParameters}) async {
+   return await _dio.get(url, queryParameters: queryParameters);
+  }
+}
 ```
 
-会出现警告：Prefer using lowerCamelCase for constant names
+获取图片列表
 
-如果想消除这个警告，有以下几种方式：
-
-1，将ACCOUNTPW 改成accountPw（当然这种方式说了等于白说）
-
-2，在这行代码上面添加一行注释：// ignore: constant_identifier_names，也可以消除警告，但是这种做法只针对注释下面的这一行代码生效，总不能每个地方都添加一遍吧。
-
-3，在项目根目录增加一个配置文件：analysis_options.yaml
-
-```text
-include: package:lints/recommended.yaml
-linter:
-  rules:
-    constant_identifier_names: false
+```dart
+class Repository {
+  static Future<List<Photo>> getPhotos() async {
+    Response response = await Http().get(Constants.GET_PHOTO);
+    if (response.statusCode == 200) {
+      return Future.value(
+        List.from(response.data).map((photo) => Photo.fromMap(photo)).toList(),
+      );
+    } else {
+      throw Exception('Failed to load post');
+    }
+  }
+}
 ```
 
-添加：constant_identifier_names: false配置， 即可对整个项目生效，关闭常量命名校验。
+返回数据转换成数据对象
+
+```dart
+factory Photo.fromMap(Map data) {
+    return Photo(
+      id: data['id'],
+      createdAt: data['created_at'],
+      updatedAt: data['updated_at'],
+      promotedAt: data['promoted_at'],
+      width: data['width'],
+      height: data['height'],
+      color: data['color'],
+      description: data['description'],
+      alternativeDescription: data['alternative_description'],
+      urls: PhotoUrls.fromMap(data['urls']),
+      links: PhotoLink.fromMap(data['links']),
+      categories: data['categories'],
+      likes: data['likes'],
+      likedByUser: data['liked_by_user'],
+      currentUserCollections: data['current_user_collections'],
+      user: User.fromMap(data['user']),
+      exif: PhotoExif.fromMap(data['exif']),
+      location: PhotoLocation.fromMap(data['location']),
+      tags: data['tags'].runtimeType == 'List'
+          ? List.from(data['tags']).map((tag) => PhotoTag.fromMap(tag)).toList()
+          : null,
+      sponsorship: data['sponsorship'],
+      relatedCollections: data['related_collections'],
+      views: data['views'],
+      downloads: data['downloads'],
+    );
+  }
+```
+
+
+
+测试
+
+http_test.dart
+
+```dart
+
+void main() {
+  test('Get Photos', () async {
+      List<Photo> data = await Repository.getPhotos();
+      expect(data.length, greaterThan(0));
+  });
+}
+```
+
+运行通过，我们再断点看看解析结果，
+
+![](./test.png)
+
+![](./test2.png)
