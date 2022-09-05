@@ -6,36 +6,36 @@
 
 首先，至少打开两个hprof文件，进入`Histogram`页面，然后选择其中两个进行对比，就可以看到变化的类实例情况
 
-![image-20211018233506542](./baseline.png)
+![image-20211018233506542](./assets/baseline.png)
 
-![image-20211018234405300](./baseline2.png)
+![image-20211018234405300](./assets/baseline2.png)
 
 ### 1.2 使用场景
 
 * 通过对比两个内存快照，可以查看内存增长原因
 * 同时也可以输入过滤条件，过滤怀疑点，快速定位
 
-![image-20211018234727264](./baseline3.png)
+![image-20211018234727264](./assets/baseline3.png)
 
 ## 2. 集合状态
 
 ### 2.1 集合填充率
 
-![image-20211019004125804](./collect.png)
+![image-20211019004125804](./assets/collect.png)
 
-![image-20211019004438382](./collect1.png)
+![image-20211019004438382](./assets/collect1.png)
 
 **使用场景**：通过对 ArrayList 或数组等集合类对象按填充率聚类，定位稀疏或空集合类对象造成的内存浪费
 
 ### 2.2 HashMap 冲突率(当Hash集合中过多的对象返回相同Hash值的时候，会严重影响性能)
 
-![image-20211019004739815](./collect2.png)
+![image-20211019004739815](./assets/collect2.png)
 
 **使用场景**：查找导致Hash集合的碰撞率较高的罪魁祸首。
 
 ## 3. 通过OQL分析内存
 
-![image-20211019001223971](./OQL.png)
+![image-20211019001223971](./assets/OQL.png)
 
 ### 3.1 语法
 
@@ -76,5 +76,5 @@ SELECT a AS Value, a.@usedHeapSize AS "Shallow Size", a.@retainedHeapSize AS "Re
 
 
 
-![image-20211019002547046](./OQL1.png)
+![image-20211019002547046](./assets/OQL1.png)
 

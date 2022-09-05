@@ -1,2 +1,0 @@
-# Android Bitmap概述
-
