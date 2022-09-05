@@ -273,7 +273,8 @@ nav:
       - Pycharm远程调试: back-end/python/pycharm_remote_debug.md
       - 以Root权限运行/调试 PyCharm: back-end/python/PyCharm_root_debug.md      
   - 游戏开发:   
-    - game/index.md          
+    - game/index.md
+    - Unity3D性能优化——工具篇: game/perf/tools.md          
   - 读书笔记: 
     - read/index.md 
     - 《深入理解java虚拟机》阅读笔记: read/jvm/jvm.md
