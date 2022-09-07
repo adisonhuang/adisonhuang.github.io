@@ -139,12 +139,44 @@
 
 !!! question "说一下WeakHashMap"
 ??? noet "回答"
-    WeakHashMap 的 Entry 继承自 WeakReference，被 WeakReference 关联的对象在下一次垃圾回收时会被回收。
-    WeakHashMap 主要用来实现缓存，通过使用 WeakHashMap 来引用缓存对象，由 JVM 对这部分缓存进行回收。
+    * **原理**： WeakHashMap 的 Entry 继承自 WeakReference，被 WeakReference 关联的对象在下一次垃圾回收时会被回收。
+    
+    * **作用**： WeakHashMap 主要用来实现缓存，通过使用 WeakHashMap 来引用缓存对象，由 JVM 对这部分缓存进行回收。
     ```java
     private static class Entry<K,V> extends WeakReference<Object> implements Map.Entry<K,V>
     ```
-
+    
+     * **Entry的Value是否会导致内存泄漏**：WeakHashMap会在在访问内容（`put`,`get`）的时候释放内部不用的对象（实则是通过访问调用了它的`expungeStaleEntries`函数）
+    ```java
+        private void expungeStaleEntries() {
+        for (Object x; (x = queue.poll()) != null; ) {
+            synchronized (queue) {
+                @SuppressWarnings("unchecked")
+                    Entry<K,V> e = (Entry<K,V>) x;
+                int i = indexFor(e.hash, table.length);
+                  Entry<K,V> prev = table[i];
+                Entry<K,V> p = prev;
+                while (p != null) {
+                    Entry<K,V> next = p.next;
+                    if (p == e) {
+                        if (prev == e)
+                            table[i] = next;
+                        else
+                            prev.next = next;
+                        // Must not null out e.next;
+                        // stale entries may be in use by a HashIterator
+                        e.value = null; // Help GC
+                        size--;
+                        break;
+                    }
+                    prev = p;
+                    p = next;
+                }
+            }
+        }
+    }
+    ```
+    
 !!! question "说一下LinkedHashMap"
 ??? noet "回答"
     * 继承自 HashMap，因此具有和 HashMap 一样的快速查找特性。
