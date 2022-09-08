@@ -6,7 +6,7 @@ CPU 优化主要以性能分析为引，根据分析所得的数据，找到性�
 
 首先我们再了解一个工具，在我们的项目中，可以在Game视图点击stats开启Statistics窗口（渲染统计窗口），该窗口显示游戏运行时，渲染、声音、网络状况等多种统计信息，帮助我们分析游戏性能。
 
-![img](https://pic2.zhimg.com/80/v2-10138cdb510ba1ca1c36e9429b21b325_720w.jpg)
+![img](./assets/v2-10138cdb510ba1ca1c36e9429b21b325_1440w.jpeg)
 
 
 
@@ -16,8 +16,7 @@ CPU 优化主要以性能分析为引，根据分析所得的数据，找到性�
 
 - **垂直同步**
   关于垂直同步的问题，我们在之前的工具篇中就有提到，想要了解的读者可以看看之前的文章，如果要深入了解，可能需要参考一些教程，在本文中就不做过多的阐述。
-
-[朔宇：Unity3D性能优化——工具篇156 赞同 · 8 评论文章![img](https://pic2.zhimg.com/v2-2adbccb74c92c5790b25710e345df7b1_180x120.jpg)](https://zhuanlan.zhihu.com/p/39529241)
+	[Unity3D性能优化——工具篇](https://blog.adison.top/game/perf/tools/)
 
 - **渲染**
   在unity中GPU和CPU渲染也是一个很大的话题，在之后的文章中，会提到渲染问题，在这里我们只需要大致的了解什么是Batches和Draw Call。
@@ -81,7 +80,7 @@ void Update(){
 
 - **注意，GetComponent如果返回空值会调用GC如下所示**：
 
-![img](https://pic2.zhimg.com/80/v2-49609c39845279407f9c71ff4697cb49_720w.jpg)
+![img](./assets/v2-49609c39845279407f9c71ff4697cb49_1440w.jpeg)
 
 
 在这里，cube中并没有添加刚体，我们在update中调用如下代码：
@@ -92,7 +91,7 @@ this.GetComponent<Rigidbody>().AddForce(Vector3.forward);
 
 可以看到在Profiler中，BehaviourUpdate有近16k的GC
 
-![img](https://pic2.zhimg.com/80/v2-296e69577d26b83729f01e4e4d8f30b1_720w.jpg)
+![img](./assets/v2-296e69577d26b83729f01e4e4d8f30b1_1440w.jpeg)
 
 
 所以，我们要避免出现空的组件获取。
@@ -107,16 +106,12 @@ this.GetComponent<Rigidbody>().AddForce(Vector3.forward);
 
 在项目中频繁地使用 Instantiate 和 Destroy 函数，会为脚本执行和垃圾回收带来很大的性能开销。如下图所示，我们使用Instantiate函数大量的创建物体，并使用Destroy销毁，这些代码占用了大量的cpu时间。
 
-![img](https://pic4.zhimg.com/80/v2-6567fe29da6848e800673b04304cd567_720w.jpg)
+![img](./assets/v2-6567fe29da6848e800673b04304cd567_1440w.jpeg)
 
 
 我们可以使用对象池优化游戏对象的创建和销毁
 
 对象池的含义很简单，我们将对象储存在一个“池”中，当需要它时可以重复使用，而不是创建一个新的对象，尽可能的复用内存中已经驻留的资源来减少频繁的IO耗时操作。有经验的开发者在程序设计时就会做一个规范，其中包含了角色池，怪物池，特效池，经验池等。
-
-我在这篇文章中有详细的描述对象池的写法， 大家可以借鉴、参考
-
-[Unity对象池gyunch.org/2016/08/10/unityObject%20pool/![img](https://pic4.zhimg.com/v2-fa6b639530b50fd0f423850744e01947_ipico.jpg)](https://link.zhihu.com/?target=http%3A//gyunch.org/2016/08/10/unityObject%20pool/)
 
 - **注意：使用对象池时，应当可以支持把物体移出屏幕，连续使用的物体可以只是移出屏幕，只有长时间不使用的物体才隐藏；因为频繁的Activate使用，也会引起不必要的性能消耗。**
 
@@ -221,3 +216,7 @@ IEnumerator SpawnInstance(){
 **7） 同一脚本中频繁使用的变量建议声明其为全局变量，脚本之间频繁调用的变量或方法建议声明为全局静态变量或方法；**
 
 在本文中，只能用一些简单的例子来讲述一些常见的性能问题及优化方法，而更多的优化问题，需要读者在具体的项目中发现，并根据实际的应用场景来选择合适的优化方法
+
+## 参考
+
+摘自https://zhuanlan.zhihu.com/p/39998137

@@ -271,11 +271,12 @@ nav:
       - python函数执行时间分析: back-end/python/python_func_time.md
       - CentOS部署flask项目: back-end/python/centos_flask.md
       - Pycharm远程调试: back-end/python/pycharm_remote_debug.md
-      - 以Root权限运行/调试 PyCharm: back-end/python/PyCharm_root_debug.md      
+      - 以Root权限运行/调试 PyCharm: back-end/python/PyCharm:_root_debug.md      
   - 游戏开发:   
     - game/index.md
-    - Unity3D性能优化——工具篇: game/perf/tools.md          
-    - Unity3D性能优化——渲染篇: game/perf/render.md          
+    - Unity3D性能优化——工具篇: game/perf/tools.md
+    - Unity3D性能优化——CPU篇: game/perf/cpu.md         
+    - Unity3D性能优化——渲染篇: game/perf/render.md                 
   - 读书笔记: 
     - read/index.md 
     - 《深入理解java虚拟机》阅读笔记: read/jvm/jvm.md
