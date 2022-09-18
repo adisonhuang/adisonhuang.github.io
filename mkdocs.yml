@@ -152,6 +152,7 @@ nav:
     - Android:
       - 必知必会:
         - Android 动画原理: front-end/android/daily/Android_animation.md   
+        - Android消息机制-Handler: front-end/android/system/handler.md 
         - 解析Binder框架: front-end/android/daily/binder.md   
         - APK文件分析: front-end/android/daily/apk_analyze.md 
         - Android 开机流程: front-end/android/system/bootloader.md    

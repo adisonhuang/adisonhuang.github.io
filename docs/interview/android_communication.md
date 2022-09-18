@@ -171,3 +171,56 @@
 !!! question "Looper.loop是一个死循环，消耗性能吗"
 ??? note "回答" 
     主线程Looper从消息队列读取消息，当读完所有消息时，主线程阻塞。子线程往消息队列发送消息，并且往管道文件写数据，主线程即被唤醒，从管道文件读取数据，主线程被唤醒只是为了读取消息，当消息读取完毕，再次睡眠。因此loop的循环并不会对CPU性能有过多的消耗。
+
+!!! question "Handler 如何避免内存泄漏"
+??? note "回答"     
+    Handler造成内存泄露的原因：**非静态内部类，或者匿名内部类**，使得Handler默认持有外部类的引用。在Activity销毁时，由于Handler可能有未执行完/正在执行的Message。导致Handler持有Activity的引用。进而导致GC无法回收Activity。
+
+    * 解决方法
+
+        1. Activity销毁时，清空Handler中，未执行或正在执行的Callback以及Message。
+        ```java
+            // 清空消息队列，移除对外部类的引用
+        @Override
+        protected void onDestroy() {
+            super.onDestroy();
+            mHandler.removeCallbacksAndMessages(null);
+
+        }
+        ```
+
+        2. 静态内部类+弱引用
+        ```java
+        private static class AppHandler extends Handler {
+            //弱引用，在垃圾回收时，被回收
+            WeakReference<Activity> activity;
+
+            AppHandler(Activity activity){
+                this.activity=new WeakReference<Activity>(activity);
+            }
+
+            public void handleMessage(Message message){
+                switch (message.what){
+                    //todo
+                }
+            }
+        } 
+        ```
+!!! question "主线程 Looper 什么时候退出循环"
+??? note "回答" 
+      当 ActivityThread 内部的 Handler 收到了 EXIT_APPLICATION 消息后，就会退出 Looper 循环
+
+      ```java
+      public void handleMessage(Message msg) {
+              switch (msg.what) {
+                  case EXIT_APPLICATION:
+                      if (mInitialApplication != null) {
+                          mInitialApplication.onTerminate();
+                      }
+                      Looper.myLooper().quit();
+                      break;
+              }
+      }
+      ```
+
+
