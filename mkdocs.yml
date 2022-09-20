@@ -200,8 +200,8 @@ nav:
       - Android卡顿优总结: perf-opt/Android/jank/jank-opt.md     
       - Linux环境下进程的CPU占用率: perf-opt/Android/jank/cpu_use.md     
     - 图片优化:
-      - 图片文件技术原理: perf-opt/Android/bitmap/image.md    
-      - Bitmap: 从出生到死亡: perf-opt/Android/bitmap/bitmap.md    
+      - 图片文件技术原理: perf-opt/Android/bitmap/image.md
+      - Bitmap从出生到死亡: perf-opt/Android/bitmap/bitmap-from-birth-to-death.md
     - 性能分析命令:
       - dumpsys: perf-opt/Android/command/dumpsys.md
       - top命令: perf-opt/Android/command/top.md     

@@ -20,7 +20,7 @@
 > Bitmap同时也表示一种数据结构，用一个bit位来标记某个元素对应的Value， 而Key即是该元素。由于采用了Bit为单位来存储数据，因此在存储空间方面，可以大大节省。具体参见[什么是Bit-map](https://wizardforcel.gitbooks.io/the-art-of-programming-by-july/content/06.07.html)
 
 
-## 2. Android Bitmap
+## 2. Bitmap 总览
 App开发不可避免的要和图片打交道，由于其占用内存非常大，管理不当很容易导致内存不足，最后OOM，图片的背后其实是Bitmap，Bitmap 占内存多是因为其像素数据(pixels)大。Bitmap 像素数据的存储在不同 Android 版本之间有所不同，具体来说
 
 | 版本                         |                           内存分布                           |
@@ -29,11 +29,7 @@ App开发不可避免的要和图片打交道，由于其占用内存非常大�
 | 3.0（API 11）~ 7.1（API 25） |      像素数据会与关联的位图一起存储在 Dalvik/ART 堆上。      |
 | 8.0（API 26）~               | 位图像素数据存储在 Native 堆中。配合 NativeAllocationRegistry 进行垃圾回收 |
 
-**为什么 Android 2.3.3 中 Native 的内存释放不可预测？在 Java 对象的 finalize 被调用时直接释放的方案有何不妥?Android 8.0 的 NativeAllocationRegistry 的引入是为了解决什么问题?**
-
-带着疑问，我们去了解下Bitmap其内存是如何被分配和销毁以及学习一下 NativeAllocationRegistry 的技术。
-
-### 2.1 总览
+ **没有特殊说明，下面涉及的内容都是基于8.0之后的版本。**
 
 先从整体上看一下 Bitmap。
 ![](./assets/68747470733a2f2f626c6f672d313235313638383530342e636f732e61702d7368616e676861692e6d7971636c6f75642e636f6d2f3230313930362f6269746d61702d6372656174696f6e2d617263682e706e67.png)
@@ -45,7 +41,12 @@ App开发不可避免的要和图片打交道，由于其占用内存非常大�
 - SkBitmap 本质上可简单理解为内存中的一个字节数组
   所以说 Bitmap 其实是一个字节数组, 本质上就是内存中的一块数据。所谓创建 Bitmap，不过是调用 malloc() 分配一块内存。而回收 Bitmap，不过是调用 free() 将之前的内存释放掉。
 
-### 2.2 创建
+
+**为什么 Android 2.3.3 中 Native 的内存释放不可预测？在 Java 对象的 finalize 被调用时直接释放的方案有何不妥?Android 8.0 的 NativeAllocationRegistry 的引入是为了解决什么问题?**
+
+带着疑问，我们去了解下Bitmap其内存是如何被分配和销毁以及学习一下 NativeAllocationRegistry 的技术。
+
+## 3. Bitmap 创建
 创建 Bitmap 的方式很多，
 
 + 可以通过 SDK 提供的 API 来创建 Bitmap
@@ -84,7 +85,7 @@ Glide.with(this).load("http://goo.gl/gEgYUd").into(imageView);
 
 ![](./assets/bitmap-creation-overview.png)
 
-Java 层的创建 Bitmap 的**所有 API** 进入到 Native 层后，全都会走这四个步骤：
+Java 层的创建 Bitmap 的 **所有 API** 进入到 Native 层后，全都会走这四个步骤：
 
 + 资源转换 - 这一步将 Java 层传来的不同类型的资源转换成解码器可识别的数据类型
 + 内存分配 - 这一步是分配内存，分配时会是否复用 Bitmap 等因素
@@ -241,7 +242,7 @@ static jobject doDecode(JNIEnv* env, std::unique_ptr<SkStreamRewindable> stream,
 
 **下面详细展开描述下**
 
-#### 2.2.1 资源转换
+### 3.1. 资源转换
 
 在 JNI 层将Java 层的待解码资源（包含`File`,`Resource`,`ByteArray`,`Stream`,`FileDescriptor`）重新划分成四种，包括：`DecodeFileDescriptor`,`DecodeStream`,`DecodeByteArray`,`DecodeAsset`
 
@@ -258,7 +259,7 @@ nativeDecodeAsset()
 
 最后，[BitmapFactory.doDecode()](https://android.googlesource.com/platform/frameworks/base/+/refs/heads/oreo-release/core/jni/android/graphics/BitmapFactory.cpp#233) 统一解码处理 `SkStreamRewindable`。
 
-#### 2.2.2 内存分配
+### 3.2. 内存分配
 解码前的第二项工作是内存分配。
 
 首先是选择 `decodeAllocator` (见上文提到的 `BitmapFactory.doDecode()` 的第7步)。有以下几种 Allocator 可供选择：
@@ -450,7 +451,7 @@ private:
 + 准确来说，`HeapAllocator` 分配的内存是由 `android::Bitmap.mStorage` 持有，而不是 SkBitmap 持有。但 `android::Bitmap` 与 SkBitmap 有某种关联，所以可以忽略这个细节
 
 
-#### 2.2.3 图片解码
+### 3.3. 图片解码
 在 Skia 中 `SkCodec` 代表解码器，解码器的类层次结构如下：
 
 ![](./assets/bitmap_codec.png)
@@ -508,7 +509,7 @@ SkCodec::Result SkPngCodec::onGetPixels(const SkImageInfo& dstInfo, void* dst,
 
 最终，解码结果保存在 `dst` 指针指向的内存。
 
-#### 2.2.4 创建Java对象
+### 3.4. 创建Java对象
 解码完成后得到 Native 层的 `SkBitmap` 对象，最后一步工作是将其封装成 Java 层可以使用的 `Bitmap` 对象。
 
 这一步的过程相对简单，分为三步：
@@ -583,11 +584,11 @@ public final class Bitmap implements Parcelable {
 
 ![](./assets/bitmap-creation-ref-relationship.png)
 
-## 3. 销毁
+## 4. 销毁
 
 Java 层的 Bitmap 对象有点特别，特别之处在于其像素数据保存在 native heap。我们知道， native heap 并不被 JVM 管理，那如何保证 Bitmap 对象本身被 GC 后 native heap 中的内存也能正确回收呢？
 
-### 3.1 recycle
+### 4.1. recycle
 首先想到的是在代码主动调用 [Bitmap.recycle()](https://developer.android.com/reference/android/graphics/Bitmap.html) 方法来释放 native 内存。
 
 流程如下：
@@ -723,7 +724,7 @@ SkMallocPixelRef::~SkMallocPixelRef() {
 }
 ```
 
-### 3.2 自动释放
+### 4.2. 自动释放
 实际上现在的 Android 应用中多数场景代码不主动调用 `recycle()`， native 内存也能正确回收。这是为何？秘密在于 [NativeAllocationRegistry](https://android.googlesource.com/platform/libcore/+/master/luni/src/main/java/libcore/util/NativeAllocationRegistry.java)。
 
 > NativeAllocationRegistry 用于将 native 内存跟 Java 对象关联，并将它们注册到 Java 运行时。注册 Java 对象关联的 native 内存有几个好处：
@@ -1211,7 +1212,7 @@ class Heap {
 
 **通过源码分析可以发现, 原来向 ART 虚拟机注册 Native 分配大小, 是为了让 Native 分配的内存也成为虚拟机 GC 的权重之一, 当 Java 对应的 Native 对象内存分配总和超过 4MB, 便会尝试触发虚拟机的 GC**
 
-## 4. 总结
+## 5. 总结
 通过一步步分析，最终不难发现 Bitmap 本质上就是内存中的一块数据。所谓创建 Bitmap，不过是调用 `malloc()` 分配一块内存。而回收 Bitmap，不过是调用 `free()` 将之前的内存释放掉。
 
 为什么 2.3.3 ~ 7.0 要放到 Java 堆? 直接放到 Native 中, 然后在 Java 对象 finalize 调用的时候释放不行吗?
@@ -1224,6 +1225,26 @@ class Heap {
 
 - 使用 NativeAllocationRegistry 解决了这个问题, 触发 ART 堆 GC 的条件不仅仅是堆占用不足, 通过 VMRuntime.registerNativeAllocation 注册的 Native 内存累计超过了阈值(4MB)之后时也会触发 GC
 - 而且 ART 的 GC 性能比 Dalvik 好的多, 不会轻易造成主线程卡顿
+
+## 6. 8.0之前Bitmap内存分配原理
+
+Bitmap中有个byte[] mBuffer，其实就是用来存储像素数据的，很明显它位于java heap中
+
+```java
+public final class Bitmap implements Parcelable {
+    private static final String TAG = "Bitmap";
+     ...
+    private byte[] mBuffer;
+     ...
+    }
+```
+
+我们以`Bitmap#createBitmap`方法为例，整体流程如下：
+
+![](./assets/16386754fcd33cd6_tplv-t2oaga2asx-zoom-in-crop-mark_3024_0_0_0.awebp)
+
+详细分析可参考[Android Bitmap变迁与原理解析](https://juejin.cn/post/6844903608887017485)
+
 
 ## 参考
 - [Bitmap 位图内存的演进流程](https://sharrychoo.github.io/blog/android-source/bitmap-memory-evolution)
