@@ -50,7 +50,7 @@ CPU 优化主要以性能分析为引，根据分析所得的数据，找到性�
 
 ## **1.缓存**
 
-**我们可以把一些必要的对象缓存起来，**在Unity中，类似于GameObject.Find ， GetComponent，transform这类的函数，会产生较大的消耗，比如下列代码：
+**我们可以把一些必要的对象缓存起来，** 在Unity中，类似于GameObject.Find ， GetComponent，transform这类的函数，会产生较大的消耗，比如下列代码：
 
 ```text
 void Update(){
@@ -156,7 +156,7 @@ IEnumerator SpawnInstance(){
 }
 ```
 
-- **注意：在使用协程时，yield本不会产生堆内存分配，但是如果yield带有参数返回，则会造成不必要的内存垃圾，**例如**：**`yield return 0;`由于需要返回0，引发了装箱操作，所以会产生内存垃圾。这种情况下，为了避免内存垃圾，我们可以这样返回：`yield return null;`如果我们每次返回时，都会new一个相同的变量， 例如我们上边的代码`yield return new WaitForSeconds(1f);`我们可以采用缓存来避免这样的内存垃圾产生：
+- **注意：在使用协程时，yield本不会产生堆内存分配，但是如果yield带有参数返回，则会造成不必要的内存垃圾** 例如：`yield return 0;`由于需要返回0，引发了装箱操作，所以会产生内存垃圾。这种情况下，为了避免内存垃圾，我们可以这样返回：`yield return null;`如果我们每次返回时，都会new一个相同的变量， 例如我们上边的代码`yield return new WaitForSeconds(1f);`我们可以采用缓存来避免这样的内存垃圾产生：
 
 ```text
 WaitForSeconds spawnWait = new WaiForSeconds(1f);

@@ -200,6 +200,7 @@ nav:
       - Linux环境下进程的CPU占用率: perf-opt/Android/jank/cpu_use.md     
     - 图片优化:
       - 图片文件技术原理: perf-opt/Android/bitmap/image.md    
+      - Bitmap: 从出生到死亡: perf-opt/Android/bitmap/bitmap.md    
     - 性能分析命令:
       - dumpsys: perf-opt/Android/command/dumpsys.md
       - top命令: perf-opt/Android/command/top.md     
@@ -242,7 +243,7 @@ nav:
       - 各种单例写法: design/other/singleton_extra.md
   - 面试: 
     - interview/index.md
-    - Android:
+    - Android::
       - Android 四大组件: interview/android_components.md
       - Android 屏幕适配: interview/android_screen.md
       - Android 系统原理: interview/android_sys.md 
