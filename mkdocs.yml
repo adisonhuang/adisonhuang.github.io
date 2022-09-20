@@ -201,6 +201,7 @@ nav:
       - Linux环境下进程的CPU占用率: perf-opt/Android/jank/cpu_use.md     
     - 图片优化:
       - 图片文件技术原理: perf-opt/Android/bitmap/image.md
+      - 了解各种图形格式的编码方式: perf-opt/Android/bitmap/imge-format.md
       - Bitmap从出生到死亡: perf-opt/Android/bitmap/bitmap-from-birth-to-death.md
     - 性能分析命令:
       - dumpsys: perf-opt/Android/command/dumpsys.md
