@@ -269,6 +269,8 @@ nav:
     - tools/index.md  
     - GIT:  
       - Git submodule 子模块的管理和使用: tools/git/git_submodule.md 
+    - VIM:  
+       - Vim常用命令: tools/vim/vim-common.md 
   - 后端&运维:
     - back-end/index.md
     - Python:  
