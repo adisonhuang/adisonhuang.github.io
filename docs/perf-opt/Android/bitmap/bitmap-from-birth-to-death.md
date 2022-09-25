@@ -408,21 +408,6 @@ void SkBitmap::setPixelRef(sk_sp<SkPixelRef> pr, int dx, int dy) {
 对应的代码如下：
 
 ```cpp
-// Bitmap.cpp https://android.googlesource.com/platform/frameworks/base/+/refs/heads/oreo-release/libs/hwui/hwui/Bitmap.cpp#86
-static sk_sp<Bitmap> allocateHeapBitmap(size_t size, const SkImageInfo& info, size_t rowBytes) {
-    void* addr = calloc(size, 1);
-    if (!addr) {
-        return nullptr;
-    }
-    return sk_sp<Bitmap>(new Bitmap(addr, size, info, rowBytes));
-}
-
-// Graphics.cpp https://android.googlesource.com/platform/frameworks/base/+/refs/heads/oreo-release/core/jni/android/graphics/Graphics.cpp#616
-bool HeapAllocator::allocPixelRef(SkBitmap* bitmap, SkColorTable* ctable) {
-    mStorage = android::Bitmap::allocateHeapBitmap(bitmap, ctable);
-    return !!mStorage;
-}
-
 // GraphicsJNI.h https://android.googlesource.com/platform/frameworks/base/+/refs/heads/oreo-release/core/jni/android/graphics/GraphicsJNI.h#125
 class HeapAllocator : public SkBRDAllocator {
 public:
@@ -439,6 +424,37 @@ public:
 private:
     sk_sp<android::Bitmap> mStorage;
 };
+
+// Graphics.cpp https://android.googlesource.com/platform/frameworks/base/+/refs/heads/oreo-release/core/jni/android/graphics/Graphics.cpp#616
+bool HeapAllocator::allocPixelRef(SkBitmap* bitmap, SkColorTable* ctable) {
+   // 创建 Native Bitmap 对象，并将指针记录到 HeapAllocator#mStorage 字段中
+    mStorage = android::Bitmap::allocateHeapBitmap(bitmap, ctable);
+    return !!mStorage;
+}
+
+// Bitmap.cpp https://android.googlesource.com/platform/frameworks/base/+/refs/heads/oreo-release/libs/hwui/hwui/Bitmap.cpp#86
+static sk_sp<Bitmap> allocateHeapBitmap(size_t size, const SkImageInfo& info, size_t rowBytes) {
+   // 使用库函数 calloc 分配 size*1 的连续空间
+    void* addr = calloc(size, 1);
+    if (!addr) {
+        return nullptr;
+    }
+   // 创建 Native Bitmap 对象
+    return sk_sp<Bitmap>(new Bitmap(addr, size, info, rowBytes));
+}
+
+Bitmap::Bitmap(void* address, size_t size, const SkImageInfo& info, size_t rowBytes, SkColorTable* ctable)
+            : SkPixelRef(info)
+            , mPixelStorageType(PixelStorageType::Heap) {
+    // 指向像素数据的内存指针
+    mPixelStorage.heap.address = address;
+    // 像素数据大小
+    mPixelStorage.heap.size = size;
+    reconfigure(info, rowBytes, ctable);
+}
+
+
+
 ```
 
 对于 `RecyclingPixelAllocator` 和 `ScaleCheckingAllocator` 的情况，读者可以自行分析。
@@ -1241,7 +1257,7 @@ public final class Bitmap implements Parcelable {
 
 我们以`Bitmap#createBitmap`方法为例，整体流程如下：
 
-![](./assets/16386754fcd33cd6_tplv-t2oaga2asx-zoom-in-crop-mark_3024_0_0_0.awebp)
+![](./assets/16386754fcd33cd6_tplv-t2oaga2asx-zoom-in-crop-mark_3024_0_0_0.webp)
 
 详细分析可参考[Android Bitmap变迁与原理解析](https://juejin.cn/post/6844903608887017485)
 
@@ -1249,5 +1265,4 @@ public final class Bitmap implements Parcelable {
 ## 参考
 - [Bitmap 位图内存的演进流程](https://sharrychoo.github.io/blog/android-source/bitmap-memory-evolution)
 - [Bitmap: 从出生到死亡](https://github.com/410063005/10years/blob/3ef9f15ca85154de2d701b159f5deadbaf5594c4/android/bitmap/bitmap-from-birth-to-death.md)
-
 
