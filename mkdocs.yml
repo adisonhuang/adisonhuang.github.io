@@ -215,6 +215,10 @@ nav:
        - 编译原理基础: native/basic/compilation-principle.md
        - 深度长文教你彻底掌握C++/C指针(一):基石: native/basic/pointer(1).md
        - 深度长文教你彻底掌握C++/C指针(二):指针和数组与字符串: native/basic/pointer(2).md
+       - C++ auto类型推导完全攻略: native/basic/Cplus_auto.md
+       - C++ decltype类型推导完全攻略: native/basic/Cplus_decltype.md
+       - C++11 nullptr：初始化空指针: native/basic/Cplus_nullptr.md
+       - C++11 shared_ptr智能指针: native/basic/Cplus_shared_ptr.md
      - JNI:
        - JNI优化: native/JNI/JNI-op.md   
      - 疑难问题:
