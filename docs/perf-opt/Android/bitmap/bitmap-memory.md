@@ -642,3 +642,7 @@ scaledHeight = int( 1381 * (480 / 320f) + 0.5) = int(2072.0) = 2072
 **3257  * 2072 *  4 = 26994016** 
 
 和API得到的数值一致，至此，Bitmap的内存占用分析完毕！！！
+
+## 参考
+
+[你的 Bitmap 究竟占多大内存？](https://cloud.tencent.com/developer/article/1071001)

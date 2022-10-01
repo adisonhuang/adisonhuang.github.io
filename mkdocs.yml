@@ -172,7 +172,8 @@ nav:
       - 杂记:
         - Mac10.14编译Android 8.1源码及刷入nexus 6p: front-end/android/daily/flask_android_8.md 
     - Flutter:
-      - 使用fvm管理多个版本flutter: front-end/flutter/tools/fvm.md           
+      - 使用fvm管理多个版本flutter: front-end/flutter/tools/fvm.md            
+      - Dart 简介: front-end/flutter/learn/Dart.md            
   - Android性能优化:
     - perf-opt/index.md
     - 内存优化:
