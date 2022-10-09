@@ -268,9 +268,13 @@ nav:
     - 网络: basic/index.md
     - 数据结构与算法:
       - 数组:  
-        - 数组-实现一个支持动态扩容的数组: basic/algo/array_algo_1.md
-        - 数组-实现一个大小固定的有序数组，支持动态增删改操作: basic/algo/array_algo_2.md
-        - 数组-合并两个有序数组: basic/algo/array_algo_3.md
+        - 实现一个支持动态扩容的数组: basic/algo/array_algo_1.md
+        - 实现一个大小固定的有序数组，支持动态增删改操作: basic/algo/array_algo_2.md
+        - 合并两个有序数组: basic/algo/array_algo_3.md
+      - 链表:
+        - 实现单链表、循环链表、双向链表，支持增删操作: basic/algo/linklist_1.md  
+        - 实现LRU缓存: basic/algo/linklist_lru.md  
+        - 常见链表操作: basic/algo/linklist_2.md  
   - 开发工具:
     - tools/index.md  
     - GIT:  
