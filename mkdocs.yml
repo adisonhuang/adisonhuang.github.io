@@ -287,7 +287,7 @@ nav:
       - python函数执行时间分析: back-end/python/python_func_time.md
       - CentOS部署flask项目: back-end/python/centos_flask.md
       - Pycharm远程调试: back-end/python/pycharm_remote_debug.md
-      - 以Root权限运行/调试 PyCharm: back-end/python/PyCharm:_root_debug.md      
+      - 以Root权限运行/调试 PyCharm: back-end/python/PyCharm_root_debug.md      
   - 游戏开发:   
     - game/index.md
     - Unity3D性能优化——工具篇: game/perf/tools.md
@@ -301,3 +301,4 @@ nav:
       - 数组: read/beautiful-algo/array.md
       - 链表: read/beautiful-algo/linked-list.md  
       - 栈: read/beautiful-algo/stack.md  
+      - 队列: read/beautiful-algo/queue.md  
