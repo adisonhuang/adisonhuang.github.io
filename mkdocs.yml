@@ -205,6 +205,7 @@ nav:
       - 了解各种图形格式的编码方式: perf-opt/Android/bitmap/imge-format.md
       - Bitmap从出生到死亡: perf-opt/Android/bitmap/bitmap-from-birth-to-death.md
       - Bitmap 内存占用分析: perf-opt/Android/bitmap/bitmap-memory.md
+      - Glide 核心知识: perf-opt/Android/bitmap/glide.md
     - 性能分析命令:
       - dumpsys: perf-opt/Android/command/dumpsys.md
       - top命令: perf-opt/Android/command/top.md     
