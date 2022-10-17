@@ -406,11 +406,99 @@ Glide的缓存分为两种，一种是内存缓存，一种是磁盘缓存。其
     2. **提高缓存效率**
     举个例子，同一张图片，我们先在`100*100`的View是展示，再在`200*200`的View上展示, 如果不缓存变换后的类型相当于每次都要进行一次变换操作，如果不缓存原始数据则每次都要去重新下载数据
 
-
-
-
 ### 内存优化
-### 扩展支持
+我们先回顾下[Bitamp 内存占用分析](https://blog.adison.top/perf-opt/Android/bitmap/bitmap-memory/), 我们知道bitmap计算公式为：
+```shell
+bitmapInRam = bitmapWidth*bitmapHeight*bytesPerPixel
+bitmapWidth = 图片宽度/inSampleSize*inTargetDensity/inDensity
+bitmapHeight = 图片高度/inSampleSize*inTargetDensity/inDensity
+```
+由于我们不是从资源目录读取图片，所以inTargetDensity/inDensity=1，所以bitmapInRam = (图片宽度/inSampleSize) * (图片高度/inSampleSize)*bytesPerPixel
+
+显而易见，假设图片分辨率不变的情况下，那我们可以从inSampleSize和bytesPerPixel两个方面进行优化，另外我们也可以通过`inBitmap`来复用bitmap，减少bitmap的内存分配，下面看下Glide是如何做的。
+#### 尺寸优化(inSampleSize)
+当图片大小与View大小不一致时，可以用inSampleSize进行尺寸优化， 例如ImageView只有100*100，而图片的分辨率为800 * 800，我们可以通过使用[inSampleSize](https://developer.android.com/reference/android/graphics/BitmapFactory.Options#inSampleSize)对Bitmap进行尺寸缩放,采样率越高，图片越小。
+
+**`Downsampler#calculateScaling`**
+```java
+  private static void calculateScaling(
+      ImageType imageType,
+      ImageReader imageReader,
+      DecodeCallbacks decodeCallbacks,
+      BitmapPool bitmapPool,
+      DownsampleStrategy downsampleStrategy,
+      int degreesToRotate,
+      int sourceWidth,
+      int sourceHeight,
+      int targetWidth,
+      int targetHeight,
+      BitmapFactory.Options options)
+      throws IOException {
+   
+    ...
+     //获取exactScaleFactor， downsampleStrategy：采样策略，默认为DownsampleStrategy#FIT_CENTER,取决于你ImageView设置的scaleType
+    final float exactScaleFactor =
+        downsampleStrategy.getScaleFactor(
+            orientedSourceWidth, orientedSourceHeight, targetWidth, targetHeight);
+
+    SampleSizeRounding rounding =
+        downsampleStrategy.getSampleSizeRounding(
+            orientedSourceWidth, orientedSourceHeight, targetWidth, targetHeight);
+    if (rounding == null) {
+      throw new IllegalArgumentException("Cannot round with null rounding");
+    }
+    //获取Bitmap输出宽高
+    int outWidth = round(exactScaleFactor * orientedSourceWidth);
+    int outHeight = round(exactScaleFactor * orientedSourceHeight);
+
+    int widthScaleFactor = orientedSourceWidth / outWidth;
+    int heightScaleFactor = orientedSourceHeight / outHeight;
+
+    // 根据缩放策略是省内存还是高品质，决定取宽高比的最大值还是最小值
+    int scaleFactor =
+        rounding == SampleSizeRounding.MEMORY
+            ? Math.max(widthScaleFactor, heightScaleFactor)
+            : Math.min(widthScaleFactor, heightScaleFactor);
+
+    int powerOfTwoSampleSize;
+    // 在Android M及以下版本，BitmapFactory不支持wbmp格式的图片进行缩放
+    if (Build.VERSION.SDK_INT <= 23
+        && NO_DOWNSAMPLE_PRE_N_MIME_TYPES.contains(options.outMimeType)) {
+      powerOfTwoSampleSize = 1;
+    } else {
+       //对scaleFactor再进行处理，通过highestOneBit()把计算的比例四舍五入到最接近2的幂
+      powerOfTwoSampleSize = Math.max(1, Integer.highestOneBit(scaleFactor));
+      if (rounding == SampleSizeRounding.MEMORY
+          && powerOfTwoSampleSize < (1.f / exactScaleFactor)) {
+          //如果缩放策略为省内存，并且计算得出的sampleSize < exactScaleFactor,则sampleSize再增加一倍
+        powerOfTwoSampleSize = powerOfTwoSampleSize << 1;
+      }
+    }
+
+     //设置inSampleSize
+    options.inSampleSize = powerOfTwoSampleSize;
+    ...
+  }
+```
+
+#### 图片格式优化(bytesPerPixel)
+
+
+从上面的分析可以看出，Bitmap占用的内存主要是由`width * height * bytesPerPixel`决定的，其中`bytesPerPixel`是由`Bitmap.Config`决定的，如下表所示
+
+| Config | bytesPerPixel |
+| --- | --- |
+| ALPHA_8 | 1 |
+| ARGB_4444 | 2 |
+| ARGB_8888 | 4 |
+| RGB_565 | 2 |
+
+不同格式对应每个像素所占用的字节不一样，所存储的色彩信息也不同。同一张100像素的图片，ARGB_8888就占了400字节，RGB_565才占200字节
+
+值得注意的是在Glide4.0之前,Glide默认使用`RGB565`格式，比较省内存
+但是Glide4.0之后，默认格式已经变成了`ARGB_8888`格式了,这一优势也就不存在了。
+这本身也就是质量与内存之间的取舍，如果应用所需图片的质量要求不高，也可以修改默认格式
+
 
 
 

@@ -616,7 +616,7 @@ bitmapHeight = 图片高度/inSampleSize*inTargetDensity/inDensity
 
 ----------------
 
-再看下我们的实验三，一张 **2171\*1381**的图片，我把它放到 **drawable-xhdpi** 目录下，在 **华为P30** 上加载，占用内存`26994016B`，其中 density 对应 xhdpi 为320，targetDensity 对应华为P30的密度为480：
+再看下我们的实验三，一张 **2171\*1381** 的图片，我把它放到 **drawable-xhdpi** 目录下，在 **华为P30** 上加载，占用内存`26994016B`，其中 density 对应 xhdpi 为320，targetDensity 对应华为P30的密度为480：
 
 **2171\*480/320 \* 1381\*480 /320  \* 4 = 26983359B**
 
