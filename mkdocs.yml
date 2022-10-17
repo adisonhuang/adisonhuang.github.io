@@ -203,7 +203,7 @@ nav:
     - 图片优化:
       - 图片文件技术原理: perf-opt/Android/bitmap/image.md
       - 了解各种图形格式的编码方式: perf-opt/Android/bitmap/imge-format.md
-      - Bitmap从出生到死亡: perf-opt/Android/bitmap/imge-format.md
+      - Bitmap从出生到死亡: perf-opt/Android/bitmap/bitmap-from-birth-to-death.md
       - Bitmap 内存占用分析: perf-opt/Android/bitmap/bitmap-memory.md
     - 性能分析命令:
       - dumpsys: perf-opt/Android/command/dumpsys.md
@@ -287,7 +287,7 @@ nav:
       - python函数执行时间分析: back-end/python/python_func_time.md
       - CentOS部署flask项目: back-end/python/centos_flask.md
       - Pycharm远程调试: back-end/python/pycharm_remote_debug.md
-      - 以Root权限运行/调试 PyCharm: back-end/python/PyCharm:_root_debug.md      
+      - 以Root权限运行/调试 PyCharm: back-end/python/PyCharm_root_debug.md      
   - 游戏开发:   
     - game/index.md
     - Unity3D性能优化——工具篇: game/perf/tools.md
@@ -301,3 +301,4 @@ nav:
       - 数组: read/beautiful-algo/array.md
       - 链表: read/beautiful-algo/linked-list.md  
       - 栈: read/beautiful-algo/stack.md  
+      - 队列: read/beautiful-algo/queue.md  
