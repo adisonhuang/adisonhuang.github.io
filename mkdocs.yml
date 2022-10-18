@@ -238,7 +238,7 @@ nav:
         - 原型模式: design/design-patterns/prototype.md
         - 建造者模式: design/design-patterns/builder.md
       - 结构型模式: 
-        - 概述: design/design-patterns/index_structural.
+        - 概述: design/design-patterns/index_structural.md
         - 适配器模式: design/design-patterns/adapter.md
         - 代理模式: design/design-patterns/proxy.md
         - 外观模式: design/design-patterns/facade.md
@@ -303,3 +303,4 @@ nav:
       - 链表: read/beautiful-algo/linked-list.md  
       - 栈: read/beautiful-algo/stack.md  
       - 队列: read/beautiful-algo/queue.md  
+      - 递归: read/beautiful-algo/recursion.md  

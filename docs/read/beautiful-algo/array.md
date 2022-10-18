@@ -5,11 +5,11 @@
 
 顾名思义，线性表就是数据排成像一条线一样的结构。每个线性表上的数据最多只有前和后两个方向。其实除了数组，链表、队列、栈等也是线性表结构。
 
-![xianxingbiao](./xianxingbiao.webp)
+![xianxingbiao](./assets/xianxingbiao.webp)
 
 而与它相对立的概念是非线性表，比如二叉树、堆、图等。之所以叫非线性，是因为，在非线性表中，数据之间并不是简单的前后关系。
 
-![feixianxing](./feixianxing.webp)
+![feixianxing](./assets/feixianxing.webp)
 
 ### 1.2.如何实现随机访问？
 
@@ -17,7 +17,7 @@
 
 我们拿一个长度为 10 的 int 类型的数组 int[] a = new int[10]来举例。在我画的这个图中，计算机给数组 a[10]，分配了一块连续内存空间 1000～1039，其中，内存块的首地址为 base_address = 1000。
 
-![array_demo](./array_demo.webp)
+![array_demo](./assets/array_demo.webp)
 
 我们知道，计算机会给每个内存单元分配一个地址，计算机通过地址来访问内存中的数据。当计算机需要随机访问数组中的某个元素时，它会首先通过下面的寻址公式，计算出该元素存储的内存地址：
 
