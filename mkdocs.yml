@@ -256,6 +256,7 @@ nav:
       - Android 四大组件: interview/android_components.md
       - Android 屏幕适配: interview/android_screen.md
       - Android 通信相关: interview/android_communication.md
+      - Android 视图相关: interview/android_view.md
       - Android 系统原理: interview/android_sys.md 
     - Java:
       - Java 基础: interview/java_basic.md  
