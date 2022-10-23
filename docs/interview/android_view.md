@@ -10,11 +10,11 @@
 
     Window有几种类型：
 
-        * 应用Window：对应一个Activity。
+    * 应用Window：对应一个Activity。
 
-        * 子Window：不能单独存在，需附属特定的父Window。如Dialog。
+    * 子Window：不能单独存在，需附属特定的父Window。如Dialog。
 
-        * 系统Window： 需申明权限才能创建。如Toast。
+    * 系统Window： 需申明权限才能创建。如Toast。
 
     
 
@@ -368,3 +368,13 @@
     * View如果有线程或者动画，需要及时停止(onDetachedFromWindow会在View被remove时调用)——避免内存泄露
 
     * View如果有滑动嵌套情形，需要处理好滑动冲突
+
+!!! question "说下SurfaceView"
+??? note "回答"
+    SurfaceView是从View基类中派生出来的显示类，他和View的区别有：
+
+        - View需要在UI线程对画面进行刷新，而SurfaceView可在子线程进行页面的刷新
+
+        - View适用于主动更新的情况，而SurfaceView适用于被动更新，如频繁刷新，这是因为如果使用View频繁刷新会阻塞主线程，导致界面卡顿
+        
+        - SurfaceView在底层已实现双缓冲机制，而View没有，因此SurfaceView更适用于需要频繁刷新、刷新时数据处理量很大的页面
