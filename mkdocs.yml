@@ -277,7 +277,9 @@ nav:
       - 链表:
         - 实现单链表、循环链表、双向链表，支持增删操作: basic/algo/linklist_1.md  
         - 实现LRU缓存: basic/algo/linklist_lru.md  
-        - 常见链表操作: basic/algo/linklist_2.md  
+        - 常见链表操作: basic/algo/linklist_2.md
+      - 栈:
+        - 顺序栈、链式栈: basic/algo/stack_1.md     
   - 开发工具:
     - tools/index.md  
     - GIT:  
