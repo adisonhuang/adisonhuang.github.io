@@ -280,6 +280,7 @@ nav:
         - 常见链表操作: basic/algo/linklist_2.md
       - 栈:
         - 顺序栈、链式栈: basic/algo/stack_1.md     
+        - 常见栈操作: basic/algo/stack_2.md     
   - 开发工具:
     - tools/index.md  
     - GIT:  
