@@ -378,3 +378,86 @@
         - View适用于主动更新的情况，而SurfaceView适用于被动更新，如频繁刷新，这是因为如果使用View频繁刷新会阻塞主线程，导致界面卡顿
         
         - SurfaceView在底层已实现双缓冲机制，而View没有，因此SurfaceView更适用于需要频繁刷新、刷新时数据处理量很大的页面
+
+
+
+!!! question "RecyclerView LayoutManager作用？"
+??? note "回答"
+
+    **LayoutManager作用是什么？**
+
+    - LayoutManager的职责是摆放Item的位置，并且负责决定何时回收和重用Item。
+
+    - RecyclerView 允许自定义规则去放置子 view，这个规则的控制者就是 
+    LayoutManager。一个 RecyclerView 如果想展示内容，就必须设置一个 LayoutManager
+
+    **LayoutManager样式有哪些？**
+
+    - LinearLayoutManager 水平或者垂直的Item视图。
+
+    - GridLayoutManager 网格Item视图。
+
+    - StaggeredGridLayoutManager 交错的网格Item视图。
+
+!!! question "RecyclerView的多级缓存机制，每级缓存到底起到什么样的作用？"
+??? note "回答"
+    
+    大概了解下 Recycler 的几个缓存变量：
+    ```java
+        public final class Recycler {
+        private ArrayList<ViewHolder> mChangedScrap = null; 
+        final ArrayList<ViewHolder> mAttachedScrap = new ArrayList<>();      
+        final ArrayList<ViewHolder> mCachedViews = new ArrayList<ViewHolder>(); 
+        private ViewCacheExtension mViewCacheExtension;
+        private RecycledViewPool mRecyclerPool;
+    } 
+    ```
+    RecyclerView在获取ViewHolder时,优先会到这 mAttachedScrap 与 mChangedScrap 两个缓存来找。其次才是 mCachedViews，最后才是RecyclerViewPool。
+
+    |       缓存级别       | createVH | bindVH |        变量        |                             含义                             |
+    | :------------------: | :------: | :----: | :----------------: | :----------------------------------------------------------: |
+    | 一级缓存(Scrap View) |    否    |   否   |   mAttachedScrap   | mAttachedScrap存储的是当前还在屏幕中的ViewHolder。匹配机制按照position和id进行匹配 |
+    | 一级缓存(Scrap View) |    否    |   是   |   mChangedScrap    | mChangedScrap存储的是数据被更新的ViewHolder,比如说调用了Adapter的 notifyXXX 方法 |
+    | 二级缓存(Cache View) |    否    |   否   |    mCachedViews    | 默认大小为2，缓存离开屏幕的viewHolder. 解决两点： 1. 频繁进入/离开屏幕的ViewHolder导致的内存抖动的问题；2.还有用于保存Prefetch的ViewHoder. |
+    | 三级缓存(可选可配置) |    否    |   否   | ViewCacheExtension | 自定义缓存，通常用不到，getViewForPositionAndType 来实现自己的缓存 使用场景：位置固定 内容不变 数量有限 |
+    |   四级缓存(缓存池)   |    否    |   是   |  RecyclerViewPool  | 根据ViewType来缓存ViewHolder，每个ViewType的数组大小默认为5，可以动态的改变 缓存的ViewHolder需要重新绑定(bindView). 也可以 RecyclerView之间共享ViewHolder的缓存池Pool. |
+
+!!! question "RecyclerView常见的优化方式？"
+??? note "回答"
+
+     **RecyclerView 优化 最重要是 减少 `createViewHolder`, `bindViewHolder` 的耗时(时间)和调用次数**
+
+     1. 通过 RecycleView.setItemViewCacheSize(size); 来加大 RecyclerView 的缓存，用空间换时间来提高滚动的流畅性。
+
+     2. 如果多个 RecycledView 的 Adapter 是一样的，比如嵌套的 RecyclerView 中存在一样的 Adapter，可以通过设置 RecyclerView.setRecycledViewPool(pool); 来共用一个 RecycledViewPool。
+
+     3. 如果 Item 高度是固定的话，可以使用 RecyclerView.setHasFixedSize(true); 来避免 requestLayout 浪费资源；
+
+     4. 设置 RecyclerView.addOnScrollListener(listener); 来对滑动过程中停止加载的操作
+
+     5. 如果不要求动画，可以通过 ((SimpleItemAnimator) rv.getItemAnimator()).setSupportsChangeAnimations(false); 把默认动画关闭来提高效率。
+
+     6. 通过重写 RecyclerView.onViewRecycled(holder) 来回收资源。比如释放一些图片资源,Glid,ImageView等等.
+
+     7. 对itemView中孩子View的点击事件优化
+
+        onBindViewHolder() 中频繁创建新的 onClickListener 实例没有必要，建议实际开发中应该在 onCreateViewHolder() 中每次为新建的 View 设置一次就行。
+        
+     8. 使用预加载 `Prefetch`   
+
+     9. DiffUtil刷新优化
+
+        * 分页拉取远端数据，对拉取下来的远端数据进行缓存，提升二次加载速度；对于新增或者删除数据通过 DiffUtil 来进行局部刷新数据，而不是一味地全局刷新数据。
+
+     10. 布局优化
+
+        - 减少 xml 文件 inflate 时间
+        
+        这里的 xml 文件不仅包括 layout 的 xml，还包括 drawable 的 xml，xml 文件 inflate 出 ItemView 是通过耗时的 IO 操作，尤其当 Item 的复用几率很低的情况下，随着 Type 的增多，这种 inflate 带来的损耗是相当大的，此时我们可以用代码去生成布局，即 new View() 的方式，只要搞清楚 xml 中每个节点的属性对应的 API 即可。
+
+        - 减少 View 对象的创建
+        
+        一个稍微复杂的 Item 会包含大量的 View，而大量的 View 的创建也会消耗大量时间，所以要尽可能简化 ItemView；设计 ItemType 时，对多 ViewType 能够共用的部分尽量设计成自定义 View，减少 View 的构造和嵌套。
+
+
+     
