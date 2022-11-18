@@ -43,7 +43,73 @@
 
 
     }
-   ```
+    ```
+
+
+=== "python"
+
+    ``` python
+    class ArrayQueue:
+        def __init__(self, capacity):
+            self._items = []
+            self._capacity = capacity
+            self._head = 0
+            self._tail = 0
+        def enqueue(self, item:str) -> bool:
+            if self._tail == self._capacity:
+                if self._head == 0:
+                    return False
+                for i in range(self._head, self._tail):
+                    self._items[i - self._head] = self._items[i]
+                self._tail -= self._head
+                self._head = 0
+            self._items.insert(self._tail, item)
+            self._tail += 1
+            return True
+        def dequeue(self) -> str:
+            if self._head == self._tail:
+                return None
+            ret = self._items[self._head]
+            self._head += 1
+            return ret
+
+        def __repr__(self) -> str:
+            return " ".join(item for item in self._items[self._head:self._tail]) 
+                        
+    ```
+
+=== "js"
+
+    ``` javascript
+    class ArrayQueue{
+        constructor(){
+            this.items = [];
+        }
+        enqueue(item){
+            this.items.push(item);
+        }
+        dequeue(){
+            return this.items.shift();
+        }
+        front(){
+            return this.items[0];
+        }
+        isEmpty(){
+            return this.items.length === 0;
+        }
+        size(){
+            return this.items.length;
+        }
+        clear(){
+            this.items = [];
+        }
+        print(){
+            console.log(this.items.toString());
+        }
+    }
+    ```    
+## 用数组实现一个顺序队列(动态)
+
 
 === "java"
 
@@ -102,70 +168,6 @@
 
     }
     ```   
-
-=== "python"
-
-    ``` python
-    class ArrayQueue:
-        def __init__(self, capacity):
-            self._items = []
-            self._capacity = capacity
-            self._head = 0
-            self._tail = 0
-        def enqueue(self, item:str) -> bool:
-            if self._tail == self._capacity:
-                if self._head == 0:
-                    return False
-                for i in range(self._head, self._tail):
-                    self._items[i - self._head] = self._items[i]
-                self._tail -= self._head
-                self._head = 0
-            self._items.insert(self._tail, item)
-            self._tail += 1
-            return True
-        def dequeue(self) -> str:
-            if self._head == self._tail:
-                return None
-            ret = self._items[self._head]
-            self._head += 1
-            return ret
-
-        def __repr__(self) -> str:
-            return " ".join(item for item in self._items[self._head:self._tail]) 
-                        
-    ```
-
- === "JavaScript"
-
-    ``` javascript  
-    class ArrayQueue{
-        constructor(){
-            this.items = [];
-        }
-        enqueue(item){
-            this.items.push(item);
-        }
-        dequeue(){
-            return this.items.shift();
-        }
-        front(){
-            return this.items[0];
-        }
-        isEmpty(){
-            return this.items.length === 0;
-        }
-        size(){
-            return this.items.length;
-        }
-        clear(){
-            this.items = [];
-        }
-        print(){
-            console.log(this.items.toString());
-        }
-    }
-
-    ```    
 
 ## 用链表实现一个链式队列
 === "java"
@@ -249,9 +251,10 @@
                 node = node.next
             return s 
     ```   
- === "JavaScript"
+    
+=== "js"
 
-    ``` javascript  
+    ``` javascript
     class Node {
         constructor(data){
             this.data = data;
@@ -389,9 +392,9 @@
          
     ```
 
- === "JavaScript"
+=== "js"
 
-    ``` javascript  
+    ``` javascript
     class CicularQueue {
         constructor(size) {
             this.queue = new Array(size);
@@ -428,7 +431,7 @@
     }
     ```
 
-## [设计实现双端队列]https://leetcode.cn/problems/design-circular-deque/)   
+## [设计实现双端队列](https://leetcode.cn/problems/design-circular-deque/)   
 
 === "python"
 

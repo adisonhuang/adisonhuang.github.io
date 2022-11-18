@@ -9,7 +9,7 @@
         return fib(n-1)+fib(n-2);
     }
     
-   ```
+    ```
 
 === "python"
 
@@ -34,7 +34,7 @@
         if(n==1)return 1;
         return n* factorial(n-1);
     }
-   ```
+    ```
 
 === "python"
 
@@ -72,7 +72,7 @@
         chars[i] = chars[j];
         chars[j] = temp;
     }
-   ```
+    ```
 
 === "python"
 
@@ -102,7 +102,7 @@
         if(n==2)return 2;
         return climbStairs(n-1)+climbStairs(n-2);
     }
-   ```
+    ```
 
 === "python"
 
