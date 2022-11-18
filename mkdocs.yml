@@ -281,6 +281,10 @@ nav:
       - 栈:
         - 顺序栈、链式栈: basic/algo/stack_1.md     
         - 常见栈操作: basic/algo/stack_2.md     
+      - 队列:
+        - 常见队列实现: basic/algo/queue.md   
+      - 递归:
+        - 常见递归算法: basic/algo/recursive.md    
   - 开发工具:
     - tools/index.md  
     - GIT:  
