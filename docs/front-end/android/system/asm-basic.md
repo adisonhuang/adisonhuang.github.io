@@ -148,15 +148,15 @@ public class Test {
 
 1. 上图中第3行到第7行，是类`Test`的默认构造函数（由编译器默认生成），`Code`以下部分是构造函数内部代码，其中：
 
-- **aload_0**：  这个指令是LOAD系列指令中的一个，它的意思表示装载当前第 0 个元素到堆栈中。代码上相当于“this”。而这个数据元素的类型是一个引用类型。这些指令包含了：ALOAD，ILOAD，LLOAD，FLOAD，DLOAD。区分它们的作用就是针对不用数据类型而准备的LOAD指令，此外还有专门负责处理数组的指令 SALOAD。
-- **invokespecial**： 这个指令是调用系列指令中的一个。其目的是调用对象类的方法。后面需要给上父类的方法完整签名。“#1”的意思是 .class 文件常量表中第1个元素。值为：“java/lang/Object."<init>":()V”。结合ALOAD_0。这两个指令可以翻译为：“super()”。其含义是调用自己的父类构造方法。
+	* **aload_0**：  这个指令是LOAD系列指令中的一个，它的意思表示装载当前第 0 个元素到堆栈中。代码上相当于“this”。而这个数据元素的类型是一个引用类型。这些指令包含了：ALOAD，ILOAD，LLOAD，FLOAD，DLOAD。区分它们的作用就是针对不用数据类型而准备的LOAD指令，此外还有专门负责处理数组的指令 SALOAD。
+	* **invokespecial**： 这个指令是调用系列指令中的一个。其目的是调用对象类的方法。后面需要给上父类的方法完整签名。“#1”的意思是 .class 文件常量表中第1个元素。值为：“java/lang/Object."<init>":()V”。结合ALOAD_0。这两个指令可以翻译为：“super()”。其含义是调用自己的父类构造方法。
 
 2. 第9到14行是`main`方法，`Code`以下是其字节码表示：
 
-- **getstatic**：   这个指令是GET系列指令中的一个其作用是获取静态字段内容到堆栈中。这一系列指令包括了：GETFIELD、GETSTATIC。它们分别用于获取动态字段和静态字段。此处表示的意思获取静态成员`System.out`到堆栈中。
-- **ldc**：这个指令的功能是从常量表中装载一个数据到堆栈中。此处表示从常量池中获取字符串"Hello World!"。
-- **invokevirtual**：也是一种调用指令，这个指令区别与 invokespecial 的是它是根据引用调用对象类的方法。此处表示调用`java.io.PrintStream.println(String)`方法，结合前面的操作，这里调用的就是`System.out.println("Hello World!")`。
-- **return**： 这也是一系列指令中的一个，其目的是方法调用完毕返回：可用的其他指令有：IRETURN，DRETURN，ARETURN等，用于表示不同类型参数的返回。
+	*	**getstatic**：   这个指令是GET系列指令中的一个其作用是获取静态字段内容到堆栈中。这一系列指令包括了：GETFIELD、GETSTATIC。它们分别用于获取动态字段和静态字段。此处表示的意思获取静态成员`System.out`到堆栈中。
+	* **ldc**：这个指令的功能是从常量表中装载一个数据到堆栈中。此处表示从常量池中获取字符串"Hello World!"。
+	* **invokevirtual**：也是一种调用指令，这个指令区别与 invokespecial 的是它是根据引用调用对象类的方法。此处表示调用`java.io.PrintStream.println(String)`方法，结合前面的操作，这里调用的就是`System.out.println("Hello World!")`。
+	* **return**： 这也是一系列指令中的一个，其目的是方法调用完毕返回：可用的其他指令有：IRETURN，DRETURN，ARETURN等，用于表示不同类型参数的返回。
 
 更多详细内容，请参考：[JVM字节码指令理解](https://links.jianshu.com/go?to=http%3A%2F%2Fkingj.iteye.com%2Fblog%2F1451008)，[JVM指令](https://www.jianshu.com/p/9f09a0c21542)，[深入字节码 -- 使用 ASM 实现 AOP](https://links.jianshu.com/go?to=https%3A%2F%2Fmy.oschina.net%2Fu%2F1166271%2Fblog%2F162796)
  更多字节码指令详情，请参考官网：[The Java Virtual Machine Instruction Set](https://links.jianshu.com/go?to=https%3A%2F%2Fdocs.oracle.com%2Fjavase%2Fspecs%2Fjvms%2Fse7%2Fhtml%2Fjvms-6.html%23jvms-6.5.aaload)
@@ -179,7 +179,6 @@ public class Test {
 要完成在`main`方法前后插入输出代码，需要以下几步操作：
 
 1. **读取`Test.class`文件，可以通过 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 提供的`ClassReader`类进行`class`文件的读取与遍历。**
-
 ```java
 // 使用全限定名，创建一个ClassReader对象
 ClassReader classReader = new ClassReader("com.yn.test.Test");
@@ -195,58 +194,44 @@ classReader.accept(classVisitor, ClassReader.SKIP_DEBUG);
 ```
 
 2. **构造`System.out.println(String)`的 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 代码。**
-    上面我们从`javap`反编译得到的字节码可以知道，实现`System.out.println("Hello World!");`的字节码总共需要3步操作：
-    
-(1). 获取`System`静态成员`out`，其对应的指令为`getstatic`，对应的 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 代码为：
 
+	上面我们从`javap`反编译得到的字节码可以知道，实现`System.out.println("Hello World!");`的字节码总共需要3步操作：
 
+	(1). 获取`System`静态成员`out`，其对应的指令为`getstatic`，对应的 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 代码为：
+  ```kotlin
+  mv.visitFieldInsn(Opcodes.GETSTATIC,
+                    Type.getInternalName(System.class), //"java/lang/System"
+                    "out",
+                    Type.getDescriptor(PrintStream.class) //"Ljava/io/PrintStream;"
+              );
+  ```
 
-```kotlin
-mv.visitFieldInsn(Opcodes.GETSTATIC,
-                  Type.getInternalName(System.class), //"java/lang/System"
-                  "out",
-                  Type.getDescriptor(PrintStream.class) //"Ljava/io/PrintStream;"
-            );
-```
+	(2). 获取字符串常量"Hello World!"，其对应的指令为`ldc`，对应的 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 代码为：
+  ```bash
+  mv.visitLdcInsn("Hello World!");
+  ```
 
-(2). 获取字符串常量"Hello World!"，其对应的指令为`ldc`，对应的 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 代码为：
+	(3). 获取`PrintStream.println(String)`方法，其对应的指令为`invokervirtual`，对应的 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 代码为：
+  ```kotlin
+  mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                     Type.getInternalName(PrintStream.class), //"java/io/PrintStream"
+                     "println",
+                     "(Ljava/lang/String;)V",//方法描述符
+                     false);
+  ```
 
-
-
-```bash
-mv.visitLdcInsn("Hello World!");
-```
-
-(3). 获取`PrintStream.println(String)`方法，其对应的指令为`invokervirtual`，对应的 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 代码为：
-
-
-
-```kotlin
-mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                   Type.getInternalName(PrintStream.class), //"java/io/PrintStream"
-                   "println",
-                   "(Ljava/lang/String;)V",//方法描述符
-                   false);
-```
-
-3. **在`main`方法进入前，进行代码插入，可以通过`MethodVisitor.visitCode()`方法。**
-
-
-
+3.  **在`main`方法进入前，进行代码插入，可以通过`MethodVisitor.visitCode()`方法。**
 ```java
 // 在源方法前去修改方法内容,这部分的修改将加载源方法的字节码之前
 @Override
 public void visitCode() {
-      mv.visitCode();
-      System.out.println("method start to insert code");
-      sop("asm insert before");//this is the insert code
-    }
+mv.visitCode();
+System.out.println("method start to insert code");
+sop("asm insert before");//this is the insert code
+}
 ```
 
 4. **在`main`方法退出前，进行代码插入，可以通关过`MethodVisitor.visitInsn()`方法，通过判断当前的指令为`return`时，表明即将执行`return`语句，此时插入字节码即可。**
-
-
-
 ```java
 @Override
 public void visitInsn(int opcode) {
@@ -261,7 +246,6 @@ public void visitInsn(int opcode) {
 ```
 
 5. **字节码插入`class`文件成功后，导出字节码到原文件中。**
-
 ```java
 //获取改写后的class二进制字节码
 byte[] classFile = classWriter.toByteArray();
