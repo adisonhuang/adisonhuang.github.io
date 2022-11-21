@@ -2,7 +2,7 @@
 
 ## 前言
 
-前面一篇文章 [ASM 简介](https://www.jianshu.com/p/a85e8f83fa14) 对 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2Fu) 框架做了简单的介绍。
+前面一篇文章 [ASM 简介](https://blog.adison.top/front-end/android/system/asm-basic/) 对 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2Fu) 框架做了简单的介绍。
 
 本篇文章主要对该框架的 Core Api 其中重要的一些类进行详细的介绍，让大家可以更得心应手的使用 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2Fu)。
 

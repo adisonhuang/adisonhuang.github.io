@@ -1,6 +1,6 @@
 # ASM 简介
 
-## [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 简介
+## 1. [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 简介
 
 > [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 是一个 Java 字节码操控框架。它能被用来动态生成类或者增强既有类的功能。ASM 可以直接产生二进制 class 文件，也可以在类被加载入 Java 虚拟机之前动态改变类行为。Java class 被存储在严格格式定义的 .class 文件里，这些类文件拥有足够的元数据来解析类中的所有元素：类名称、方法、属性以及 Java 字节码（指令）。ASM 从类文件中读入信息后，能够改变类行为，分析类信息，甚至能够根据用户要求生成新类。
 
@@ -10,7 +10,7 @@
 
 知道了 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 的作用后，接下来我们就来看下 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 的执行模式，了解它的执行模式后，我们才能更好地使用。
 
-## [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 框架执行流程
+## 2. [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 框架执行流程
 
 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 提供了两组API：Core和Tree：
 
@@ -49,13 +49,13 @@
 
 至此，相信读者已经对 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 框架的执行过程有一定了解了。接下来我们还剩的一点内容就是如何实现`class`文件字节码的修改。
 
-## [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 字节码修改
+## 3. [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 字节码修改
 
 由于 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 是直接对`class`文件的字节码进行操作，因此，要修改`class`文件内容时，也要注入相应的`java`字节码。
 
 所以，在注入字节码之前，我们还需要了解下`class`文件的结构，JVM指令等知识。
 
-1. **`class`文件结构**
+### 3.1 `class`文件结构
     `Java`源文件经过`javac`编译器编译之后，将会生成对应的二进制`.class`文件，如下图所示：
 
 ![img](./assets/2222997-dc643ccf6579ab4b.webp)
@@ -77,7 +77,7 @@ class文件结构图
 - 每个类、字段、方法和方法代码的属性有属于自己的名称记录在类文件格式的JVM规范的部分，这些属性展示了字节码多方面的信息，例如源文件名、内部类、签名、代码行数、本地变量表和注释。JVM规范允许定义自定义属性，这些属性会被标准的VM（虚拟机）忽略，但是可以包含附件信息。
 - 方法代码表包含一系列对java虚拟机的指令。有些指令在代码中使用偏移量，当指令从方法代码被插入或者移除时，全部偏移量的值可能需要调整。
 
-1. **`Java`类型与`class`文件内部类型对应关系**
+### 3.2 `Java`类型与`class`文件内部类型对应关系
     `Java`类型分为基本类型和引用类型，在 JVM 中对每一种类型都有与之相对应的类型描述，如下表：
 
 | Java type  | JVM Type descriptor  |
@@ -116,7 +116,7 @@ Lorg/victorzhzh/core/structure/TypeDescriptors;
 Ljava/lang/String;    
 ```
 
-1. **`Java`方法声明与`class`文件内部声明的对应关系**
+### 3.3 `Java`方法声明与`class`文件内部声明的对应关系
     在·Java·的二进制文件中，方法的方法名和方法的描述都是存储在Constant pool 中的，且在两个不同的单元里。因此，方法描述中不含有方法名，只含有参数类型和返回类型。
 
 格式：(参数描述符)返回值描述符
@@ -129,12 +129,11 @@ Ljava/lang/String;
 |         Object m(int[] i)         | ([I]Ljava/lang/Object;  |
 |            String m()             |  ()Ljava/lang/String;   |
 
-1. **JVM 指令**
-    假设现在我们有如下一个类：
+### 3.4 JVM 指令
 
+假设现在我们有如下一个类：
 
-
-```csharp
+```java
 package com.yn.test;
 public class Test {
     public static void main(String[] agrs){
@@ -145,16 +144,14 @@ public class Test {
 
 我们先用`javac com/yn/test/Test.java`编译得到`Test.class`文件，然后再使用`javap -c com/yn/test/Test`来查看下这个`Test.class`文件的字节码，结果如下图所示：
 
-![img](https:////upload-images.jianshu.io/upload_images/2222997-5d7223825fa5e14c.png?imageMogr2/auto-orient/strip|imageView2/2/w/854/format/webp)
-
-Test.class字节码
+![img](./assets/2222997-5d7223825fa5e14c.webp)
 
 1. 上图中第3行到第7行，是类`Test`的默认构造函数（由编译器默认生成），`Code`以下部分是构造函数内部代码，其中：
 
 - **aload_0**：  这个指令是LOAD系列指令中的一个，它的意思表示装载当前第 0 个元素到堆栈中。代码上相当于“this”。而这个数据元素的类型是一个引用类型。这些指令包含了：ALOAD，ILOAD，LLOAD，FLOAD，DLOAD。区分它们的作用就是针对不用数据类型而准备的LOAD指令，此外还有专门负责处理数组的指令 SALOAD。
 - **invokespecial**： 这个指令是调用系列指令中的一个。其目的是调用对象类的方法。后面需要给上父类的方法完整签名。“#1”的意思是 .class 文件常量表中第1个元素。值为：“java/lang/Object."<init>":()V”。结合ALOAD_0。这两个指令可以翻译为：“super()”。其含义是调用自己的父类构造方法。
 
-1. 第9到14行是`main`方法，`Code`以下是其字节码表示：
+2. 第9到14行是`main`方法，`Code`以下是其字节码表示：
 
 - **getstatic**：   这个指令是GET系列指令中的一个其作用是获取静态字段内容到堆栈中。这一系列指令包括了：GETFIELD、GETSTATIC。它们分别用于获取动态字段和静态字段。此处表示的意思获取静态成员`System.out`到堆栈中。
 - **ldc**：这个指令的功能是从常量表中装载一个数据到堆栈中。此处表示从常量池中获取字符串"Hello World!"。
@@ -168,9 +165,7 @@ Test.class字节码
 
 现在假设我们想要在类`Test`的`main`方法前后动态插入代码，如下所示：
 
-
-
-```csharp
+```java
 package com.yn.test;
 public class Test {
     public static void main(String[] agrs){
@@ -185,9 +180,7 @@ public class Test {
 
 1. **读取`Test.class`文件，可以通过 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 提供的`ClassReader`类进行`class`文件的读取与遍历。**
 
-
-
-```cpp
+```java
 // 使用全限定名，创建一个ClassReader对象
 ClassReader classReader = new ClassReader("com.yn.test.Test");
 
@@ -201,9 +194,10 @@ ClassVisitor classVisitor = new TestClassVisitor(classWriter);
 classReader.accept(classVisitor, ClassReader.SKIP_DEBUG);
 ```
 
-1. **构造`System.out.println(String)`的 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 代码。**
+2. **构造`System.out.println(String)`的 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 代码。**
     上面我们从`javap`反编译得到的字节码可以知道，实现`System.out.println("Hello World!");`的字节码总共需要3步操作：
-    (1). 获取`System`静态成员`out`，其对应的指令为`getstatic`，对应的 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 代码为：
+    
+(1). 获取`System`静态成员`out`，其对应的指令为`getstatic`，对应的 [ASM](https://links.jianshu.com/go?to=http%3A%2F%2Fasm.ow2.org%2F) 代码为：
 
 
 
@@ -235,11 +229,11 @@ mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                    false);
 ```
 
-1. **在`main`方法进入前，进行代码插入，可以通过`MethodVisitor.visitCode()`方法。**
+3. **在`main`方法进入前，进行代码插入，可以通过`MethodVisitor.visitCode()`方法。**
 
 
 
-```csharp
+```java
 // 在源方法前去修改方法内容,这部分的修改将加载源方法的字节码之前
 @Override
 public void visitCode() {
@@ -249,11 +243,11 @@ public void visitCode() {
     }
 ```
 
-1. **在`main`方法退出前，进行代码插入，可以通关过`MethodVisitor.visitInsn()`方法，通过判断当前的指令为`return`时，表明即将执行`return`语句，此时插入字节码即可。**
+4. **在`main`方法退出前，进行代码插入，可以通关过`MethodVisitor.visitInsn()`方法，通过判断当前的指令为`return`时，表明即将执行`return`语句，此时插入字节码即可。**
 
 
 
-```csharp
+```java
 @Override
 public void visitInsn(int opcode) {
     //检测到return语句
@@ -266,11 +260,9 @@ public void visitInsn(int opcode) {
   }
 ```
 
-1. **字节码插入`class`文件成功后，导出字节码到原文件中。**
+5. **字节码插入`class`文件成功后，导出字节码到原文件中。**
 
-
-
-```go
+```java
 //获取改写后的class二进制字节码
 byte[] classFile = classWriter.toByteArray();
 // 将这个类输出到原先的类文件目录下，这是原先的类文件已经被修改
