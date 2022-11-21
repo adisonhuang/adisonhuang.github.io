@@ -77,6 +77,25 @@
 
      比如，设计稿宽度是360px，那么开发这边就会把目标dp值设为360dp，在不同的设备中，动态修改density值，从而保证(手机像素宽度)px/density这个值始终是360dp,这样的话，就能保证UI在不同的设备上表现一致了。   
 
+     ```java
+     public static void setCustomDensity
+        (Activity activity,final Application application){
+        final DisplayMetrics appDisplayMetrics
+            =application.getResource().getDisplayMetrics();
+            
+        final float targetDensity=appDisplayMetrics.widthPixels/360;
+        final int targetDensityDpi=(int)(160*targetDensity);
+        appDisplayMetrics.density=targetDensity;
+        appDisplayMetrics.densityDpi=targetDensity;
+        //Activty 的DisplayMetrics也要设置
+        final DisplayMetrics activityDisplayMetrics
+            =activity.getResource().getDisplayMetrics();
+            activityDisplayMetrics.density=targetDensity;
+        activityDisplayMetrics.densityDpi=targetDensity;
+        
+     }
+     ```
+
 !!! question "如何在代码中获取屏幕的宽高？"
 ??? note "回答"
     * 获取屏幕的宽高
