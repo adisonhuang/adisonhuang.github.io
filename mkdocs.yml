@@ -226,6 +226,7 @@ nav:
        - C++11 shared_ptr智能指针: native/basic/Cplus_shared_ptr.md
      - JNI:
        - JNI优化: native/JNI/JNI-op.md   
+       - JNI使用总结: native/JNI/Android-JNI.md   
      - 疑难问题:
        - dlopen时找不到__emutls_get_address符号: native/basic/__emutls_get_address.md      
   - 设计&架构:
