@@ -256,7 +256,7 @@ nav:
       - 各种单例写法: design/other/singleton_extra.md
   - 面试: 
     - interview/index.md
-    - Android::
+    - Android:
       - Android 四大组件: interview/android_components.md
       - Android 屏幕适配: interview/android_screen.md
       - Android 通信相关: interview/android_communication.md
