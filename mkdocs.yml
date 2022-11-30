@@ -288,7 +288,10 @@ nav:
       - 队列:
         - 常见队列实现: basic/algo/queue.md   
       - 递归:
-        - 常见递归算法: basic/algo/recursive.md    
+        - 常见递归算法: basic/algo/recursive.md  
+      - 排序与二分查找: 
+        - 常见排序算法: basic/algo/sort.md    
+        - 二分查找算法: basic/algo/bsearch.md    
   - 开发工具:
     - tools/index.md  
     - GIT:  
