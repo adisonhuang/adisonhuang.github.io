@@ -324,3 +324,5 @@ nav:
       - 高级排序算法: read/beautiful-algo/sort-advance.md   
       - 排序优化: read/beautiful-algo/sort-op.md   
       - 二分查找: read/beautiful-algo/bsearch.md   
+      - 跳表: read/beautiful-algo/skip-list.md   
+      - 散列表: read/beautiful-algo/hashmap.md   
