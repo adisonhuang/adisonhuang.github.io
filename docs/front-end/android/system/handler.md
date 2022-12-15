@@ -20,8 +20,8 @@ Android有大量的消息驱动方式来进行交互，比如Android的四剑客
 
 - **Looper** 有一个MessageQueue消息队列；
 - **MessageQueue** 有一组待处理的Message；
-- **Message **中有一个用于处理消息的Handler；
-- **Handler **中有Looper和MessageQueue。
+- **Message** 中有一个用于处理消息的Handler；
+- **Handler** 中有Looper和MessageQueue。
 
 ## 2、Message
 
@@ -113,17 +113,17 @@ MessageQueue(boolean quitAllowed) {
 
 !!!note ""
 
-		在整个消息机制中，而`MessageQueue`是连接Java层和Native层的纽带，换言之，Java层可以向MessageQueue消息队列中添加消息，Native层也可以向MessageQueue消息队列中添加消息，`MessageQueue`大部分核心方法都交给native层来处理，其中MessageQueue类中涉及的native方法如下：
+    在整个消息机制中，而`MessageQueue`是连接Java层和Native层的纽带，换言之，Java层可以向MessageQueue消息队列中添加消息，Native层也可以向MessageQueue消息队列中添加消息，`MessageQueue`大部分核心方法都交给native层来处理，其中MessageQueue类中涉及的native方法如下：
 	
-		```java
-		private native static long nativeInit(); //初始化
-		private native static void nativeDestroy(long ptr);//清理回收
-		private native void nativePollOnce(long ptr, int timeoutMillis);//提取消息队列中的消息
-		private native static void nativeWake(long ptr); //唤醒
-		private native static boolean nativeIsPolling(long ptr);
-		private native static void nativeSetFileDescriptorEvents(long ptr, int fd, int events);
-		```
-		> 具体参阅[Android消息机制](http://gityuan.com/2015/12/27/handler-message-native/)
+    ```java
+    private native static long nativeInit(); //初始化
+    private native static void nativeDestroy(long ptr);//清理回收
+    private native void nativePollOnce(long ptr, int timeoutMillis);//提取消息队列中的消息
+    private native static void nativeWake(long ptr); //唤醒
+    private native static boolean nativeIsPolling(long ptr);
+    private native static void nativeSetFileDescriptorEvents(long ptr, int fd, int events);
+    ```
+    > 具体参阅[Android消息机制](http://gityuan.com/2015/12/27/handler-message-native/)
 
 ### 3.2 添加一条消息到消息队列
 
@@ -468,7 +468,7 @@ HandlerThread 是 Thread 的子类，其作用就是为了用来执行耗时任�
 
 ### 7.2 IntentService
 
-ntentService 是系统提供的 Service 子类，用于在后台串行执行耗时任务，在处理完所有任务后会自动停止，不必来手动调用 `stopSelf()` 方法。而且由于IntentService 是四大组件之一，拥有较高的优先级，不易被系统杀死，因此适合用于执行一些高优先级的异步任务
+IntentService 是系统提供的 Service 子类，用于在后台串行执行耗时任务，在处理完所有任务后会自动停止，不必来手动调用 `stopSelf()` 方法。而且由于IntentService 是四大组件之一，拥有较高的优先级，不易被系统杀死，因此适合用于执行一些高优先级的异步任务
 
 **Google 官方以前也推荐开发者使用 IntentService，但是在 Android 11 中已经被标记为废弃状态了，新版本让考虑使用workmanager或者JobIntentService**
 
