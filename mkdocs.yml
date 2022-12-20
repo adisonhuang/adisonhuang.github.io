@@ -326,3 +326,4 @@ nav:
       - 二分查找: read/beautiful-algo/bsearch.md   
       - 跳表: read/beautiful-algo/skip-list.md   
       - 散列表: read/beautiful-algo/hashmap.md   
+      - 哈希算法: read/beautiful-algo/hashalgo.md
