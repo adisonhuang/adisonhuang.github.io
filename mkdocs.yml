@@ -186,6 +186,7 @@ nav:
       - Android 内存分析工具(MAT入门): perf-opt/Android/memory/MAT-Startup.md
       - Android 内存分析工具(MAT进阶): perf-opt/Android/memory/MAT-Advanced.md  
       - Android句柄泄漏分析: perf-opt/Android/memory/Android_fd_leak.md
+      - Android内存综合治理: perf-opt/Android/memory/android-memory-gov.md
     - 崩溃优化:
       - Android 崩溃优化: perf-opt/Android/crash/crash_op.md
       - Android 平台 Native 代码的崩溃捕获机制及实现: perf-opt/Android/crash/native-catch.md

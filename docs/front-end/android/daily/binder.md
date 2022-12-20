@@ -1,4 +1,3 @@
-> 摘自https://www.jianshu.com/p/a676a4378250
 
 ## 第一节:了解一些基础
 
@@ -107,7 +106,6 @@ mmap是操作系统中成熟的技术，只不过安卓把它巧妙的用在了b
 
 ![img](./26874665-f2e7e7794d716201.webp)
 
-image_cyhwHnapyC.png
 
 过程看起来没有几步，但是整个流程涉及复杂，从Java , jni ,native，再到内核，到binder驱动，会涉及很多代码文件。
  如下列表所示：
@@ -382,7 +380,6 @@ int misc_register(struct miscdevice *misc)
 
 ![img](./26874665-fd18091fc3ab6171.webp)
 
-image_yDShhjFAFK.png
 
 ### 4.2.ServiceManager服务初始化
 
@@ -837,7 +834,6 @@ status_t IPCThreadState::handlePolledCommands(){
 
 ![img](./26874665-5b18899ce722a478.webp)
 
-image_O_q_jLOpl-.png
 
 前面章节我们已经对某些概念有所涉及，我们这里再补充一下其中的一些重要概念：
 
@@ -1113,7 +1109,6 @@ status_t Parcel::writeStrongBinder(const sp<IBinder>& val){
 
 ![img](./26874665-70ac0b1b57b24668.webp)
 
-image_BolSgwRiOH.png
 
 相对应的，在远端需要有unflatten的过程：
 
@@ -1272,7 +1267,6 @@ public class ActivityManagerService extends IActivityManager.Stub{
 
 ![img](./26874665-23f2522b6d5ca925.webp)
 
-image_Ff5hLnxebj.png
 
 ### 6.2client调用addService()
 
@@ -1342,9 +1336,8 @@ client获取AMS服务使用的是SM提供的getService()接口，这里可以分
 
 SM进程在随着开机启动后，在binder驱动中处于read休眠状态，等待client线程来唤醒它。经过7.1节的步骤后，SM的binder线程就被唤醒了，处理它的checkService()工作。
 
-![img](https:////upload-images.jianshu.io/upload_images/26874665-9fd90ee9bd202f5c.png?imageMogr2/auto-orient/strip|imageView2/2/w/1200/format/webp)
+![img](./26874665-9fd90ee9bd202f5c.webp)
 
-image_lvrDNpoS2E.png
 
 重点步骤说明：
 
@@ -1455,3 +1448,6 @@ binder架构代码繁多，结构复杂，追源码很容易陷入代码的重�
 [android分析之Binder 01 - 徐小鱼 - 博客园 (cnblogs.com)](https://links.jianshu.com/go?to=https%3A%2F%2Fwww.cnblogs.com%2Flittlefishxu%2Fp%2F4003337.html)
 
 [理解Android Binder机制(1/3)：驱动篇 (paul.pub)](https://links.jianshu.com/go?to=https%3A%2F%2Fpaul.pub%2Fandroid-binder-driver%2F)
+
+## 参考
+摘自https://www.jianshu.com/p/a676a4378250
