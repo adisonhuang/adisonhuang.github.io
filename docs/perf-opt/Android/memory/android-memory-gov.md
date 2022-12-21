@@ -1,5 +1,93 @@
 # Android 内存综合治理
-## 图片检测&监控
+
+## 1. 内存基础监控
+
+### 1.1 简介
+内存基础监控主要负责对客户端的整体内存状态进行监控，借助线上海量用户的复杂案例来帮助我们发现在开发及测试阶段难以发现的问题，同时也能够帮助我们对客户端的内存使用情况进行分析，从而帮助我们优化客户端的内存使用情况。
+``
+监控模块主要实现对`虚拟内存`、`Java堆`、`FD数量`、`线程数量`、`PSS`、`Native Heap`的监控，根据系统限制或设置固定数值，定期查看其状态，同时我们把页面跳转时记录的内存数据记录在链路中进行上报，从而统计出应用运行过程中各个业务场景的内存状态。
+
+### 1.2. 核心源码
+```kotlin
+// FD数量,耗时一般
+fun getFds(): Int {
+    lastFDCount = 0
+    runCatching {
+        if (appFdFile == null) {
+            appFdFile = File("/proc/self/fd")
+        }
+        appFdFile?.listFiles { _, name -> TextUtils.isDigitsOnly(name) }
+            ?.size ?: 0
+    }.getOrDefault(0).also { lastFDCount = it }
+    return lastFDCount
+}
+
+
+/**
+ * Get Threads.
+ * 耗时一般
+ */
+fun getProcessStatus(): ProcessStatus {
+    val processStatus = ProcessStatus()
+    runCatching {
+        if (appStatusFile == null) {
+            appStatusFile = File("/proc/self/status")
+        }
+        appStatusFile?.useLines {
+            it.forEach { line ->
+                when {
+                    line.startsWith("VmSize") -> processStatus.vssKbSize = VSS_REGEX.matchValue(line)
+                    line.startsWith("VmRSS") -> processStatus.rssKbSize = RSS_REGEX.matchValue(line)
+                    line.startsWith("Threads") ->
+                        processStatus.threadsCount = THREADS_REGEX.matchValue(line)
+                }
+            }
+        }
+    }
+    lastProcessStatus = processStatus
+    return processStatus
+}
+
+
+/**
+ *  获取内存信息 比较耗时
+ */
+fun getProcessMemoryInfo(): ProcessMemInfo {
+    val memInfo = ProcessMemInfo()
+    runCatching {
+        val mi = Debug.MemoryInfo()
+        Debug.getMemoryInfo(mi)
+        if (Build.VERSION.SDK_INT >= 23) {
+            memInfo.javaHeapInKb = mi.getMemoryStat("summary.java-heap").toLong()
+            memInfo.nativeHeapInKb = mi.getMemoryStat("summary.native-heap").toLong()
+            memInfo.code = mi.getMemoryStat("summary.code").toLong()
+            memInfo.stack = mi.getMemoryStat("summary.stack").toLong()
+            memInfo.graphics = mi.getMemoryStat("summary.graphics").toLong()
+            memInfo.system = mi.getMemoryStat("summary.system").toLong()
+            memInfo.totalPssInKb = mi.getMemoryStat("summary.total-pss").toLong()
+            memInfo.totalSwap = mi.getMemoryStat("summary.total-swap").toLong()
+        } else {
+            memInfo.javaHeapInKb = mi.dalvikPrivateDirty.toLong()
+            memInfo.nativeHeapInKb = mi.nativePrivateDirty.toLong()
+//            val otherPrivateDirty = mi.otherPrivateDirty
+            memInfo.system = if (Build.VERSION.SDK_INT >= 19) {
+                mi.totalPss - mi.totalPrivateDirty - mi.totalPrivateClean
+            } else {
+                mi.totalPss - mi.totalPrivateDirty
+            }.toLong()
+            memInfo.totalPssInKb = mi.totalPss.toLong()
+        }
+    }
+    lastProcessMemInfo = memInfo
+    return lastProcessMemInfo
+}
+
+
+```
+
+## 2. 图片检测&监控
+
+### 2.1. 简介
 假设屏幕分辨率 `1080x1920`，一张 Bitmap 占满屏幕时内存大小是`1080x1920x4`，大约 8MB。所以一个不起眼的 Bitmap 占用的内存也远远大于多数对象。可见，如果应用内有许多不合理的图片，就会拉高内存水位。如下图， 目前88%以上的用户的手机是8.0及更高系统版本，它的内存申请是在Native层的。因此，图片内存的分析重点放在8.0以及更高的系统版本上。
 ![](./assets/20221219-110541.jpeg)
 
@@ -12,11 +100,14 @@
 
 这里hook的方案采用爱奇艺开源的`plt-hook`开源方案[xHook](https://github.com/iqiyi/xHook)来完成。关于`plt-hook`具体原理见[Native-Hook](https://blog.adison.top/perf-opt/Android/memory/Native-Hook/)。
 
+
 那怎么查找到这个函数呢？
 
 首先需要通过 `adb pull system/lib/libandroid_runtime.so` 拿到系统的so文件，然后通过`arm-linux-androideabi-nm -D libandroid_runtime.so | grep bitmap` ，可以查找到对应的函数名，也就是我们要hook的函数，系统版本不同可能会有差异，注意兼容。
 
 ![](./assets/38p4h4ny9u.png)
+
+### 2.2. 实现
 
 核心源码如下：
 
@@ -205,7 +296,7 @@ public class GlideImageListener<R> implements RequestListener<R> {
 ```
 > 对于通过图片控件方法直接设置图片的情况，如`setImageDrawable`，`setImageBitmap`等，我们可以通过hook控件的相关方法来实现。这里要求项目最好有一套自己的控件系统，这样可以方便统一处理。
 
-### 小结
+### 2.3. 小结
 
 这样，我们就能得到应用创建的`Bitmap的内存大小`，`加载的view的大小`、`图片文件大小`等信息，通过这些信息，我们可以对图片进行优化，比如：
 1. 是否存在过大内存的图片
@@ -262,6 +353,12 @@ public class GlideImageListener<R> implements RequestListener<R> {
         }
     }
     ```
+
+## 3. 资源泄露/触顶
+
+### 3.1. 线程泄露
+
+### 3.2. 资源使用触顶监控
 
 
 ## 参考
