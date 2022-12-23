@@ -210,7 +210,8 @@ nav:
       - Bitmap从出生到死亡: perf-opt/Android/bitmap/bitmap-from-birth-to-death.md
       - Bitmap 内存占用分析: perf-opt/Android/bitmap/bitmap-memory.md
       - Glide 核心知识: perf-opt/Android/bitmap/glide.md
-    - 性能分析命令:
+    - 基础:
+      - native-hook: perf-opt/Android/memory/Native-Hook.md
       - dumpsys: perf-opt/Android/command/dumpsys.md
       - top命令: perf-opt/Android/command/top.md     
   - Native:
@@ -328,3 +329,6 @@ nav:
       - 跳表: read/beautiful-algo/skip-list.md   
       - 散列表: read/beautiful-algo/hashmap.md   
       - 哈希算法: read/beautiful-algo/hashalgo.md
+      - 二叉树: read/beautiful-algo/binary-tree.md
+      - 红黑树: read/beautiful-algo/Red-Black-Tree.md
+      - 递归树: read/beautiful-algo/digui-tree.md
