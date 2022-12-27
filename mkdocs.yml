@@ -333,3 +333,4 @@ nav:
       - 二叉树: read/beautiful-algo/binary-tree.md
       - 红黑树: read/beautiful-algo/Red-Black-Tree.md
       - 递归树: read/beautiful-algo/digui-tree.md
+      - 堆: read/beautiful-algo/heap.md
