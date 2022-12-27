@@ -8,7 +8,7 @@
 
 在前文`Android`卡顿掉帧问题分析之原理篇的内容中，我们以滑动场景为例完整的分析了`Android`应用上帧显示的全流程（默认开启硬件绘制加速条件下）。下面我们用一张图来看看这个流程上可能引起卡顿、反应延迟等性能问题的点。
 
-![img](./26874665-aace8086c1dcacdf.webp)
+![img](./assets/26874665-aace8086c1dcacdf.webp)
 
 
 从上图可以看出，在`Android`应用上帧显示的各个流程上都可能出现问题导致出现卡顿、反应延迟等性能问题。下面我们分类来分析一下各个流程上可能的引起卡顿等性能问题的点。
@@ -26,7 +26,7 @@
 
 **问题分析**：结合`Systrace`工具分析问题原因如下：
 
-![img](./26874665-aace8086c1dcacdf的副本.webp)
+![img](./assets/26874665-aace8086c1dcacdf的副本.webp)
 
 
 从以上问题`Systrace`的分析可以看出，出现桌面滑动卡顿的原因是：
@@ -53,7 +53,7 @@
 
 **问题分析**：结合`Systrace`工具分析问题原因如下：
 
-![img](./26874665-7a487dfaa52f65da.webp)
+![img](./assets/26874665-7a487dfaa52f65da.webp)
 
 
 从以上问题`Systrace`的分析可以看出，退出应用界面时出现卡住几秒的原因：
@@ -104,7 +104,7 @@ case MSG_TIMEOUT_INPUT_EVENT: {
 
 对用户触控事件的响应速度直接关系到用户对交互设备性能体验的感知，所以一直以来都是系统性能优化工作的重中之重。多年来谷歌，包括`SOC`厂商都有针对系统`Input`事件的处理流程作出优化，以提升触控响应速度。例如高通基线上在`2018`年左右就有一笔提交，优化应用进程侧的`Input`事件处理流程，大概思路就是识别应用`UI`线程中收到第一个`ACTION_DOWN`的`Touch`事件后，调用`sendMessageAtFrontOfQueue`接口在应用`UI`线程的消息队列的最前面插入一帧`doFrame`绘制任务，这样界面不用等待下一个`Vsync`的信号的到来就能直接上帧显示，从而减少整个`Input`触控事件的响应延迟。从`Systrace`上表现如下图所示：
 
-![img](./26874665-4f9fc137b91fb3e8.webp)
+![img](./assets/26874665-4f9fc137b91fb3e8.webp)
 
 
 国内各大手机厂商也有各自的优化方案。比如硬件上采用触控采样率更高的屏幕，屏幕触控采样率达到`240HZ`甚至`480HZ`。再比如监控到触控事件后提升`CPU`主频，提升触控事件处理相关线程和渲染线程的优先级等方式，从而优化事件触控响应速度。而对于应用`APP`开发者来说，需要做的就是避免在`Input`触控事件的分发处理流程中执行耗时操作，以免引起触控延迟或卡顿等性能问题。
@@ -127,7 +127,7 @@ case MSG_TIMEOUT_INPUT_EVENT: {
 
 **问题分析**：结合`Systrace`工具分析问题原因如下：
 
-![img](./26874665-d51c58d1f9db6fa1.webp)
+![img](./assets/26874665-d51c58d1f9db6fa1.webp)
 
 
 从`Systrace`上可以看到，应用`UI`线程上帧的`doFrame`流程中主要耗时点在`buildDrawingCache`的流程上。下面我们结合源码来看看什么情况下`draw`流程中会出现`buildDrawingCache`的动作：
@@ -160,7 +160,7 @@ public RenderNode updateDisplayListIfDirty() {
 
 **问题分析**：结合`Systrace`工具分析问题原因如下：
 
-![img](./26874665-89c16b8af8a2eab5.webp)
+![img](./assets/26874665-89c16b8af8a2eab5.webp)
 
 
 从`Systrace`上可以看到，三方应用`Twitter`出现掉帧的主要原因是：其`UI`线程中存在大量耗时的`inflate`解析`xml`布局文件的操作，且出现问题时`UI`线程已经持续`Running`到`CPU 5`大核心上但是还是出现严重的上帧超时。
@@ -187,7 +187,7 @@ public RenderNode updateDisplayListIfDirty() {
 
 **问题分析**：结合`Systrace`工具分析问题原因如下：
 
-![img](./26874665-cec73e6e0a8bb134.webp)
+![img](./assets/26874665-cec73e6e0a8bb134.webp)
 
 
 从`Systrace`上可以看到，开启录屏或投屏后，部分`Layer`需要采用效率更低的`GPU`合成方式（主要是因为高通平台`HWC`不支持回写），`SurfaceFlinger`的主线程中需要实现`drawLayers`的动作，还需要将图层数据写入到`MediaCodec`缓存中，总体负载较高，导致在`8ms`（`120HZ`高刷模式下）内无法完成一帧数据的处理而出现帧率下降的问题。
@@ -217,7 +217,7 @@ public RenderNode updateDisplayListIfDirty() {
 
 `CPU`算力资源绝对是系统内最重要的公共资源之一，每个应用程序的正常运行都需要`CPU`的调度执行。目前的主流移动设备搭载的`CPU`基本上都是采用多核心架构设计，按照算力的大小设置有多颗`CPU`运算核心（以高通最新的骁龙`8 gen 1`处理器为例，其拥有`8`颗`CPU`运算核心，包含四个小核、三个中核和一个大核，算力依次递增，功耗也逐渐增大）。
 
-![img](./26874665-c490a3f772d7b6c1.webp)
+![img](./assets/26874665-c490a3f772d7b6c1.webp)
 
 
 且`Linux`操作系统内核中会有相应的`scheduler`和`governor`调度器，来管理每颗`CPU`核心上当前运行的任务的排程，以及每颗`CPU`核心当前运行的主频（每颗`CPU`核心都有一个运行主频参数可以支持在一定的范围内动态调节，主频越高算力越强，相应的功耗也就越大）、节能状态等参数，以达到最佳的性能与功耗的平衡。但是很多时候由于`CPU`运行核心上的任务排布不合理，或运行主频过低导致的算力过低，无法满足应用进程的需求，就可能导致应用出现卡顿掉帧等性能问题。常见的一些原因如下：
@@ -233,7 +233,7 @@ public RenderNode updateDisplayListIfDirty() {
 
 **问题分析**：结合`Systrace`工具分析问题原因如下：
 
-![img](./26874665-4d93a840721351f3.webp)
+![img](./assets/26874665-4d93a840721351f3.webp)
 
 
 从`Systrace`上可以看到：腾讯视频播放视频时出现掉帧卡顿的原因，是因为其负责弹幕上帧的线程无法获得`CPU`运行资源，而长时间处于`Runnable`状态，导致上帧出现严重超时。
@@ -247,7 +247,7 @@ public RenderNode updateDisplayListIfDirty() {
 
 **问题分析**：结合`Systrace`工具分析问题原因如下：
 
-![img](./26874665-a2f87911188610bf.webp)
+![img](./assets/26874665-a2f87911188610bf.webp)
 
 
 从`Systrace`上可以看到：前台应用桌面出现掉帧的原因是其`UI`线程抢不到`CPU`运算资源而长时间处于`Runnable`状态。而此时，`CPU`上分布有大量后台应用的任务持续运行。出现这个问题的原因是国内部分应用存在很多进程保活机制，会在后台持续运行，并想方设法提升其进程的优先级。所以在系统关闭了相关针对性的管控后就会出现问题。
@@ -259,14 +259,14 @@ public RenderNode updateDisplayListIfDirty() {
 针对`CPU`调度问题引起的性能卡顿问题，常见的优化思路有：
 
 1. **基于`cgroup`的进程资源隔离**。`Android`系统上继承了`linux`的`cgroup`机制，以控制进程的资源占用，让重要的进程获得更多的系统资源。涉及的系统资源如下图所示：
-![img](./26874665-bf1c9e1000ab9fb9.webp)
+![img](./assets/26874665-bf1c9e1000ab9fb9.webp)
 **其中`cpuset`（可以实现限制进程只能运行在指定的`CPU`核心上）、`cpuctl`（可以实现控制前后台进程的`CPU`用量）和`freezer`（可以实现控制进程处于冻结休眠状态，完全放弃`CPU`执行权）就是对进程`CPU`资源的控制**。后面的`top-app`标识当前进程所属的资源分组。`cgroup`机制中会将不同的运行进程分成不同的资源组，比如前台应用属于`top-app`组，后台应用属于`background`组。不同的组可以支持配置不同的资源使用权限（比如通过`cpuset`的配置，`background`组中的进程被限制只能运行在`cpu 0-3`三个小核心上，而处于`top-app`组中的进程可以使用所有的`cpu`核心资源）。以`cpuset`为例，如下图所示：
-![img](./26874665-ee4dbddcba47e604.webp)
-![img](./26874665-6889a0d4aba1792a.webp)
+![img](./assets/26874665-ee4dbddcba47e604.webp)
+![img](./assets/26874665-6889a0d4aba1792a.webp)
 通过这种限制后台不重要的进程的`CPU`资源占用，从而让前台重要的应用进程获得更多的`CPU`资源（至于进程的前后台优先级定义，主要是由框架`AMS`服务来管理维护，通过写进程的`oom_score_adj`值来标识）。国内各大手机厂商的系统性能优化的策略中，有很大一部分工作都是依赖于`cgroup`机制来实现的，**通过对系统资源精细的定义划分，和应用进程优先级与功能场景的精准识别，来实现对资源的合理分配，达到性能与功耗的最佳平衡。**
 2. **基于场景识别的`CPU`调度策略配置**。主要工作包括：
 	- 对`CPU`基础配置影响各核的性能输出：包括`CPU Frequency`运行主频调节、排程器大核小核工作分配策略`upmigrate/downmigrate/sched_boost`的调节（根据`CPU`各核心的任务负载，对线程任务进行大小核分布的迁移调整），以上都是通过`Soc`厂商提供的`Perf`服务接口设置参数，去写相关的设备节点实现，以高通平台为例相关节点如下图所示：
-  ![img](./26874665-e61db864e53d39f1.webp)
+  ![img](./assets/26874665-e61db864e53d39f1.webp)
    **还有温控策略的配置调整**（出于功耗与发热的考量，移动设备上温控机制`thermal-engine`服务，会根据遍布设备内部的各个温度传感器读取的温度值，按照一定的温度阈值对`CPU`运行主频进行限制，以防止设备过热）；
 	- 对场景的定义识别与策略配置：比如定义应用冷启动场景，在框架进行识别，并动态将`CPU`主频进行拉升一段时间，以提升应用打开速度；定义视频播放的场景，在框架进行识别，然后对`CPU`主频进行限频，在保证播放流畅的前提下，尽量降低功耗和发热；这块也属于国内各大手机厂商的系统性能优化的核心工作。**如何实现精确的场景定义与识别，精准控制`CPU`的性能输出，用最小的功耗，保证应用界面的流畅运行，就是对厂商功力的考验**。
 
@@ -278,7 +278,7 @@ public RenderNode updateDisplayListIfDirty() {
 
 `GPU`算力资源是继`CPU`算力外，系统内另一个重要的公共资源，从前文`Android`应用上帧显示的流程分析可知，应用对每一帧画面的渲染处理都离不开`GPU`算力的支撑。和`CPU`类似，设备的`GPU`也有自己的运行主频（运行主频越高，算力越强，同时发热也就越大），且支持在一定的范围内调节，以实现功耗和性能的最佳平衡。以高通`SM8450`平台所搭载的型号为`Adreno 730`的`GPU`为例，其参数信息如下图所示：
 
-![img](./26874665-8f4b1f0a0f5165ef.webp)
+![img](./assets/26874665-8f4b1f0a0f5165ef.webp)
 
 
 从上图可以看到，`GPU`支持在一定的范围内动态调节运行主频，`Soc`厂商和国内的手机厂商会根据任务负载和使用场景，动态调节`GPU`的工作频率以实现功耗与性能的最佳平衡。但是如果调节不合理，就可能引起性能问题，常见的一些原因如下：
@@ -294,7 +294,7 @@ public RenderNode updateDisplayListIfDirty() {
 
 **问题分析**：结合`Systrace`工具分析问题原因如下：
 
-![img](./26874665-a02964bc73a3a0b4.webp)
+![img](./assets/26874665-a02964bc73a3a0b4.webp)
 
 
 从上图的`Systrace`可以看出，`UC`浏览器出现上帧超时的主要原因是，其`RenderThread`渲染线程长时间阻塞在`queueBuffer`上帧的流程上，而`queueBuffer`阻塞在`SurfaceFlinger`进程那边的`Binder`响应，而`SurfaceFlinger`进程中又需要等待`GPU`那边完成画面渲染处理的`fence`信号的（从应用进程侧的`waiting for GPU completion`的`systrace tag`也能看出）。如下简化代码所示：
@@ -335,7 +335,7 @@ status_t BufferQueueProducer::queueBuffer(int slot,
 
 内存也绝对算的上是一个重要的系统公共资源，系统内任何进程的正常运行都需要消耗一定的内存资源。一般来讲设备的`RAM`硬件物理内存的大小是固定且有限的（`4G、8G或12G`等），而系统内运行的所有进程都需要共享这些有限内存资源。如何用有限的内存资源去满足系统各个应用进程无限的需求，这就涉及到一个系统内存管理的逻辑。这是一个复杂的问题，几乎贯穿了整个`Android`系统的各个层级。从`Linux`内核到`Art`虚拟机，再到`Framework`框架，甚至到`APP`应用，都会有各自的内存管理的策略。关于`Android`系统的内存管理的详细逻辑，由于篇幅所限本文就不详细展开。我们以`systemui`应用进程为例，来看看一个普通应用进程的内存占用分布：
 
-![img](./26874665-ce6add28d0aa0d30.webp)
+![img](./assets/26874665-ce6add28d0aa0d30.webp)
 
 
 **合理的内存的分配与管理无论对系统和应用来讲都至关重要。因为内存问题既能引发稳定性问题，也能引发卡顿性能问题。** 下面我们分别来分析一下：
@@ -347,7 +347,7 @@ status_t BufferQueueProducer::queueBuffer(int slot,
 	- `32`位的应用虚拟内存的寻址空间最大为`4G`，当应用进程的虚拟内存占用超过`4G`时，就无法继续为其分配内存，产生`OOM`类型的报错，出现应用崩溃或黑屏等问题。
 	- 另外Android系统基于Linux内核，也绩承了Linux系统对应用进程的相关限制。如果应用进程中开启的线程过多（每创建一个空线程也会有一定的内存开销），超过/proc/sys/kernel/threads-max中定义的上限，也会报出OOM异常导致应用进程崩溃；再比如应用进程中打开的文件句柄过多，超过/proc/pid/limits节点中的定义上限，也会报出OOM异常导致应用进程崩溃。如下图所示：
 
-     ![img](./26874665-d5a6371e611c9dc2.webp)
+     ![img](./assets/26874665-d5a6371e611c9dc2.webp)
 
      
 
@@ -363,7 +363,7 @@ status_t BufferQueueProducer::queueBuffer(int slot,
 
 **问题分析**：结合`Systrace`工具分析问题原因如下：
 
-![img](./26874665-a3acabaadf526667.webp)
+![img](./assets/26874665-a3acabaadf526667.webp)
 
 
 从`Systrace`上可以看到，唯品会应用出现掉帧卡顿的主要原因如下：
@@ -398,12 +398,12 @@ status_t BufferQueueProducer::queueBuffer(int slot,
 
 磁盘是现代计算机系统实现数据持久化存储的核心硬件模块。也是继`CPU`和内存外系统内另一个重要的公共资源。`Android`系统内应用程序的运行一般都会伴随有大量的磁盘`I/O`读写的操作，比如读写数据库、加载`XML`布局文件、读取配置文件等。但是相对于`CPU`和内存相比，磁盘的读写访问速度是比较慢的，很容易成为`CPU`运行的瓶颈，导致系统被拖累。当应用进程的线程中发生直接`I/O`磁盘读写时，就会导致线程进入`Uninterrupt Sleep-Block I/O`阻塞状态，如下图所示：
 
-![img](./26874665-e7bbb51ea78c18a7.webp)
+![img](./assets/26874665-e7bbb51ea78c18a7.webp)
 
 
 在开始分析磁盘`I/O`读写的瓶颈引起性能问题原因之前，我们先借用一张简化图来总体看看`Linux`系统的`I/O`栈：
 
-![img](./26874665-4d46c4d298a1badf.webp)
+![img](./assets/26874665-4d46c4d298a1badf.webp)
 
 
 从上图可以看出，整个`Linux` 下的 `I/O`栈大致有三个层次：
@@ -432,7 +432,7 @@ status_t BufferQueueProducer::queueBuffer(int slot,
 	- 采用读写性能更强的闪存器件，比如最新的`UFS 3.1`；
 	- **启用`fstrim`磁盘碎片整理功能**，在息屏、充电等条件下触发磁盘碎片整理的动作，从而减少磁盘碎片，提升磁盘读写性能；系统手机管家模块可以引导用户定期进行垃圾文件的清理，以保证磁盘有充足的剩余空间；
 	- 基于mmap内存映射机制，将系统运行常访问的文件Lock锁定到内存缓存中，以提升文件读写的性能，减少真正发生I/O磁盘读写的概率，减轻系统的I/O负载。Android系统框架中的PinnerService服务主要职责就是这个，如下图所示：
-     ![img](./26874665-c5e463bd17032cc3.webp)
+     ![img](./assets/26874665-c5e463bd17032cc3.webp)
 
 
 2. 从应用开发者角度：
@@ -456,7 +456,7 @@ status_t BufferQueueProducer::queueBuffer(int slot,
 
 所以`ART`虚拟机在执行一个函数过程中会在 `Interpreter` 解释器模式和`quick code`模式切换，具体切换规则如下图所示：
 
-![img](./26874665-59ab22875d3a5b11.webp)
+![img](./assets/26874665-59ab22875d3a5b11.webp)
 
 
 从上图可以看出，有些时候应用部分代码还是按照`Interpreter` 模式执行，运行效率较低，从而产生一些性能问题。
@@ -469,11 +469,11 @@ status_t BufferQueueProducer::queueBuffer(int slot,
 
 **问题分析**：结合`Systrace`工具分析问题原因如下：
 
-![img](./26874665-8b2b8766f082418f.webp)
+![img](./assets/26874665-8b2b8766f082418f.webp)
 
 
 
-![img](./26874665-444bfb813379f6d5.webp)
+![img](./assets/26874665-444bfb813379f6d5.webp)
 
 
 
@@ -500,7 +500,7 @@ status_t BufferQueueProducer::queueBuffer(int slot,
 
 
 
-![img](./26874665-d42104ef6fd35d45.webp)
+![img](./assets/26874665-d42104ef6fd35d45.webp)
 
 
 从上图可以看出：抖音应用界面卡顿的原因是因为其`UI`线程抢不到`CPU`算力资源而长时间处于`Runnbale`状态，而导致这个问题的很大一部分原因就是此时后台`dex2oat`进程创建多个线程持续执行应用编译动作抢占`CPU`算力资源。

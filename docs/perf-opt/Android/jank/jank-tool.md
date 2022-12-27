@@ -12,7 +12,7 @@
 
 
 
-![img](./26874665-51166962b76ca386.webp)
+![img](./assets/26874665-51166962b76ca386.webp)
 
 
 如上图所示，`Systrace` 中 `CPU Trace`一般在最上面显示，展示`Kernel`中的 `CPU Info` 区域信息，一般包含如下信息：
@@ -29,11 +29,11 @@
 
 5. 每颗`CPU`核心上运行的线程任务信息与统计，按时间轴排开；
 
-   ![img](./26874665-5499aaaf78f5d96f.webp)
+   ![img](./assets/26874665-5499aaaf78f5d96f.webp)
 
    
 
-   ![img](./26874665-87d853195aa59186.webp)
+   ![img](./assets/26874665-87d853195aa59186.webp)
 
    
 
@@ -48,7 +48,7 @@
 
 在上一篇文章中我们完整的分析了`Android`应用上帧显示的全部流程，其中包含了`Android`渲染显示系统的核心逻辑，这部分内容在`Systrace`上也有完整的展示，如下图所示：
 
-![img](./26874665-39a8bf09b11b7b41.webp)
+![img](./assets/26874665-39a8bf09b11b7b41.webp)
 
 
 
@@ -64,7 +64,7 @@
 
 总的来说，**`Systrace`中的渲染显示系统这部分能够帮助我们判断界面是否有掉帧以及掉帧产生原因的分析方向**，主要分析流程如下图所示：
 
-![img](./26874665-fe11cd84db105f47.webp)
+![img](./assets/26874665-fe11cd84db105f47.webp)
 
 
 
@@ -74,7 +74,7 @@
 
 `Input` 是 `System Server` 进程中非常重要的一部分，主要是由 `InputReader` 和 `InputDispatcher` 这两个 `Native` 子线程组成，关于这一部分在上一篇文章中已经从原理机制并结合`Systrace`详细分析过，这里就不再展开分析。我们回顾一下这边部分内容在`Systrace`上的表现：
 
-![img](./26874665-bf0d7882a8e13117.webp)
+![img](./assets/26874665-bf0d7882a8e13117.webp)
 
 
 
@@ -84,14 +84,14 @@
 
 `ActivityManagerService`（以下简称`AMS`）属于系统框架`System Server`中运行的核心服务之一，主要负责应用进程和四大组件的管理。是与应用`App`进程之间产生`Binder`交互最多的系统服务之一。谷歌原生的`AOSP`代码中就在`AMS`服务管理的进程和四大组件的各种场景下有对应的`Trace`点来记录，比如大家熟悉的 `ActivityStart`、`ActivityResume`、`activityStop` 等，与`AMS`相关的`Trace`一般会用`TRACE_TAG_ACTIVITY_MANAGER`这个`TAG`，在 `Systrace` 中对应的名字是 `ActivityManager` 。以桌面打开应用冷启动场景为例，`AMS`需要为应用创建一个新的进程，此过程在`AOSP`代码中就有相关的`AMS`相关的`Trace`埋点记录，如下图所示：
 
-![img](./26874665-621f6481235edc2e.webp)
+![img](./assets/26874665-621f6481235edc2e.webp)
 
 
 
 
 对应`Systrace`上表现如下图所示：
 
-![img](./26874665-8c60049a67cd48cc.webp)
+![img](./assets/26874665-8c60049a67cd48cc.webp)
 
 
 
@@ -99,7 +99,7 @@
 
 `WindowManagerService`（以下简称`WMS`） 属于系统框架`System Server`中运行的核心服务之一，主要负责应用窗口管理、窗口动画管理、`Surface`管理和`Input`触控事件的管理。也是与应用`App`进程之间产生`Binder`交互最多的系统服务之一。谷歌原生的`AOSP`代码中就在`WMS`窗口管理等核心流程上有对应的`Trace Tag`埋点来记录。与`WMS` 相关的 `Trace` 一般会用 `TRACE_TAG_WINDOW_MANAGER` 这个 `TAG`， 在 `Systrace` 中对应的名字是 `WindowManager` 。继续以上面的桌面打开应用冷启动场景为例，应用启动后创建第一个`Activity`界面后，在绘制第一帧画面时需要通过`Binder`访问框架`WMS`服务的`relayoutWindow`接口，以实现计算应用窗口的大小和申请一张可用`Surface`画布等逻辑，关于这块详细的分析请参考笔者之前的文章https://www.jianshu.com/p/37370c1d17fc。从`Systrace`上看如下图所示：
 
-![img](./26874665-e5ba86769b3a8c6e.webp)
+![img](./assets/26874665-e5ba86769b3a8c6e.webp)
 
 
 
@@ -107,14 +107,14 @@
 
 上面描述的`AMS`、`WMS`等系统框架核心管理服务，其具体逻辑最终都需要运行在具体的线程中。为此`system_server`进程中设计了很多继承于`HandlerThread`（自带`Looper`消息循环的线程）的核心工作线程，负责执行不同分类业务的逻辑。比如有专门负责系统`UI`展示的`UiThread`线程（源码实现位于`framework/base/services/core/java/com/android/server/UiThread.java`），线程名为“`android.ui`”，在`Systrace`上的显示如下图所示：
 
-![img](./26874665-a7e2d88aa0f363bd.webp)
+![img](./assets/26874665-a7e2d88aa0f363bd.webp)
 
 
 
 
 比如负责窗口动画展示的`AnimationThread`，线程名为“`android.anim`”，在`Systrace`上的显示如下图所示：
 
-![img](./26874665-12d242c98c8e9912.webp)
+![img](./assets/26874665-12d242c98c8e9912.webp)
 
 
 
@@ -165,7 +165,7 @@ private Watchdog() {
 
 a.**`Binder`是`Android`系统中最广泛使用的跨进程通信机制，应用进程与系统框架`system_server`进程之间的大部分跨进程通信机制都是通过`Binder`来实现的**，它就像“神经网络”一样遍布于`Android`系统的整个运行体系中。例如应用通过`startActvity`启动一个新的`Activity`页面，或者`sendBroadcast`发送一条广播，都需要通过`Binder`发送相关的请求到框架`system_server`进程中具体处理与实现。所以框架`system_server`进程中很多时候都在处理应用进程的各种`Binder`请求与响应的逻辑。关于`Binder`的详细实现原理与架构设计可以参考这篇文章[https://juejin.cn/post/6955298955307515917](https://links.jianshu.com/go?to=https%3A%2F%2Fjuejin.cn%2Fpost%2F6955298955307515917)，本节内容重点在于描述其在`Systrace`上的表现，就不再详细展开分析。在抓取`Systrace`时注意选择开启`binder_lock`和`binder_driver`两个追踪选项，就能在`Systrace`上看到完整的`Binder`调用事件信息流。我们还是以从桌面打开应用冷启动的场景为例，桌面应用中需要启动三方应用时，通过`Binder`调用框架`AMS`服务中的`startActivity`接口来实现，相关`Binder`调用过程在`Systrace`上看如下图所示：
 
-![img](./26874665-41a05ffe685c0256.webp)
+![img](./assets/26874665-41a05ffe685c0256.webp)
 
 
 
@@ -173,7 +173,7 @@ a.**`Binder`是`Android`系统中最广泛使用的跨进程通信机制，应�
 b.从上面的分析可以看到，很多时候框架`system_server`进程中都在阻塞式的处理应用的各种`Binder`跨进程访问与请求。**但是很多时候`system_server`进程在处理应用的`Binder`请求时，内部都是阻塞在了各种同步锁的竞争与等待的流程上（`AMS`和`WMS`等核心服务运行时内部都拥有各自的相关锁对象，且往往很容易存在相互持有锁和锁竞争的逻辑），间接导致对应用的`Binder reply`响应变慢，从而最终导致应用出现卡顿或反应慢等性能问题**。`system_server`进程内部的这些锁竞争与等待的问题，轻则导致应用和系统的卡顿与反应慢的问题，重则出现死锁而导致系统冻屏、重启(`WatchDog`触发）等严重问题。所以`system_server`进程内部的工作线程之间的锁等待问题的优化，一直以来都是谷歌和国内各大手机厂商们做`Android`系统性能优化的重点工作之一。当然要想合理优化减少这些线程之间的锁等待现象，需要在深入分析了解系统相关源码流程的基础上才能作出合理的改善与优化，这是一个考验相关参与系统性能优化人员水平的问题，也需要时间与经验的沉淀。本小节中先带大家来了解一下如何从`Systrace`上的显示来入手分析这种锁竞争等待的问题：
 首先我们来看看`Systrace`上显示的锁相关的信息，如下图所示：
 
-![img](./26874665-62e32e10171ffe3e.webp)
+![img](./assets/26874665-62e32e10171ffe3e.webp)
 
 
 其实`Systrace`上显示的锁相关的信息（谷歌通过在`art`虚拟机的`monitor`对象锁实现的源码流程中增加相关的`Trace TAG`埋点实现，相关源码位于`art/runtime/monitor.cc`中，感兴趣的读者可以自行去阅读一下），已经基本上包含了我们分析锁竞争等待问题所需要的全部有效信息。上图中展示的这段锁相关信息翻译一下描述如下：
@@ -212,7 +212,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 然后我们再从`Systarce`上总体来看看这个`mGlobalLock`对象锁的竞争等待状态：
 
-![img](./26874665-ac70f3bfb8fc0183.webp)
+![img](./assets/26874665-ac70f3bfb8fc0183.webp)
 
 
 上图中可以看到 `mGlobalLock` 这个对象锁的争夺情况：
@@ -231,14 +231,14 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 **如果说前面讲解的`Systrace`上的显示的内容通常`Android`系统开发者们关注的会多一些，那么本节中所描述的`Systrace`上应用进程`APP Trace`信息区域则需要`APP`应用开发者格外的关注**。分析`Systrace`上这块区域的显示内容，我们一般主要看的是`UI Thread`和`Render Thread`两个线程的显示，因为从上一篇文章中关于`Android`应用上帧显示的原理的内容中的分析我们知道，这两个线程是应用进程中直接负责界面上帧显示的工作线程。当然`Systrace`上还有很多应用进程中还有很多其它线程的信息，如与`GC`相关的`HeapTaskDeamon`线程、负责动态编译机器码的`JIT`线程等，甚至很多应用开发者自己创建并定义的工作线程，关于这些线程的分析开发者可以根据自身问题和业务的需要进行，本文就不再涉及。
 根据前文的分析可知，`UI Thread`和`Render Thread`都是自带`Looper`的消息循环线程，由系统创建应用进程后统一为应用创建启动，主要负责应用界面的`UI`界面的更新上帧显示和应用四大组件生命周期的处理。`Systrace`上的表现前文中（参考上一篇文章中已经详细分析过）已经分析过，如下图所示：
 
-![img](./26874665-acbd3d9662cd3529.webp)
+![img](./assets/26874665-acbd3d9662cd3529.webp)
 
 
 
 
 分析`Systrace`线程上每一段`Trace TAG`的详细运行情况如下图所示：
 
-![img](./26874665-0863becef6bbd295.webp)
+![img](./assets/26874665-0863becef6bbd295.webp)
 
 
 通过分析线程每一段`Trace TAG`执行过程的线程排程使用状态中`Running`、`Sleeping`、`Runnable`以及`Uninterruptible Sleep`占用比例和时长等信息，再结合对应的`tag`信息，我们可以看到：
@@ -260,7 +260,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 我们先用一张图来总体看看线程运行状态的变化以及引起变化的原因：
 
-![img](./26874665-e9e45259752989c0.webp)
+![img](./assets/26874665-e9e45259752989c0.webp)
 
 
 从上面的图中可以看出：一个线程在运行过程中会到受各种因素的影响而在**`Running`**、**`Sleeping`**、**`Uninterruptible Sleep`**和**`Runnable`**四个状态之间不断切换。而除了`Running`状态下时线程工作任务有真正运行在`CPU`上去执行，其它几种状态下线程任务都无法得到有效的执行，从而可能会引起一些性能相关的问题。所以我们很多时候在分析性能问题，都需要找到线程任务没有持续处于`Running`状态的原因，还要判断其切换到其它几种状态的原因是否合理。而从`Systrace`上我们就可以清晰的观察到线程运行状态的变化以及引起状态变化的原因。各种线程运行状态切换场景如下所示：
@@ -271,7 +271,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 
 
-![img](./26874665-2190d70db1a30806.webp)
+![img](./assets/26874665-2190d70db1a30806.webp)
 
 
 常见于：**线程工作结束，线程使用`Thread.sleep`延时，线程被`Binder`服务端阻塞，线程陷入等锁阻塞状态等**，具体原因需要结合线程`Sleeping`结束后线程被唤醒时的信息分析判断是否合理，后文会详细分析。
@@ -282,7 +282,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 
 
-![img](./26874665-1e7939e5685ed103.webp)
+![img](./assets/26874665-1e7939e5685ed103.webp)
 
 
 处于`Sleeping`状态的线程被唤醒，重新进入`Runnable`待执行状态，`Systrace`上会显示出唤醒该线程的线程号。
@@ -293,7 +293,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 
 
-![img](./26874665-b74265e567d8590d.webp)
+![img](./assets/26874665-b74265e567d8590d.webp)
 
 
 
@@ -306,7 +306,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 
 
-![img](./26874665-c3f195da7036b1f2.webp)
+![img](./assets/26874665-c3f195da7036b1f2.webp)
 
 
 正在执行的线程陷入内核锁等待状态，`Systrace`上可以看到被内核阻塞的详细信息，通过`addr2line`工具结合`symbol table`信息就可以查到产生问题的内核代码行号，帮助进一步定位问题原因。
@@ -317,7 +317,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 
 
-![img](./26874665-ab0bc5927c14cd07.webp)
+![img](./assets/26874665-ab0bc5927c14cd07.webp)
 
 
 
@@ -330,7 +330,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 有了上面的分析基础，本小节中我们还是以桌面打开应用冷启动的场景为例，看看如何通过`Systrace`来分析观察线程之间的唤醒等待关系，从而看清应用进程与系统框架`system_server`进程之间是如何交互的。**只有掌握了如何用`Systrace`分析线程之间的唤醒等待关系，我们才能去追踪并理清系统内跑在各个进程或线程中的各个功能模块之间是如何相互交互配合去完成一次系统事件流程的处理，个人理解这也就是使用`Systrace`工具分析问题的精髓所在**。
 
-![img](./26874665-30c7f9bd4e3438fb.webp)
+![img](./assets/26874665-30c7f9bd4e3438fb.webp)
 
 
 
@@ -341,7 +341,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 然后桌面应用`UI`线程中根据连续收到的几条的`Input`事件判断用户在执行点击应用图标启动应用的动作，然后通过`Binder`调用框架的`startActivity`接口尝试去启动应用，从`Systrace`上分析如下所示：
 
-![img](./26874665-d3084d682c455422.webp)
+![img](./assets/26874665-d3084d682c455422.webp)
 
 
 从线程`Runnable`状态切换可以看到，桌面的`UI`线程（线程`tid`为`4893`）中会先唤醒`system_server`进程中的负责处理应用`Binder`请求的`Binder:2323_1C`（`tid`为`8289`）线程，然后进入`Sleeping`状态，然后`Binder:2323_1C`线程中执行完`startActivity`具体内部逻辑后，会唤醒桌面的`UI`线程。这就是一次从`Systarce`上看到的应用`Binder`阻塞调用访问框架服务接口的线程相互等待唤醒的过程。
@@ -409,11 +409,11 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
       dalvik camera input res
 ```
 
-![img](./26874665-cd35dd10879ffc03.webp)
+![img](./assets/26874665-cd35dd10879ffc03.webp)
 
 - `endSection()`建议包裹在`finally`代码块中，以保证中间代码出现异常情况下都能够结束事件；另外如果您多次调用 `beginSection()`，调用 `endSection()` 只会结束最后调用的 `beginSection()` 方法。因此，对于嵌套调用（如以上官方代码段中所示），请务必将每次对 `beginSection()` 的调用与一次对 `endSection()` 的调用正确匹配。否则抓取出来的`Systrace`会出现`Did Not Finish`的显示异常，影响结果分析。如下图所示：
 
-![img](./26874665-8be3ac579b1e774f.webp)
+![img](./assets/26874665-8be3ac579b1e774f.webp)
 
 - 不能在一个线程上调用 `beginSection()`，而在另一个线程上结束它；您必须在同一个线程上调用这两个方法。如果就有需要在不同的线程开始和结束一个方法的追踪，请使用`Trace.beginAsyncSection()`和`Trace.endAsyncSection()`。
 
@@ -455,7 +455,7 @@ b.从上面的分析可以看到，很多时候框架`system_server`进程中都
 
 `TRACE_TAG_VIEW`的定义见`android.os.Trace.java`，这个与`Systrace`的脚本的参数是对应的，我们使用`python`脚本抓`Systrace`时可以根据需要选择是否抓取显示。如下图所示：
 
-![img](./26874665-5c12913280a660e9.webp)
+![img](./assets/26874665-5c12913280a660e9.webp)
 
 
 
@@ -478,7 +478,7 @@ void myExpensiveFunction() {
 
 另外模块的编译控制脚本`.bp`或`.mk`文件中注意添加引用`libutils`库，如下图所示：
 
-![img](./26874665-44b870dc0b882fa4.webp)
+![img](./assets/26874665-44b870dc0b882fa4.webp)
 
 
 
@@ -500,7 +500,7 @@ void myExpensiveFunction() {
 
 另外模块的编译控制脚本`.bp`或`.mk`文件中注意添加引用`libcutils`库，如下图所示：
 
-![img](./26874665-36b39464eaaabc0f.webp)
+![img](./assets/26874665-36b39464eaaabc0f.webp)
 
 
 
@@ -590,7 +590,7 @@ void myExpensiveFunction() {
 
 - 经过上面两步后，在设备的`/sys/kernel/debug/tracing` 下就有各种跟踪器（`tracer`）和事件（`event`），相关节点的功能分析如下图所示：
 
-  ![img](./26874665-3744d26fd937d189.webp)
+  ![img](./assets/26874665-3744d26fd937d189.webp)
 
   
 
@@ -681,7 +681,7 @@ void foo(void)
 
 `gcc` 的 `-pg` 选项将在每个函数入口处加入对 `mcount` 的调用代码，下图中对比展示了添加`-pg`和不添加`-pg`编译选项的区别：
 
-![img](./26874665-491b241ea657c4df.webp)
+![img](./assets/26874665-491b241ea657c4df.webp)
 
 
 增加 `pg` 选项后，`gcc` 在函数 `foo` 的入口处加入了对 `mcount` 的调用：`call _mcount` 。原本 `mcount` 由`libc` 实现，但内核不会连接 `libc` 库，因此 `ftrace` 编写了自己的 `mcount stub` 函数，并借此实现 `trace`功能。
@@ -807,7 +807,7 @@ void foo(void)
 
 我们用`Notepad++`工具以文本的形式打开任意一份抓取好的`Systrace html`文件源码，其中关于线程之间唤醒关系的跟踪记录信息如下图所示：
 
-![img](./26874665-999e2434f83bf0e5.webp)
+![img](./assets/26874665-999e2434f83bf0e5.webp)
 
 
 
@@ -829,7 +829,7 @@ void foo(void)
 
 首先我们来看看`atrace`抓取的数据源包括哪些，如下图所示：
 
-![img](./26874665-cb6845e27dc39b65.webp)
+![img](./assets/26874665-cb6845e27dc39b65.webp)
 
 
 其中：
@@ -842,7 +842,7 @@ void foo(void)
 
 借用一张图描述`Android`系统中生成`Systrace`的可视`html`文件的整个实现流程大致如下图所示：
 
-![img](./26874665-de3c24e8d262fed8.webp)
+![img](./assets/26874665-de3c24e8d262fed8.webp)
 
 
 
@@ -881,7 +881,7 @@ systrace.py -o mynewtrace.html sched freq idle am wm gfx view binder_driver hal 
 
 
 
-![img](./26874665-62c5afc5be482fd2.webp)
+![img](./assets/26874665-62c5afc5be482fd2.webp)
 
 
 

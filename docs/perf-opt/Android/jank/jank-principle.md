@@ -23,7 +23,7 @@
 
 用一张图描述整个过程大致如下（关于这部分详细的`Android`系统源码实现流程可以参考这篇文章[https://juejin.cn/post/6956500920108580878](https://links.jianshu.com/go?to=https%3A%2F%2Fjuejin.cn%2Fpost%2F6956500920108580878)）：
 
-![img](./26874665-ab756e88f0bb89c2.webp)
+![img](./assets/26874665-ab756e88f0bb89c2.webp)
 
 
 
@@ -41,7 +41,7 @@
 
 3. 最后当事件发送给具体的应用目标窗口后，会将事件移动到`WaitQueue`队列中（也就是`Systrace`上看到的`“wq”`队列）并一直等待收到到目标应用处理`Input`事件完成后的反馈后再从队列中移除，**如果5秒内没有收到目标应用窗口处理完成此次`Input`事件的反馈，就会报该应用ANR异常事件**。以上整个过程在`Android`系统`AOSP`源码中都加有相应的`Systrace tag`，如下`Systrace`截图所示：
 
-   ![img](./26874665-26d272761a9069fa.webp)
+   ![img](./assets/26874665-26d272761a9069fa.webp)
 
    
 
@@ -57,7 +57,7 @@
 
 7. **一次滑动过程的触控交互的`InputResponse`区域中一般会包含一个`Input`的`ACTION_DOWN`事件+多个`ACTION_MOVE`事件+一个`ACTION_UP`事件**，`Settings`应用界面中的相关`View`控件在收到多个`ACTION_MOVE`触控事件后，经过判断为用户手指滑动行为，**一般会调用`View#invalidate`等相关接口触发`UI`线程的绘制上帧更新画面的操作**，具体流程后文会继续详细分析。以上过程如下`Systrace`截图所示：
 
-   ![img](./26874665-f7b8127610f84a36.webp)
+   ![img](./assets/26874665-f7b8127610f84a36.webp)
 
    
 
@@ -145,7 +145,7 @@ class H extends Handler {
 
 主线程初始化完成后，主线程就进入阻塞状态（进入`epoll_wait`状态，并释放`CPU`运行资源），等待 `Message`，一旦有 `Message` 发过来，主线程就会被唤醒，处理 `Message`，处理完成之后，如果没有其他的 `Message` 需要处理，那么主线程就会进入休眠阻塞状态继续等待。**可以说`Android`系统的运行是受消息机制驱动的**，而整个消息机制是由上面所说的四个关键角色相互配合实现的（**`Handler`**、**`Looper`**、**`MessageQueue`**、**`Message`**），其运行原理如下图所示：
 
-![img](./26874665-1c9a83dc71d8d91a.webp)
+![img](./assets/26874665-1c9a83dc71d8d91a.webp)
 
 
 
@@ -155,20 +155,20 @@ class H extends Handler {
 
 在一个典型的显示系统中，一般包括`CPU`、`GPU`、`Display`三个部分：**`CPU`负责计算帧数据，把计算好的数据交给`GPU`，`GPU`会对图形数据进行渲染，渲染好后放到`buffer`(图像缓冲区)里存起来，然后`Display`（屏幕或显示器）负责把`Buffer`里的数据呈现到屏幕上**。屏幕上显示的内容，是从`Buffer`图像帧缓冲区中读取的，大致读取过程为：从`Buffer`的起始地址开始，从上往下，从左往右扫描整个`Buffer`，将内容映射到显示屏上。如下图所示：
 
-![img](./26874665-1c01a8e3a68137d5.webp)
+![img](./assets/26874665-1c01a8e3a68137d5.webp)
 
 
 
 当然，屏幕上显示的内容需要不断的更新，如果在同一个`Buffer`进行读取和写入操作，将会导致屏幕显示多帧内容而出现显示错乱。所以硬件层除了提供一个`Buffer`用于屏幕显示，还会提供了一个`Buffer`用于后台的`CPU/GPU`图形绘制与合成，也就是我们常说的**双缓冲**：让绘制和显示器拥有各自的`Buffer：CPU/GPU` 始终将完成的一帧图像数据写入到 后缓存区（`Back Buffer`），而显示器使用前缓存区（ `Front Buffer`），当屏幕刷新时，`Front Buffer` 并不会发生变化，当`Back Buffer`准备就绪后，它们才进行交换。如下图所示：
 
-![img](./26874665-f41a4955d482cfdc.webp)
+![img](./assets/26874665-f41a4955d482cfdc.webp)
 
 
 
 
  理想情况下假设前一帧显示完成，后一帧数据就准备好了，屏幕开始读取下一帧内容进行显示，也就是开始读取上图中的后缓冲区的内容：
 
-![img](./26874665-4f3e2ff95b14368f.webp)
+![img](./assets/26874665-4f3e2ff95b14368f.webp)
 
 
 
@@ -193,7 +193,7 @@ class H extends Handler {
 
    现象，如下图所示：
 
-   ![img](./26874665-53bc711026d2e290.webp)
+   ![img](./assets/26874665-53bc711026d2e290.webp)
 
 
 所以上面两种情况，都会导致问题，根本原因就是两个缓冲区的操作速率不一致。解决办法就是：**让屏幕控制前后缓冲区的切换时机，让系统帧速率配合屏幕刷新率的节奏**。那么屏幕是如何控制这个节奏的呢？
@@ -206,7 +206,7 @@ class H extends Handler {
 
 在`Android 4.1`之前，屏幕刷新也遵循上面介绍的 **双缓存+`VSync`** 机制，整个流程与架构借用`2012`年`Google I/O`大会上展示的一张图如下所示：
 
-![img](./26874665-7fa5328dcd02825b.webp)
+![img](./assets/26874665-7fa5328dcd02825b.webp)
 
 
 
@@ -234,7 +234,7 @@ class H extends Handler {
 
 为了优化系统显示性能，`Google`在`Android 4.1`系统中对`Android Display`系统进行了重构，引入了`Project Butter`（黄油计划），其中很重要的一点修改就是实现了：**在系统收到`VSync`信号后，上层`CPU`和`GPU`马上开始进行下一帧画面数据的处理，完成后及时将数据写入到`Buffer`中，`Google`称之为`Drawing with Vsync`**。如下图所示：
 
-![img](./26874665-0311c942520a58cf.webp)
+![img](./assets/26874665-0311c942520a58cf.webp)
 
 
 
@@ -267,7 +267,7 @@ void scheduleTraversals() {
 
 `Choreographer`在收到的绘制任务后，其内部的工作流程如下图所示：
 
-![img](./26874665-6f851c8e1d5bfcdf.webp)
+![img](./assets/26874665-6f851c8e1d5bfcdf.webp)
 
 
 
@@ -291,7 +291,7 @@ void scheduleTraversals() {
 
 在开始分析之前，我们先来看看`Android`系统的`GUI`显示系统在`APP`应用进程侧的核心架构，其整体架构如下图所示：
 
-![img](./26874665-51a975ff2b3a2186.webp)
+![img](./assets/26874665-51a975ff2b3a2186.webp)
 
 
 
@@ -406,7 +406,7 @@ private boolean draw(boolean fullRedrawNeeded) {
 
 以上绘制过程从`systrace`上看如下图所示：
 
-![img](./26874665-bc0bedd86a62d3a1.webp)
+![img](./assets/26874665-bc0bedd86a62d3a1.webp)
 
 
 
@@ -536,21 +536,21 @@ public void endRecording() {
 
 以上整个构建绘制命令树的过程可以用如下流程图表示：
 
-![img](./26874665-20529fa058c44a07.webp)
+![img](./assets/26874665-20529fa058c44a07.webp)
 
 
 
 
  硬件加速下的整个界面的`View`树的结构如下图所示：
 
-![img](./26874665-6f1b95b11f3fe294.webp)
+![img](./assets/26874665-6f1b95b11f3fe294.webp)
 
 
 
 
  最后从`Systrace`上看这个过程如下图所示：
 
-![img](./26874665-b94a5aeb293a3dad.webp)
+![img](./assets/26874665-b94a5aeb293a3dad.webp)
 
 
 
@@ -708,14 +708,14 @@ void CanvasContext::draw() {
 
 整个过程可以用如下流程图表示：
 
-![img](./26874665-a849cafb9e09dc39.webp)
+![img](./assets/26874665-a849cafb9e09dc39.webp)
 
 
 
 
  从`Systrace`上这个过程如下图所示：
 
-![img](./26874665-f4ce565d0be1d9da.webp)
+![img](./assets/26874665-f4ce565d0be1d9da.webp)
 
 
 
@@ -725,7 +725,7 @@ void CanvasContext::draw() {
 
 `SurfaceFlinger`合成显示部分属于`Android`系统`GUI`中图形显示的内容，简单的说`SurfaceFlinger`作为系统中独立运行的一个`Native`进程，**借用`Android`官网的描述，其职责就是负责接受来自多个来源的数据缓冲区，对它们进行合成，然后发送到显示设备。**如下图所示：
 
-![img](./26874665-e7f57fd02b8effb1.webp)
+![img](./assets/26874665-e7f57fd02b8effb1.webp)
 
 
 
@@ -743,7 +743,7 @@ void CanvasContext::draw() {
 
 借用一张经典的图来描述`BufferQueue`的工作原理：
 
-![img](./26874665-23d55ad35fecf5dd.webp)
+![img](./assets/26874665-23d55ad35fecf5dd.webp)
 
 BufferQueue状态转换图.jpg
 
@@ -766,7 +766,7 @@ BufferQueue状态转换图.jpg
 
 **`Vsync`信号的生成是参考屏幕硬件的刷新周期的**，其架构如下图所示：
 
-![img](./26874665-04b831a664ca42a5.webp)
+![img](./assets/26874665-04b831a664ca42a5.webp)
 
 
 
@@ -818,13 +818,13 @@ void MessageQueue::invalidate() {
 
 以上过程从`Systrace`上看如下图所示：
 
-![img](./26874665-f6784d876edd3964.webp)
+![img](./assets/26874665-f6784d876edd3964.webp)
 
 
 
 
 
-![img](./26874665-db743387780c416e.webp)
+![img](./assets/26874665-db743387780c416e.webp)
 
 
 
@@ -941,7 +941,7 @@ status_t ConsumerBase::acquireBufferLocked(BufferItem *item,
 
 到这里`onMessageInvalidate`中的主要工作结束，在这个函数的处理中：**`SurfaceFlinger`主要是检查每个`Layer`是否有新提交的`Buffer`， 如果有则调用`latchBuffer`将每个`BufferQueue`中的`Slot` 通过`acquireBuffer`拿走**。此过程从`Systrace`上看如下图有所示：
 
-![img](./26874665-5ae751371232e148.webp)
+![img](./assets/26874665-5ae751371232e148.webp)
 
 
 
@@ -1007,7 +1007,7 @@ status_t HWComposer::presentAndGetReleaseFences(DisplayId displayId) {
 
 以上过程从`systrace`上看如下图所示：
 
-![img](./26874665-2644e13bdbda7cb0.webp)
+![img](./assets/26874665-2644e13bdbda7cb0.webp)
 
 
 
@@ -1028,7 +1028,7 @@ status_t HWComposer::presentAndGetReleaseFences(DisplayId displayId) {
 
 在本节中我们以用户手指上下滑动应用界面的操作场景为例，结合系统源码和`Systrace`工具，按照执行顺序分析了`Android`应用绘制上帧显示的系统运行机制与总体流程，我们以一张图描述如下：
 
-![img](./26874665-7d1cb09267361b98.webp)
+![img](./assets/26874665-7d1cb09267361b98.webp)
 
 
 

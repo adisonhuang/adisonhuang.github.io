@@ -1,7 +1,5 @@
 #Linux环境下进程的CPU占用率
 
-> 摘自 http://www.samirchen.com/linux-cpu-performance/
-
 ## 1、Linux 环境下查看 CPU 信息
 
 ### 1.1、查看 CPU 详细信息
@@ -541,12 +539,6 @@ PID USER PR NI VIRT RES SHR S %CPU %MEM TIME+ COMMAND
 13620 test1370 20 0 11060 944 760 R 53.4 0.0 0:04.78 netperf
 ```
 
-## 本文参考
+## 参考
 
-http://www.blogjava.net/fjzag/articles/317773.html
-
-http://www.brokestream.com/procstat.html
-
-http://blog.csdn.net/zg_hover/article/details/4356210
-
-[《鸟哥Linux私房菜》](http://www.amazon.cn/鸟哥的Linux私房菜-基础学习篇-鸟哥/dp/B003TJNO98/ref=sr_1_1?ie=UTF8&qid=1381382041&sr=8-1&keywords=鸟哥+linux+私房菜)
+摘自 http://www.samirchen.com/linux-cpu-performance/
