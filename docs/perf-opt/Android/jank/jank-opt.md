@@ -243,11 +243,9 @@ for (;;) {
 }
 ```
 
-无论是通过反射替换Looper的*mLogging*还是通过*setMessageLogging*设置printer，我们只需要替换主线程Looper的printer对象，通过计算执行dispatchMessage方法之后和之前打印字符串的时间的差值，就可以拿到到*dispatchMessage*方法执行的时间。而大部分的主线程的操作最终都会执行到这个*dispatchMessage*方法中。
+无论是通过反射替换Looper的*mLogging*还是通过*setMessageLogging*设置printer，我们只需要替换主线程Looper的printer对象，通过计算执行dispatchMessage方法之后和之前打印字符串的时间的差值，就可以拿到到*dispatchMessage*方法执行的时间。而**大部分的主线程的操作最终都会执行到这个*dispatchMessage*方法中**。
 
 另外利用系统 Choreographer 模块，向该模块注册一个 FrameCallback 监听对象，并在每次 Vsync 事件 doFrame 通知回来时，循环注册该监听对象，间接统计两次 Vsync 事件的时间间隔。这样可以很方便统计到帧率以及每帧的耗时。
-
-
 
 结合`Choreographer`和`Looper Printer`，我们不仅可以统计到准确的帧率，同时也可以计算出主线程中各个函数执行耗时，这里可以参考 [matrix](https://github.com/Tencent/matrix)
 
@@ -259,7 +257,7 @@ for (;;) {
 
 所以我们希望寻求一种可以在线上准确地捕捉卡顿堆栈，又能计算出各个函数执行耗时的方案。而要计算函数的执行耗时，最关键的点在于如何对执行过程中的函数进行打点监控。
 
-可以利用 Java 字节码修改工具（如 BCEL、ASM、Javassis等），在编译期间收集所有生成的 class 文件，扫描文件内的方法指令进行统一的打点插桩，同样也可以高效的记录函数执行过程中的信息。
+可以利用 Java 字节码修改工具（如 `BCEL`、`ASM`、`Javassis`等），在编译期间收集所有生成的 class 文件，扫描文件内的方法指令进行统一的打点插桩，同样也可以高效的记录函数执行过程中的信息。
 
 ##### 实现细节：
 
@@ -270,6 +268,255 @@ for (;;) {
 * 编译期已经对全局的函数进行插桩，在运行期间每个函数的执行前后都会调用 MethodBeat.i/o 的方法，如果是在主线程中执行，则在函数的执行前后获取当前距离 MethodBeat 模块初始化的时间 offset（为了压缩数据，存进一个long类型变量中），并将当前执行的是 MethodBeat i或者o、mehtod id 及时间 offset，存放到一个 long 类型变量中，记录到一个预先初始化好的数组 long[] 中 index 的位置（预先分配记录数据的 buffer 长度为 100w，内存占用约 7.6M）。数据存储如下图：
 
   ![](./assets/run_store.jpeg)
+
+#### 4.2.2  无法被监控到的卡顿
+
+使用`Looper Printer`这种方式监控， **不会随机漏报，无需轮询，一劳永逸**，但是**某些类型的卡顿无法被监控到**，因为有些情况的卡顿，这种方案从原理上就无法监控到。看到上面的*queue.next()*，这里给了注释：**might block**，直接跟你说这里是可能会卡住的，Printer无法监控到next里面发生的卡顿， 这时候再计算*dispatchMessage*方法的耗时显然就没有意义了。
+
+如果排除主线程空闲的情况，究竟会是什么原因会卡在*MessageQueue*的*next*方法中呢？下图是*next*方法简化过后的源码，
+
+```java
+
+for (;;) {
+    if (nextPollTimeoutMillis != 0) {
+        Binder.flushPendingCommands();
+    }
+
+    nativePollOnce(ptr, nextPollTimeoutMillis);
+
+    //......
+
+    // Run the idle handlers.
+    // We only ever reach this code block during the first iteration.
+    for (int i = 0; i < pendingIdleHandlerCount; i++) {
+        final IdleHandler idler = mPendingIdleHandlers[i];
+        mPendingIdleHandlers[i] = null; // release the reference to the handler
+
+        boolean keep = false;
+        try {
+            keep = idler.queueIdle();
+        } catch (Throwable t) {
+            Log.wtf(TAG, "IdleHandler threw exception", t);
+        }
+
+        if (!keep) {
+            synchronized (this) {
+                mIdleHandlers.remove(idler);
+            }
+        }
+    }
+    //......
+}
+```
+
+1. 主线程空闲时会阻塞next()，具体是阻塞在nativePollOnce()，这种情况下无需监控
+
+2. IdleHandler的queueIdle()回调方法也无法监控到
+3. Touch事件大部分是从nativePollOnce直接到了InputEventReceiver，然后到ViewRootImpl进行分发
+
+4. 还有一类相对少见的问题是SyncBarrier（同步屏障）的泄漏同样无法被监控到
+
+第一种情况我们不用管，接下来看一下后面3种情况下如何监控卡顿。
+
+
+
+### 4.3 监控IdleHandler卡顿
+
+***IdleHandler***的 *queueIdle()*回调方法会在主线程空闲的时候被调用。然而实际上，很多开发同学都先入为主的认为这个时候反正主线程空闲，做一些耗时操作也没所谓。**其实主线程MessageQueue的*queueIdle*默认当然也是执行在主线程中**，所以这里的耗时操作其实是很容易引起卡顿和ANR的。
+
+
+
+IdleHandler任务最终会被存储到MessageQueue的`mIdleHandlers` （一个ArrayList）中，在主线程空闲时，也就是MessageQueue的next方法暂时没有message可以取出来用时，会从`mIdleHandlers` 中取出IdleHandler任务进行执行。那我们可以把这个`mIdleHandlers` 替换成自己的，重写add方法，添加进来的 `IdleHandler` 给它包装一下，包装的那个类在执行 `queueIdle` 时进行计时，这样添加进来的每个`IdleHandler`在执行的时候我们都能拿到其 `queueIdle` 的执行时间 。如果超时我们就进行记录或者上报。
+
+```java
+
+private static void detectIdleHandler() {
+    try {
+        MessageQueue mainQueue = Looper.getMainLooper().getQueue();
+        Field field = MessageQueue.class.getDeclaredField("mIdleHandlers");
+        field.setAccessible(true);
+        MyArrayList<MessageQueue.IdleHandler> myIdleHandlerArrayList = new MyArrayList<>();
+        field.set(mainQueue, myIdleHandlerArrayList);
+    } catch (Throwable t) {
+        t.printStackTrace();
+    }
+}
+
+static class MyArrayList<T> extends ArrayList {
+    Map<MessageQueue.IdleHandler, MyIdleHandler> map = new HashMap<>();
+
+    @Override
+    public boolean add(Object o) {
+        if (o instanceof MessageQueue.IdleHandler) {
+            MyIdleHandler myIdleHandler = new MyIdleHandler((MessageQueue.IdleHandler) o);
+            map.put((MessageQueue.IdleHandler) o, myIdleHandler);
+            return super.add(myIdleHandler);
+        }
+        return super.add(o);
+    }
+
+    @Override
+    public boolean remove(@Nullable Object o) {
+        if (o instanceof MyIdleHandler) {
+            MessageQueue.IdleHandler idleHandler = ((MyIdleHandler) o).idleHandler;
+            map.remove(idleHandler);
+            return super.remove(o);
+        } else {
+            MyIdleHandler myIdleHandler = map.remove(o);
+            if (myIdleHandler != null) {
+                return super.remove(myIdleHandler);
+            }
+            return super.remove(o);
+        }
+    }
+}
+```
+
+
+
+### 4.4 监控TouchEvent卡顿
+
+从 Input 事件分发机制可知，大部分Touch的调用栈如下：
+
+> 有些touch事件是需要批量处理(ViewRootImpl#ConsumeBatchedInputRunnable)，这时交给Choreographer#CALLBACK_INPUT处理， 详见 [Batched consumption](https://android.googlesource.com/platform/frameworks/base/+/master/core/jni/android_view_InputEventReceiver.md)
+
+![](./assets/15728723834004.jpeg)
+
+
+
+从堆栈可见， `InputManagerService` 通过 socket 将 touch 事件发往应用进程，应用进程收到后会唤醒主线程，然后执行 `InputEventReceiver#dispatchInputEvent()`，并不会继续执行 `MessageQueue#next`。原理参见 https://juejin.cn/post/7032166333500686344
+
+
+
+InputReader（读取、拦截、转换输入事件）和InputDispatcher（分发事件）都是运行在`system_server`系统进程中，而我们的应用程序运行在自己的应用进程中，这里涉及到跨进程通信，这里的跨进程通信用的非binder方式，而是用的socket。
+
+![](./assets/26874665-ab756e88f0bb89c2.webp)
+
+InputDispatcher会与我们的应用进程建立连接，它是socket的服务端；我们应用进程的native层会有一个socket的客户端，客户端收到消息后，会通知我们应用进程里ViewRootImpl创建的WindowInputEventReceiver（继承自InputEventReceiver）来接收这个输入事件。事件传递也就走通了，后面就是上层的View树事件分发了。
+
+!!! question "这里为啥用socket而不用binder"
+
+	Socket可以实现异步的通知，且只需要两个线程参与（Pipe两端各一个），假设系统有N个			应用程序，跟输入处理相关的线程数目是N+1（1是Input Dispatcher线程）。然而，如果		用Binder实现的话，为了实现异步接收，每个应用程序需要两个线程，一个Binder线程，一     个后台处理线程（不能在Binder线程里处理输入，因为这样太耗时，将会阻塞住发射端的调     用线程）。在发射端，同样需要两个线程，一个发送线程，一个接收线程来接收应用的完成通     知，所以，N个应用程序需要2（N+1）个线程。相比之下，Socket还是高效多了。
+
+有了上面的知识铺垫，现在回到我们的主问题上来，如何监控TouchEvent卡顿。既然它们是用socket来进行通信的，那么我们可以通过PLT Hook，去Hook这对socket的发送（send）和接收(recv)方法，从而监控Touch事件。当调用到了recvfrom时（send和recv最终会调用`sendto`和`recvfrom`，这2个函数的具体定义在[socket.h源码](https://link.juejin.cn?target=https%3A%2F%2Fcs.android.com%2Fandroid%2Fplatform%2Fsuperproject%2F%2B%2Fmaster%3Abionic%2Flibc%2Finclude%2Fbits%2Ffortify%2Fsocket.h%3Bdrc%3Db0193ccac5b8399f9b5ef270d102b5a50f9446ab%3Bl%3D79)），说明我们的应用接收到了Touch事件，当调用到了sendto时，说明这个Touch事件已经被成功消费掉了，当两者的时间相差过大时即说明产生了一次Touch事件的卡顿。
+
+![](./assets/640 (1).png)
+
+### 4.4. 监控SyncBarrier泄漏
+
+当我们每次通过invalidate来刷新UI时，最终都会调用到*ViewRootImpl*中的*scheduleTraversals*方法，会向主线程的Looper中post一个SyncBarrier，其目的是为了在刷新UI时，主线程的同步消息都被跳过，此时渲染UI的异步消息就可以得到优先处理。但是我们注意到这个方法是**线程不安全**的，如果在非主线程中调用到了这里，就有可能会同时post多个SyncBarrier，但只**能remove掉最后一个**，从而有一个SyncBarrier就永远无法被remove，就导致了主线程Looper无法处理同步消息（Message默认就是同步消息），导致卡死。当然，这种情况还是比较少见的。
+
+```java
+
+void scheduleTraversals() {
+    if (!mTraversalScheduled) {
+        mTraversalScheduled = true;
+        mTraversalBarrier = mHandler.getLooper().getQueue().postSyncBarrier();
+        mChoreographer.postCallback(
+                Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);
+        notifyRendererOfFramePending();
+        pokeDrawLockIfNeeded();
+    }
+}
+
+void unscheduleTraversals() {
+    if (mTraversalScheduled) {
+        mTraversalScheduled = false;
+        mHandler.getLooper().getQueue().removeSyncBarrier(mTraversalBarrier);
+        mChoreographer.removeCallbacks(
+                Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);
+    }
+}
+```
+
+> 关于SyncBarrier具体原理参见[同步屏障](https://blog.adison.top/front-end/android/system/handler/#73)
+
+
+
+有什么好办法能监控到这种情况吗（虽然这种情况比较少见）：
+
+1. 开个子线程，轮询检查主线程的MessageQueue里面的message，检查是否有同步屏障消息的when已经过去了很久了，但还没得到移除
+2. 此时可以合理怀疑该同步屏障消息可能已泄露，但还不能确定（有可能是主线程卡顿，导致没有及时移除）
+3. 这个时候，往主线程发一个同步消息和一个异步消息（可以间隔地多发几次，增加可信度），如果同步消息没有得到执行，但异步消息得到执行了，这说明什么？说明主线程有处理消息的能力，不卡顿，且主线程的MessageQueue中有一个同步屏障一直没得到移除，所以同步消息才没得到执行，而异步消息得到执行了。
+4. 此时，可以激进一点，**我们甚至可以反射调用*MessageQueue*的*removeSyncBarrier*方法，手动把这个SyncBarrier移除掉，从而从错误状态中恢复**。
+
+核心源码如下：
+
+```java
+MessageQueue mainQueue = Looper.getMainLooper().getQueue();
+Field field = mainQueue.getClass().getDeclaredField("mMessages");
+field.setAccessible(true);
+Message mMessage = (Message) field.get(mainQueue);  //通过反射得到当前正在等待执行的Message
+if (mMessage != null) {
+    currentMessageToString = mMessage.toString();
+    long when = mMessage.getWhen() - SystemClock.uptimeMillis();
+    if (when < -3000 && mMessage.getTarget() == null) { //target == null则为sync barrier
+        int token = mMessage.arg1;
+        startCheckLeaking(token);
+    }
+}
+
+private static void startCheckLeaking(int token) {
+    int checkCount = 0;
+    barrierCount = 0;
+    while (checkCount < CHECK_STRICTLY_MAX_COUNT) {
+        checkCount++;
+        int latestToken = getSyncBarrierToken();
+        if (token != latestToken) {     //token变了，不是同一个barrier，return
+            break;
+        }
+        if (DetectSyncBarrierOnce()) {
+            //发生了sync barrier泄漏
+            removeSyncBarrier(token);   //手动remove泄漏的sync barrier
+            break;
+        }
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+private static void removeSyncBarrier(int token) {
+    MessageQueue mainQueue = Looper.getMainLooper().getQueue();
+    Method method = mainQueue.getClass().getDeclaredMethod("removeSyncBarrier", int.class);
+    method.setAccessible(true);
+    method.invoke(mainQueue, token);
+}
+
+private static boolean DetectSyncBarrierOnce() {
+    Handler mainHandler = new Handler(Looper.getMainLooper()) {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (msg.arg1 == 0) {
+                barrierCount ++;    //收到了异步消息，count++
+            } else if (msg.arg1 == 1) {
+                barrierCount = 0;   //收到了同步消息，说明同步屏障不在, count设置为0
+            }
+        }
+    };
+
+    Message asyncMessage = Message.obtain();
+    asyncMessage.setAsynchronous(true);
+    asyncMessage.setTarget(mainHandler);
+    asyncMessage.arg1 = 0;
+
+    Message syncNormalMessage = Message.obtain(); 
+    syncNormalMessage.arg1 = 1;
+
+    mainHandler.sendMessage(asyncMessage);      //发送一个异步消息
+    mainHandler.sendMessage(syncNormalMessage); //发送一个同步消息
+
+    if(barrierCount > 3){
+        return true;
+    }
+    return false;
+}
+```
+
+> 坏消息是，这种方案只能监控到问题的产生，也可以直接解决问题，但是无法溯源问题究竟是哪个View导致的。
 
 
 
