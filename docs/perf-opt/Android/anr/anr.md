@@ -9,7 +9,7 @@ ANR全称是Applicatipon No Response，Android设计ANR的用意，是系统通�
 
 ![](./assets/anr_timeout.jpeg)
 
-*(图片仅供参考，国内厂商可能会有调整，每个厂商的标准也存在差异)*
+*(图表仅供参考，国内厂商可能会有调整，每个厂商的标准也存在差异)*
 
 !!! note "前台与后台服务的区别"
 
@@ -367,7 +367,7 @@ private static long dumpJavaTracesTombstoned(int pid, String fileName, long time
 }
 ```
 
-再一路追到native层负责dump堆栈的***system/core/debuggerd/client/debuggerd_client.cpp***：
+再一路追到native层负责dump堆栈的 ***system/core/debuggerd/client/debuggerd_client.cpp***：
 
 ```c++
 
@@ -388,7 +388,7 @@ bool debuggerd_trigger_dump(pid_t tid, DebuggerdDumpType dump_type, unsigned int
 }
 ```
 
-这里会通过*sigqueue*向需要dump堆栈的进程发送SIGQUIT信号，也就是signal 3信号，而发生ANR的进程是一定会被dump的，也是第一个被dump的。
+这里会通过 *sigqueue*向需要dump堆栈的进程发送SIGQUIT信号，也就是signal 3信号，而发生ANR的进程是一定会被dump的，也是第一个被dump的。
 
 **每一个应用进程都会有一个SignalCatcher线程，专门处理SIGQUIT**
 
@@ -421,7 +421,7 @@ void* SignalCatcher::Run(void* arg) {
 }
 ```
 
-*WaitForSignal*方法调用了*sigwait*方法，这是一个阻塞方法。这里的死循环，就会一直不断的等待监听SIGQUIT和SIGUSR1这两个信号的到来。
+*WaitForSignal* 方法调用了 *sigwait* 方法，这是一个阻塞方法。这里的死循环，就会一直不断的等待监听SIGQUIT和SIGUSR1这两个信号的到来。
 
 SignalCatcher 线程接收到信号后，首先 Dump 当前虚拟机有关信息，如内存状态，对象，加载 Class，GC 等等，接下来设置各线程标记位(check_point)，以请求线程起态(suspend)。其它线程运行过程进行上下文切换时，会检查该标记，如果发现有挂起请求，会主动将自己挂起。等到所有线程挂起后，SignalCatcher 线程开始遍历 Dump 各线程的堆栈和线程数据，结束之后再唤醒线程。期间如果某些线程一直无法挂起直到超时，那么本次 Dump 流程则失败，并主动抛出超时异常。
 
