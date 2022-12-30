@@ -1,34 +1,34 @@
 # Android ClassLoader机制
 
-## 传统Jvm
+## 1. 传统Jvm
 
 java虚拟机把描述类的数据从Class文件加载到内存，并对数据进行校验、转换解析和初始化，最终形成可以被虚拟机直接使用的Java类型，这就是虚拟机的类加载机制。 
 
-### 类的生命周期 
+### 1.1 类的生命周期 
 
 类从被加载到虚拟机内存中开始，到卸载出内存为止，它的整个生命周期包括：加载（Loading）、验证（Verification）、准备（Preparation）、解析（Resolution）、初始化（Initialization）、使用（Using）和卸载（Unloading）7个阶段。其中验证、准备、解析3个部分统称为连接（Linking)，这7个阶段的发生顺序如图所示 
 ![classloader_1](./assets/classloader_1.png)
 
 
-### 类加载器 
+### 1.2 类加载器 
 
 对于任意一个类，都需要由加载它的类加载器和这个类本身一同确立其在Java虚拟机中的唯一性，每一个类加载器，都拥有一个独立的类名称空间。这句话可以表达得更通俗一些： **比较两个类是否“相等”，只有在这两个类是由同一个类加载器加载的前提下才有意义，否则，即使这两个类来源于同一个Class文件，被同一个虚拟机加载，只要加载它们的类加载器不同，那这两个类就必定不相等。 **
 
-### 双亲委派模型 
+### 1.3 双亲委派模型 
 
 绝大部分Java程序都会使用到以下3种系统提供的类加载器: 
 
-1. 启动类加载器（Bootstrap ClassLoader） 
+* **启动类加载器（`Bootstrap ClassLoade`）** 
 
-这个类将器负责将存放在＜JAVA_HOME＞\lib目录中的，或者被-Xbootclasspath参数所指定的路径中的，并且是虚拟机识别的（仅按照文件名识别，如rt.jar，名字不符合的类库即使放在lib目录中也不会被加载）类库加载到虚拟机内存中。启动类加载器无法被Java程序直接引用，用户在编写自定义类加载器时，如果需要把加载请求委派给引导类加载器，那直接使用null代替即可。 
+这个类将器负责将存放在`＜JAVA_HOME＞\lib`目录中的，或者被`-Xbootclasspath`参数所指定的路径中的，并且是虚拟机识别的（仅按照文件名识别，如rt.jar，名字不符合的类库即使放在lib目录中也不会被加载）类库加载到虚拟机内存中。启动类加载器无法被Java程序直接引用，用户在编写自定义类加载器时，如果需要把加载请求委派给引导类加载器，那直接使用null代替即可。 
 
-2. 扩展类加载器（Extension ClassLoader） 
+* **扩展类加载器（`Extension ClassLoader`）** 
 
-这个加载器由sun.misc.Launcher $ExtClassLoader实现，它负责加载＜JAVA_HOME＞\lib\ext目录中的，或者被java.ext.dirs系统变量所指定的路径中的所有类库，开发者可以直接使用扩展类加载器。 
+这个加载器由`sun.misc.Launcher $ExtClassLoade`r实现，它负责加载`＜JAVA_HOME＞\lib\ext`目录中的，或者被`java.ext.dirs`系统变量所指定的路径中的所有类库，开发者可以直接使用扩展类加载器。 
 
-3. 应用程序类加载器（Application ClassLoader） 
+* **应用程序类加载器（Application ClassLoader） **
 
-这个类加载器由sun.misc.Launcher $App-ClassLoader实现。由于这个类加载器是ClassLoader中的getSystemClassLoader（）方法的返回值，所以一般也称它为系统类加载器。它负责加载用户类路径（ClassPath）上所指定的类库，开发者可以直接使用这个类加载器，如果应用程序中没有自定义过自己的类加载器，一般情况下这个就是程序中默认的类加载器。 
+这个类加载器由`sun.misc.Launcher $App-ClassLoader`实现。由于这个类加载器是`ClassLoader`中的`getSystemClassLoader（）`方法的返回值，所以一般也称它为系统类加载器。它负责加载用户类路径（`ClassPath`）上所指定的类库，开发者可以直接使用这个类加载器，如果应用程序中没有自定义过自己的类加载器，一般情况下这个就是程序中默认的类加载器。 
 
 java应用程序一般都是由这3种类加载器互相配合进行加载的，如果有必要，还可以加入自己定义的类加载器。这些类加载器之间的关系一般如图所示。 
 
@@ -38,15 +38,18 @@ java应用程序一般都是由这3种类加载器互相配合进行加载的，
 
 双亲委派模型的 **工作过程** 是：如果一个类加载器收到了类加载的请求，它首先不会自己去尝试加载这个类，而是把这个请求委派给父类加载器去完成，每一个层次的类加载器都是如此，因此所有的加载请求最终都应该传送到顶层的启动类加载器中，只有当父加载器反馈自己无法完成这个加载请求（它的搜索范围中没有找到所需的类）时，子加载器才会尝试自己去加载。 
 
-## Android的ClassLoader机制 
+## 2. Android的ClassLoader机制 
 
-本质上，Android和传统的JVM是一样的，也需要通过ClassLoader 将目标类加载到内存，类加载器之间也符合双亲委派模型，类也有对应的生命周期。但基于移动设备的特点，如内存以及电量等诸多方面跟一般的 PC 设备都有本质的区别，Google开发了更符合移动设备的用于执行 Java 代码的虚拟机，也就是Dalvik和 ART，Android从5.0开始就采用AR虚拟机替代Dalvik。传统Jvm主要是通过读取class字节码来加载, 而ART则是从dex字节码来读取. 这是一种更为优化的方案, 可以将多个.class文件合并成一个classes.dex文件。
+本质上，Android和传统的JVM是一样的，也需要通过ClassLoader 将目标类加载到内存，类加载器之间也符合双亲委派模型，类也有对应的生命周期。但基于移动设备的特点，如内存以及电量等诸多方面跟一般的 PC 设备都有本质的区别，Google开发了更符合移动设备的用于执行 Java 代码的虚拟机，也就是Dalvik和 ART，Android从5.0开始就采用AR虚拟机替代Dalvik。
 
-### Classloader关系图
+>  传统Jvm主要是通过读取class字节码来加载, 而ART则是从dex字节码来读取. 这是一种更为优化的方案, 可以将多个.class文件合并成一个classes.dex文件。
+
+### 2.1 Android Classloader关系
+
+![](./assets/1625938-9e05a382f363e6fa.webp)
 
 
-
-#### BaseDexClassLoader
+#### 2.1.1 BaseDexClassLoader
 
 ```java
 public class BaseDexClassLoader extends ClassLoader {
@@ -80,7 +83,7 @@ public class BaseDexClassLoader extends ClassLoader {
 
 > 从DexPathList的构造过程可以看到，无论optimizedDirectory是何值，传递的都是空，所以optimizedDirectory参数是无效的（从Android8.0开始）
 
-#### PathClassLoader
+#### 2.1.2 PathClassLoader
 
 ```java
 public class PathClassLoader extends BaseDexClassLoader {
@@ -97,7 +100,7 @@ public class PathClassLoader extends BaseDexClassLoader {
 
 PathClassLoader比较简单, 继承于BaseDexClassLoader. 默认 optimizedDirectory=null.
 
-#### DexClassLoader
+#### 2.1.3 DexClassLoader
 
 ```java
 public class DexClassLoader extends BaseDexClassLoader {
