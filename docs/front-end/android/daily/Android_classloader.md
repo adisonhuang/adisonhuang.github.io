@@ -44,7 +44,7 @@ java应用程序一般都是由这3种类加载器互相配合进行加载的，
 
 >  传统Jvm主要是通过读取class字节码来加载, 而ART则是从dex字节码来读取. 这是一种更为优化的方案, 可以将多个.class文件合并成一个classes.dex文件。
 
-### 2.1 Android Classloader关系
+### 2.1 Android Classloader种类
 
 ![](./assets/1625938-9e05a382f363e6fa.webp)
 
@@ -53,7 +53,7 @@ java应用程序一般都是由这3种类加载器互相配合进行加载的，
 
 ```java
 public class BaseDexClassLoader extends ClassLoader {
-    private final DexPathList pathList;
+    private final DexPathList pathList; //记录dex文件路径信息
     public BaseDexClassLoader(String dexPath, File optimizedDirectory,
             String librarySearchPath, ClassLoader parent) {
         super(parent);
@@ -79,9 +79,16 @@ public class BaseDexClassLoader extends ClassLoader {
 }
 ```
 
-可以看到在构造函数里初始化了DexPathList对象，而在BaseDexClassLoader中的操作`findClass`、`findResource`执行的都是这个DexPathList对象的操作，关于DexPathList，在此暂不展开。
+可以看到在构造函数里初始化了DexPathList对象，而在BaseDexClassLoader中的操作`findClass`、`findResource`执行的都是这个DexPathList对象的操作
 
-> 从DexPathList的构造过程可以看到，无论optimizedDirectory是何值，传递的都是空，所以optimizedDirectory参数是无效的（从Android8.0开始）
+> 从DexPathList的构造过程可以看到，无论optimizedDirectory是何值，传递给DexPathList都是空，所以optimizedDirectory参数是无效的（从Android8.0开始）
+
+参数说明：
+
+- dexPath: 包含目标类或资源的apk/jar列表;当有多个路径则采用:分割;
+- optimizedDirectory: 优化后dex文件存在的目录, 可以为null;
+- libraryPath: native库所在路径列表;当有多个路径则采用:分割;
+- ClassLoader:父类的类加载器.
 
 #### 2.1.2 PathClassLoader
 
@@ -116,4 +123,80 @@ DexClassLoader也比较简单, 只是简单封装,和PathClassLoader唯一区别
 > DexClassLoader：能够加载未安装的apk
 > PathClassLoader：只能加载系统中已经安装过的apk
 
-那么在8.0以上这个结论还成立吗，事实上PathClassLoader也可以加载未安装的apk，验证过程比较简单，不在此累赘，有兴趣可以自己试试。
+那么在8.0以上这个结论还成立吗，事实上PathClassLoader也可以加载未安装的apk，验证过程比较简单，不在此累赘。
+
+
+
+>  BootClassLoader：Android系统启动时会使用BootClassLoader来预加载常用类，与Java中的Bootstrap ClassLoader不同的是，它并不是由C/C++代码实现，而是由Java实现的。BootClassLoader是ClassLoader的一个内部类。
+
+
+
+### 2.2 类加载过程
+
+类加载经过一系列前置调用会走到`ClassLoader#loadClass`:
+
+```java
+public abstract class ClassLoader {
+
+    public Class<?> loadClass(String className) throws ClassNotFoundException {
+        return loadClass(className, false);
+    }
+
+    protected Class<?> loadClass(String className, boolean resolve) throws ClassNotFoundException {
+        //判断当前类加载器是否已经加载过指定类，若已加载则直接返回
+        Class<?> clazz = findLoadedClass(className);
+
+        if (clazz == null) { 
+            //如果没有加载过，则调用parent的类加载递归加载该类，若已加载则直接返回
+            clazz = parent.loadClass(className, false);
+            
+            if (clazz == null) {
+                //还没加载，则调用当前类加载器来加载
+                clazz = findClass(className);
+            }
+        }
+        return clazz;
+    }
+}
+```
+
+```java
+public class BaseDexClassLoader extends ClassLoader {
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+        Class c = pathList.findClass(name, suppressedExceptions);
+        ...
+        return c;
+    }
+}
+```
+
+最后会调用到`DexPathList.findClass`
+
+```java
+public Class findClass(String name, List<Throwable> suppressed) {
+    for (Element element : dexElements) {
+        DexFile dex = element.dexFile;
+        if (dex != null) {
+            //找到目标类，则直接返回
+            Class clazz = dex.loadClassBinaryName(name, definingContext, suppressed);
+            if (clazz != null) {
+                return clazz;
+            }
+        }
+    }
+    return null;
+}
+```
+
+这里是 **核心逻辑**，一个Classloader可以包含多个dex文件，每个dex文件被封装到一个Element对象，这些Element对象排列成有序的数组 dexElements。当查找某个类时，会遍历所有的dex文件，如果找到则直接返回，不再继续遍历dexElements。也就是说当两个类不同的dex中出现，会优先处理排在前面的dex文件，这便是热修复的核心精髓，将需要修复的类所打包的dex文件插入到dexElements前面。
+
+
+
+## 参考
+
+[Android类加载器](http://gityuan.com/2017/03/19/android-classloader/)
+
+
+
+
+
