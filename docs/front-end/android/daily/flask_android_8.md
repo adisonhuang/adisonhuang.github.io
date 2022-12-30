@@ -126,7 +126,7 @@ repo sync
 从[官网](https://developers.google.com/android/drivers)下载对应机型驱动即可，下载完成后解压，依次执行里面的sh文件，如：
 
 ```shell
-$ ./extract-huawei-angler.sh
+$ ./assets/extract-huawei-angler.sh
 
 The license for this software will now be displayed.
 You must agree to this license before using this software.

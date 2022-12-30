@@ -9,7 +9,7 @@ animationDrawable.start();
 
 ### 1.1. 原理
 
-![frame_animation](./frame_animation.png)
+![frame_animation](./assets/frame_animation.png)
 
 ## 2. View动画
 
@@ -22,7 +22,7 @@ imageView.startAnimation(anim)
 
 ### 2.1 原理
 
-![tween_animation](./tween_animation.png)
+![tween_animation](./assets/tween_animation.png)
 
 ## 3. 属性动画
 
@@ -34,7 +34,7 @@ ObjectAnimator.ofFloat(imageView, "translationX", 0f, 200f)
 
 ### 3.1 原理
 
-![value_animation](./value_animation.png)
+![value_animation](./assets/value_animation.png)
 
 ## 4. 相关细节问题
 

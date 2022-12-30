@@ -3,7 +3,7 @@
 ## 概述
 
 我们通过 Android studio APK  Analyze 可以展开一个APK文件
-![image](./apk_an.jpg)
+![image](./assets/apk_an.jpg)
 
 - META-INF
 - res
@@ -61,7 +61,7 @@ SHA1-Digest: l8Lc+gtdLvtxJ1K+kscUmWQGQ1E=
 
  包含了公钥和私钥签名后的一些信息
  它的基本格式是这样的：
- ![image](./apk_an_1.jpg)
+ ![image](./assets/apk_an_1.jpg)
 
 ## res目录
 res目录存放资源文件
