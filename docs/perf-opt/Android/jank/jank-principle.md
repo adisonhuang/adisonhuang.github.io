@@ -1,4 +1,3 @@
-> 摘自 https://www.jianshu.com/p/386bbb5fa29a
 # Android卡顿掉帧问题分析之原理篇
  当用户抱怨手机在使用过程中存在卡顿问题的时候，会严重影响用户对手机品牌的好感和应用`APP`的体验，从而导致用户对手机品牌的忠诚度降低或应用`APP`的装机留存率下降。所以无论是手机设备厂商还是应用`APP`开发者，又或是`Android`系统的维护者`Google`都会对界面卡顿问题非常重视，会将界面的流畅度作为核心性能体验指标进行持续的优化。说到流畅度，本质上就是要解决用户操作手机过程中的界面丢帧问题，本来一秒钟屏幕上需要更新`60`帧画面，但是由于种种原因，这期间屏幕上只更新了`55`帧画面，这就是出现丢帧，在用户主观肉眼看来就是感知卡顿。那么当出现了丢帧卡顿的问题时，我们该如何着手去分析与优化解决呢？
 
@@ -1057,6 +1056,4 @@ status_t HWComposer::presentAndGetReleaseFences(DisplayId displayId) {
 
 ## 8 参考
 
-“终于懂了” 系列：Android屏幕刷新机制—VSync、Choreographer 全面理解 [https://juejin.cn/post/6863756420380196877](https://links.jianshu.com/go?to=https%3A%2F%2Fjuejin.cn%2Fpost%2F6863756420380196877)
- Android Systrace 流畅性实战 `1` ：了解卡顿原理 [https://www.androidperformance.com/2021/04/24/android-systrace-smooth-in-action-1/#/%E4%BA%86%E8%A7%A3%E5%8D%A1%E9%A1%BF%E5%8E%9F%E7%90%86](https://links.jianshu.com/go?to=https%3A%2F%2Fwww.androidperformance.com%2F2021%2F04%2F24%2Fandroid-systrace-smooth-in-action-1%2F%23%2F%E4%BA%86%E8%A7%A3%E5%8D%A1%E9%A1%BF%E5%8E%9F%E7%90%86)
- Android图形显示系统汇总 [https://mp.weixin.qq.com/s?__biz=MzIxNzU1Nzk3OQ==&mid=2247493101&idx=1&sn=9c4f6a09408e3f4ee6e9acdac47a28d3&chksm=97f55b59a082d24fead3bfe40d2ecb89f1d6991d0d198879f4abcbd08f8c48182676f7566c6f&mpshare=1&scene=1&srcid=0518K88i53u0Zt0JOSvdStY3&sharer_sharetime=1621300130624&sharer_shareid=2d76fc4769fc55b6ca84ec3820ba5821&version=3.1.7.3005&platform=win#rd](https://links.jianshu.com/go?to=https%3A%2F%2Fmp.weixin.qq.com%2Fs%3F__biz%3DMzIxNzU1Nzk3OQ%3D%3D%26mid%3D2247493101%26idx%3D1%26sn%3D9c4f6a09408e3f4ee6e9acdac47a28d3%26chksm%3D97f55b59a082d24fead3bfe40d2ecb89f1d6991d0d198879f4abcbd08f8c48182676f7566c6f%26mpshare%3D1%26scene%3D1%26srcid%3D0518K88i53u0Zt0JOSvdStY3%26sharer_sharetime%3D1621300130624%26sharer_shareid%3D2d76fc4769fc55b6ca84ec3820ba5821%26version%3D3.1.7.3005%26platform%3Dwin%23rd)
+摘自 https://www.jianshu.com/p/386bbb5fa29a

@@ -205,6 +205,8 @@ nav:
       - Android卡顿掉帧问题分析之实战篇: perf-opt/Android/jank/jank-shizhan.md     
       - Android卡顿优总结: perf-opt/Android/jank/jank-opt.md     
       - Linux环境下进程的CPU占用率: perf-opt/Android/jank/cpu_use.md     
+    - ANR优化:
+      - ANR 原理: perf-opt/Android/anr/anr.md     
     - 图片优化:
       - 图片文件技术原理: perf-opt/Android/bitmap/image.md
       - 了解各种图形格式的编码方式: perf-opt/Android/bitmap/imge-format.md

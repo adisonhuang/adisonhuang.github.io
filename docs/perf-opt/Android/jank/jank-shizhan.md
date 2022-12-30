@@ -1,5 +1,3 @@
-> 摘自 https://www.jianshu.com/p/f1a777551b70
-
 # Android卡顿掉帧问题分析之实战篇
 
 本文是`Android`卡顿问题分析三部曲的最后一篇。在前面两篇文章的理论和工具的分析基础上，本文将结合典型实战案例，分析常见的造成卡顿等性能问题的原因。从系统工程师的总体角度来看 ，造成卡顿等性能问题的原因总体上大致分为三个大类：一类是流程执行异常；二是系统负载异常；三是编译问题引起。
@@ -517,5 +515,4 @@ status_t BufferQueueProducer::queueBuffer(int slot,
 
 # 参考
 
-Linux系统中I/O操作的数据读写流程介绍 [https://zhuanlan.zhihu.com/p/435406445](https://links.jianshu.com/go?to=https%3A%2F%2Fzhuanlan.zhihu.com%2Fp%2F435406445)
-一文读懂直播卡顿优化那些事儿 [https://mp.weixin.qq.com/s?__biz=MzI1MzYzMjE0MQ==&mid=2247491520&idx=1&sn=dbd14f1d0d6107c87c137433ef435b5b&chksm=e9d0d422dea75d34e9788b0355a08132f84e558a6a7fc46bfb8a730f8be80ea77abee1c66e63&mpshare=1&scene=1&srcid=0328FFMqSCGN58JthxnZbEVw&sharer_sharetime=1648435053999&sharer_shareid=3accc00cd7dff7038611325ccc9f75bd&version=4.0.2.6061&platform=win#rd](https://links.jianshu.com/go?to=https%3A%2F%2Fmp.weixin.qq.com%2Fs%3F__biz%3DMzI1MzYzMjE0MQ%3D%3D%26mid%3D2247491520%26idx%3D1%26sn%3Ddbd14f1d0d6107c87c137433ef435b5b%26chksm%3De9d0d422dea75d34e9788b0355a08132f84e558a6a7fc46bfb8a730f8be80ea77abee1c66e63%26mpshare%3D1%26scene%3D1%26srcid%3D0328FFMqSCGN58JthxnZbEVw%26sharer_sharetime%3D1648435053999%26sharer_shareid%3D3accc00cd7dff7038611325ccc9f75bd%26version%3D4.0.2.6061%26platform%3Dwin%23rd)
+摘自 https://www.jianshu.com/p/f1a777551b70

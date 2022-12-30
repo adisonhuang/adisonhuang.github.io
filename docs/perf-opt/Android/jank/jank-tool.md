@@ -1,5 +1,3 @@
-> 摘自 https://www.jianshu.com/p/cf531a3af828
-
 # Android卡顿掉帧问题分析之工具篇
 
 上一篇文章中我们完整的分析了`Android`系统中应用上帧显示的系统运行机制和流程，了解了卡顿问题的基本定义，也就具备了分析卡顿掉帧性能问题的理论知识。但是俗话说“工欲善其事，必先利其器”，在开始着手分析卡顿问题之前，我们还必须要掌握一些分析性能问题的工具与手段，也就是掌握分析问题所使用的“器”，才能帮助我们更好的观测系统运行的状态，找到性能问题的原因。`Systrace` 是谷歌提供的最常用的`Android` 系统级性能分析工具。它以视觉化的方式将系统内所有的**“工作线程”**（内核+框架+应用）与**系统模块状态**（如 `CPU` 调度、`IO` 活动、`Binder` 调用等信息）按**时间轴**铺开展示，并支持在 `Chrome` 浏览器中显示出来。在 `Perfetto` 出现之前，它是最实用、分析最精准、最专业的性能分析工具，是分析`Android`性能问题的首选。本文我们就来详细分析一下这个`Systrace`工具 。
@@ -891,10 +889,4 @@ systrace.py -o mynewtrace.html sched freq idle am wm gfx view binder_driver hal 
 
 # 参考
 
-Android Systrace 基础知识 - Binder 和锁竞争解读 [https://www.androidperformance.com/2019/12/06/Android-Systrace-Binder/#/Binder-%E6%A6%82%E8%BF%B0](https://links.jianshu.com/go?to=https%3A%2F%2Fwww.androidperformance.com%2F2019%2F12%2F06%2FAndroid-Systrace-Binder%2F%23%2FBinder-%E6%A6%82%E8%BF%B0)
-Android Systrace 基础知识 - CPU Info 解读
-[https://www.androidperformance.com/2019/12/21/Android-Systrace-CPU#/taskset-%E7%9A%84%E7%94%A8%E6%B3%95](https://links.jianshu.com/go?to=https%3A%2F%2Fwww.androidperformance.com%2F2019%2F12%2F21%2FAndroid-Systrace-CPU%23%2Ftaskset-%E7%9A%84%E7%94%A8%E6%B3%95)
-抖音 Android 性能优化系列：新一代全能型性能分析工具 Rhea
-[https://mp.weixin.qq.com/s?__biz=MzI1MzYzMjE0MQ==&mid=2247487720&idx=1&sn=4c1dc31b6201e420dcac49250b81055f&chksm=e9d0db0adea7521c9337aacc22877d4e6f33a774499c650f3bfb12ad23ffdc0b8ab6ef40a9a5&scene=21#wechat_redirect](https://links.jianshu.com/go?to=https%3A%2F%2Fmp.weixin.qq.com%2Fs%3F__biz%3DMzI1MzYzMjE0MQ%3D%3D%26mid%3D2247487720%26idx%3D1%26sn%3D4c1dc31b6201e420dcac49250b81055f%26chksm%3De9d0db0adea7521c9337aacc22877d4e6f33a774499c650f3bfb12ad23ffdc0b8ab6ef40a9a5%26scene%3D21%23wechat_redirect)
-系统跟踪概览
-[https://developer.android.google.cn/topic/performance/tracing](https://links.jianshu.com/go?to=https%3A%2F%2Fdeveloper.android.google.cn%2Ftopic%2Fperformance%2Ftracing)
+摘自 https://www.jianshu.com/p/cf531a3af828
