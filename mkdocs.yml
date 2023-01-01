@@ -297,6 +297,13 @@ nav:
       - 排序与二分查找: 
         - 常见排序算法: basic/algo/sort.md    
         - 二分查找算法: basic/algo/bsearch.md    
+      - 散列表:
+        - 常见散列表实现: basic/algo/hashTable.md
+      - 二叉树:
+        - 二叉查找树: basic/algo/tree.md 
+      - 堆:
+        - 小顶堆、大顶堆、优先级队列: basic/algo/heap.md
+        - 常见堆算法: basic/algo/heap_1.md        
   - 开发工具:
     - tools/index.md  
     - GIT:  
