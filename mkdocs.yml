@@ -209,6 +209,7 @@ nav:
       - ANR 原理: perf-opt/Android/anr/anr.md     
       - ANR 监控: perf-opt/Android/anr/anr_monitor.md     
       - ANR 分析: perf-opt/Android/anr/anr_trace.md     
+      - 告别 SharedPreference 等待: perf-opt/Android/anr/sp.md     
     - 图片优化:
       - 图片文件技术原理: perf-opt/Android/bitmap/image.md
       - 了解各种图形格式的编码方式: perf-opt/Android/bitmap/imge-format.md
