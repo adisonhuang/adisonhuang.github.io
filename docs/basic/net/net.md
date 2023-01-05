@@ -171,3 +171,46 @@ HTTP 协议，全称超文本传输协议（Hypertext Transfer Protocol）。顾
 
 ## 6. 移动网络
 
+
+
+
+
+## HTTP1.0
+
+在**HTTP1.0**中，一次请求 会建立一个TCP连接，请求完成后主动断开连接。这种方法的好处是简单，各个请求互不干扰。 但每次请求都会经历 3次握手、2次或4次挥手的连接建立和断开过程——极大影响网络效率和系统开销。
+
+![http1.0](https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/6/14/172b2ffdbb5b8e68~tplv-t2oaga2asx-zoom-in-crop-mark:4536:0:0:0.image)
+
+
+
+## HTTP1.1
+
+在**HTTP1.1**中，解决了HTTP1.0中连接不能复用的问题，支持持久连接——使用**keep-alive机制**：一次HTTP请求结束后不会立即断开TCP连接，如果此时有新的HTTP请求，且其请求的Host同上次请求相同，那么会直接复用TCP连接。这样就减少了建立和关闭连接的消耗和延迟。keep-alive机制在HTTP1.1中是默认打开的——即在请求头添加：**connection:keep-alive**。（keep-alive不会永久保持连接，它有一个保持时间，可在不同的服务器软件（如Apache）中设定这个时间）
+
+![http1.1](https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/6/14/172b2ffdbb61a3ff~tplv-t2oaga2asx-zoom-in-crop-mark:4536:0:0:0.image)
+
+
+
+## HTTP2.0
+
+HTTP1.1中，**连接的复用是串行的**：一个请求建立了TCP连接，请求**完成后**，下一个相同host的请求继续使用这个连接。 但客户端想 **同时** 发起多个**并行请求**，那么必须建立多个TCP连接。将会产生网络延迟、增大网路开销。
+
+并且HTTP1.1不会压缩请求和响应报头，导致了不必要的网络流量；HTTP1.1不支持资源优先级导致底层TCP连接利用率低下。在HTTP2.0中，这些问题都会得到解决，**HTTP2.0主要有以下特性**：
+
+> - 新的二进制格式（Binary Format）：http/1.x使用的是明文协议，其协议格式由三部分组成：request line，header，body，其协议解析是基于文本，但是这种方式存在天然缺陷，文本的表现形式有多样性，要做到健壮性考虑的场景必然很多，二进制则不同，只认0和1的组合；基于这种考虑，http/2.0的协议解析决定采用二进制格式，实现方便且健壮
+> - 多路复用（MultiPlexing）：即连接共享，使用streamId用来区分请求，一个request对应一个stream并分配一个id，这样一个TCP连接上可以有多个stream，每个stream的frame可以随机的混杂在一起，接收方可以根据stream id将frame再归属到各自不同的request里面
+> - 优先级和依赖（Priority、Dependency）：每个stream都可以设置优先级和依赖，优先级高的stream会被server优先处理和返回给客户端，stream还可以依赖其它的sub streams；优先级和依赖都是可以动态调整的，比如在APP上浏览商品列表，用户快速滑动到底部，但是前面的请求已经发出，如果不把后面的优先级设高，那么当前浏览的图片将会在最后展示出来，显然不利于用户体验
+> - header压缩：http2.0使用encoder来减少需要传输的header大小，通讯双方各自cache一份header fields表，既避免了重复header的传输，又减小了需要传输的大小
+> - 重置连接：很多APP里都有停止下载图片的需求，对于http1.x来说，是直接断开连接，导致下次再发请求必须重新建立连接；http2.0引入RST_STREAM类型的frame，可以在不断开连接的前提下取消某个request的stream
+
+其中涉及了两个新的概念：
+
+- **数据流-stream**：基于TCP连接之上的逻辑双向字节流，用于承载双向消息，对应一个请求及其响应。客户端每发起一个请求就建立一个数据流，后续该请求及其响应的所有数据都通过该数据流传输。每个数据流都有一个唯一的标识符和可选的优先级信息。
+
+- 帧-frame
+
+  ：HTTP/2的最小数据切片单位，承载着特定类型的数据，例如 HTTP 标头、消息负载，等等。 来自不同数据流的帧可以交错发送，然后再根据每个帧头的数据流标识符重新组装，从而在宏观上实现了多个请求或响应并行传输的效果。
+
+  ![http2.0](https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/6/14/172b2ffdbb7beac2~tplv-t2oaga2asx-zoom-in-crop-mark:4536:0:0:0.image)
+
+这里的 **多路复用机制 就实现了 在同一个TCP连接上 多个请求 并行执行。**
