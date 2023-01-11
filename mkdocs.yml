@@ -282,6 +282,7 @@ nav:
       - shell核心语法: basic/system/shell.md
     - 网络: 
       - 基础知识: basic/net/net.md
+      - 讲清楚5G: basic/net/5g.md
     - 数据结构与算法:
       - 数组:  
         - 实现一个支持动态扩容的数组: basic/algo/array_algo_1.md
