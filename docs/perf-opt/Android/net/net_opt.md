@@ -54,6 +54,108 @@
 * **连接数**：每秒的连接数。
 * **错误**：丢包计数、超时等。
 
+### 2.1 命令工具
+
+####  **ping**
+
+`ping`命令主要用于测试网络连通性
+
+执行 `ping` 指令会使用 `ICMP` 传输协议，发出要求回应的信息，若远端主机的网络功能没有问题，就会回应该信息，因而得知该主机运作正常。
+
+!!! notes "什么是ICMP"
+
+    因特网控制报文协议`ICMP`（`Internet Control Message Protocol`）是一个差错报告机制，是`TCP/IP`协议簇中的一个重要子协议，通常被IP层或更高层协议（TCP或UDP）使用，属于网络层协议，主要用于在IP主机和路由器之间传递控制消息，用于报告主机是否可达、路由是否可用等。这些控制消息虽然并不传输用户数据，但是对于收集各种网络信息、诊断和排除各种网络故障以及用户数据的传递具有至关重要的作用。
+    
+
+**ping 使用**
+
+```bash
+ping -c 4 www.baidu.com
+```
+
+`-c` 参数指定发送的数据包数量，`4` 表示发送 4 个数据包。
+
+**ping 输出**
+
+```bash
+PING www.a.shifen.com (163.177.151.110): 56 data bytes
+64 bytes from 163.177.151.110: icmp_seq=0 ttl=53 time=4.636 ms
+64 bytes from 163.177.151.110: icmp_seq=1 ttl=53 time=5.344 ms
+64 bytes from 163.177.151.110: icmp_seq=2 ttl=53 time=4.884 ms
+64 bytes from 163.177.151.110: icmp_seq=3 ttl=53 time=4.810 ms
+
+--- www.a.shifen.com ping statistics ---
+4 packets transmitted, 4 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 4.636/4.918/5.344/0.262 ms
+```
+* bytes值：数据包大小，也就是字节。
+* time值：响应时间，这个时间越小，说明你连接这个地址速度越快。
+* ttl值：Time To Live,表示DNS记录在DNS服务器上存在的时间，它是IP协议包的一个值，告诉路由器该数据包何时需要被丢弃。
+
+> 更多关于 `ping` 的内容，可以参考 [ping命令](https://www.runoob.com/linux/linux-comm-ping.html)
+
+####  **traceroute**
+
+`traceroute`命令 用于追踪数据包在网络上的传输时的全部路径，它默认发送的数据包大小是40字节。
+
+通过traceroute我们可以知道信息从你的计算机到互联网另一端的主机是走的什么路径。当然每次数据包由某一同样的出发点（source）到达某一同样的目的地(destination)走的路径可能会不一样，但基本上来说大部分时候所走的路由是相同的。
+
+traceroute通过发送小的数据包到目的设备直到其返回，来测量其需要多长时间。一条路径上的每个设备traceroute要测3次。输出结果中包括每次测试的时间(ms)和设备的名称（如有的话）及其ip地址。
+
+**traceroute 使用**
+
+```bash
+traceroute www.58.com
+traceroute to www.58.com (211.151.111.30), 30 hops max, 40 byte packets
+ 1  unknown (192.168.2.1)  3.453 ms  3.801 ms  3.937 ms
+ 2  221.6.45.33 (221.6.45.33)  7.768 ms  7.816 ms  7.840 ms
+ 3  221.6.0.233 (221.6.0.233)  13.784 ms  13.827 ms 221.6.9.81 (221.6.9.81)  9.758 ms
+ 4  221.6.2.169 (221.6.2.169)  11.777 ms 122.96.66.13 (122.96.66.13)  34.952 ms 221.6.2.53 (221.6.2.53)  41.372 ms
+ 5  219.158.96.149 (219.158.96.149)  39.167 ms  39.210 ms  39.238 ms
+ 6  123.126.0.194 (123.126.0.194)  37.270 ms 123.126.0.66 (123.126.0.66)  37.163 ms  37.441 ms
+ 7  124.65.57.26 (124.65.57.26)  42.787 ms  42.799 ms  42.809 ms
+ 8  61.148.146.210 (61.148.146.210)  30.176 ms 61.148.154.98 (61.148.154.98)  32.613 ms  32.675 ms
+ 9  202.106.42.102 (202.106.42.102)  44.563 ms  44.600 ms  44.627 ms
+10  210.77.139.150 (210.77.139.150)  53.302 ms  53.233 ms  53.032 ms
+11  211.151.104.6 (211.151.104.6)  39.585 ms  39.502 ms  39.598 ms
+12  211.151.111.30 (211.151.111.30)  35.161 ms  35.938 ms  36.005 ms
+```
+
+记录按序列号从1开始，每个纪录就是一跳 ，每跳表示一个网关，我们看到每行有三个时间，单位是ms, 是探测数据包向每个网关发送三个数据包后，网关响应后返回的时间；
+
+有时我们traceroute一台主机时，会看到有一些行是以星号表示的。出现这样的情况，可能是防火墙封掉了ICMP的返回信息，所以我们得不到什么相关的数据包返回数据。
+
+有时我们在某一网关处延时比较长，有可能是某台网关比较阻塞，也可能是物理设备本身的原因。当然如果某台DNS出现问题时，不能解析主机名、域名时，也会 有延时长的现象；您可以加-n参数来避免DNS解析，以IP格式输出数据。
+
+#### **tcpdump**
+
+`tcpdump`是一个网络数据包嗅探器，用于抓取网络数据包，可以抓取网络数据包的源地址、目的地址、协议类型、数据包长度等信息。
+
+**tcpdump 使用**
+
+Android没有内置`tcpdump`，需要自己安装，同时要求手机root权限。
+
+1. 下载 [tcpdump](https://www.tcpdump.org/linktypes.html)
+2. 将 tcpdump 放入手机： `adb push ~/tcpdump /data/local/tcpdump`
+3. 将 tcpdump 的权限变为可执行：`chmod +x tcpdump`
+4. 开始抓包： 譬如 `/data/local/tcpdump -vv -s 0 -w /mnt/sdcard/pcapture.pcap`。其中 `"-s 0"` 表示每个包都抓取全部长度，而不是部分长度；`"-w /mnt/sdcard/pcapture.pcap"` 表示抓取的包写入指定文件；`"-vv"` 表示显示多一些信息，如果要显示更多信息可以用 `"-vvv"`
+5. 按下 `"contrl+c"` 结束抓包。
+6. 将`"/mnt/sdcard/pcapture.pcap"`  拉取到电脑上： `adb pull /mnt/sdcard/pcapture.pcap <指定目录>`
+7. 通过 `Wireshark` 或者 `charles`进行分析。
+
+上面是步骤比较繁琐，每次都需要抓包后都需要拉取到电脑上，有没有办法直接在电脑上抓去手机的包呢？答案是有的，我们可以使用 `adb forward` 命令将手机的端口转发到电脑上。基本思路如下图
+
+![](./assets/1625938-59c2d00b9c46c609.webp)
+
+1. 手机开始抓包:在 adb shell 中运行 `/data/local/tcpdump -n -s 0 -w - | nc -l -p 12345`
+2. 将手机抓的包传送到电脑的 Wireshark 中: 另开一个终端运行 `adb forward tcp:12345 tcp:12345 && nc 127.0.0.1 12345 | /Applications/Wireshark.app/Contents/MacOS/wireshark -k -S -i -`
+
+这样就可以实时抓取手机的包了。
+
+> 更多关于`tcpdump`的使用，可以参考 [tcpdump 使用指南](https://juejin.cn/post/6844904084168769549)
+
+
+
 
 # 参考
 [深入探索 Android 网络优化](https://juejin.cn/post/6844904182822993933)
