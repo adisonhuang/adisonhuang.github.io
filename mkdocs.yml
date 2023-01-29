@@ -216,10 +216,13 @@ nav:
       - Bitmap从出生到死亡: perf-opt/Android/bitmap/bitmap-from-birth-to-death.md
       - Bitmap 内存占用分析: perf-opt/Android/bitmap/bitmap-memory.md
       - Glide 核心知识: perf-opt/Android/bitmap/glide.md
+    - 网络优化: 
+      - 移动网络优化: perf-opt/Android/net/net_opt.md
     - 基础:
       - native-hook: perf-opt/Android/memory/Native-Hook.md
       - dumpsys: perf-opt/Android/command/dumpsys.md
       - top命令: perf-opt/Android/command/top.md     
+      - 线上疑难问题该如何排查和跟踪？: perf-opt/Android/net/log.md  
   - Native:
      - native/index.md
      - C/C++:
