@@ -72,12 +72,16 @@
 !!! question "说一下onSaveInstanceState()和onRestoreInstanceState()"
 ??? note "回答"
     * Activity的 onSaveInstanceState()和onRestoreInstanceState()并不是生命周期方法，它们不同于onCreate()、onPause()等生命周期方法，它们并不一定会被触发。
-	 * **什么时候会触发走这两个方法？** 当应用遇到意外情况（如：内存不足、用户直接按Home键）由系统销毁一个Activity，`onSaveInstanceState()` 会被调用。但是当用户主动去销毁一个Activity时，例如在应用中按返回键，`onSaveInstanceState()`就不会被调用。通常onSaveInstanceState()只适合用于保存一些临时性的状态，而onPause()适合用于数据的持久化保存。
-	 * **onSaveInstanceState()被执行的场景有哪些？**
-        * 长按HOME键，选择运行其他的程序时
-        * 锁屏时
-    	  * 从activity A中启动一个新的activity时
-    	  * 屏幕方向切换时
+	* **什么时候会触发走这两个方法？** 当应用遇到意外情况（如：内存不足、用户直接按Home键）由系统销毁一个Activity，`onSaveInstanceState()` 会被调用。但是当用户主动去销毁一个Activity时，例如在应用中按返回键，`onSaveInstanceState()`就不会被调用。通常onSaveInstanceState()只适合用于保存一些临时性的状态，而onPause()适合用于数据的持久化保存。
+	* **onSaveInstanceState()被执行的场景有哪些？**
+      * 长按HOME键，选择运行其他的程序时
+      * 锁屏时
+      * 从activity A中启动一个新的activity时
+      * 屏幕方向切换时
+    * **onRestoreInstanceState** 只有在activity被系统回收，重新创建activity的情况下才会被调用(如横竖屏切换)。 
+    * onCreat()和onRestoreInstanceState()恢复数据区别
+      * 因为onSaveInstanceState 不一定会被调用，所以onCreate()里的Bundle参数可能为空，如果使用onCreate()来恢复数据，一定要做非空判断。而onRestoreInstanceState的Bundle参数一定不会是空值，因为它只有在上次activity被回收了才会调用。
+      * onRestoreInstanceState是在onStart()之后被调用的。有时候我们需要onCreate()中做的一些初始化完成之后再恢复数据，用onRestoreInstanceState会比较方便。
 
 !!! question "app切换到后台，当前activity会走onDestory方法吗？"
 ??? note "回答"
