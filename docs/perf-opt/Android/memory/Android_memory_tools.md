@@ -202,7 +202,7 @@ Total RAM: 7,789,196K (status normal)
 
   * **Shmem:** Shared memory 即 kernel 中的共享内存，tmpfs 也会被统计为 Shmem。
   * **SUnreclaim:** Slab 中的不可回收部分。
-  * **PageTables:** kernel 中用来转化虚拟地址和物理地址的。
+  * **PageTables:** kernel 中用来转化虚拟地址和物理地址的。22
   * **KernelStack:** 每个用户线程都会在 kernel 有个内核栈（kernel stack）。kernel stack 虽然属于用户态线程，但是用户态无法访问，只有 syscall、异常等进入到内核态才会调用到。所以这部分内存是内核代码使用的。
 
 第二部分是 `VM_ALLOC_USED`，它是 kernel 中的模块通过 vmalloc 函数申请的内存，通过统计 /proc/vmallocinfo 中 “pages=” 数值之和得到（注意这里统计的单位是页面，一般Android上跑的 linux 一个页面都是 4Kb）
@@ -211,7 +211,7 @@ Total RAM: 7,789,196K (status normal)
 
 zram 是 linux 的一项内存压缩技术，Android 里面用来当 Swap 用。当配置开启了 Zram，AMS 会把一些优先级低线程标记为可以放入 Swap 分区（例如说一些 Cached 进程）。这个 Swap 是基于内存的（Zram 支持写回磁盘，但是Android没支持），线程数据放入 Swap 的时候，会进行压缩（可以配置压缩算法），然后把之前占用的内存就可以给其他线程使用了。当再次使用这个线程数据的时候，再从 Swap 解压换回正常内存。这样能在小内存设备上挤出更多的内存空间给前台进程使用。
 
-* **physical used for**:是读取 /sys/block/zram0/mm_stat 统计的。mm_stat 一共有8个数值，含义可以参看参考资料里面的 kernel 官方文档。这里读取的是第三个数值，也就是 mem_used_total。这里代表是实际物理内存使用的大小（经过压缩算法）。
+* **physical used for**:是读取 /sys/block/zram0/mm_stat 统计的。mm_stat 一共有8个数值，含义可以参看[kernel 官方文档](https://www.kernel.org/doc/Documentation/blockdev/zram.txt)。这里读取的是第三个数值，也就是 mem_used_total。这里代表是实际物理内存使用的大小（经过压缩算法）。
 * **in swap**: 是 /proc/meminfo 里面 SwapTotal - SwapFree。代表 swap 里存放实际内存的大小（解压之后的） 。
 * **total swap**: 是 /proc/meminfo 里面的 SwapTotal。可以由方案配置
 
@@ -287,15 +287,20 @@ Uptime: 891059163 Realtime: 4221638629
     : 7965K
 ```
 
-> **PSS**
->
-> 进程独占的 RAM 页会直接计入其 PSS 值，而与其他进程共享的 RAM 页则仅会按相应比例计入 PSS 值
+
+!!! note "Pss"
+
+   进程独占的 RAM 页会直接计入其 PSS 值，而与其他进程共享的 RAM 页则仅会按相应比例计入 PSS 值
+
+!!! note ""   
+
+   android下所有app的进程均是fork自Zygote，从Zygote进程 fork 时，子进程完全拷贝了Zygote进程的虚拟内存空间(包括加载的so占用、resource资源占用、主动申请等内存空间等)。但当继承自Zygote进程的内存被修改时，由于copy-on-write，会申请新的内存空间，这就会形成Private Dirty内存。当继承自Zygote进程的内存没被修改时，是不用分配额外的内存空间。
 
 #### 1.2.1 横列项参数：
 
 * **Pss Total**: /proc/pid/smaps vma 里面 Pss 之和
-* **Private Dirty**: /proc/pid/smaps vma 里面 Private_Dirty 之和
-* **Private Clean**: /proc/pid/smaps vma 里面 Private_Clean 之和
+* **Private Dirty**: /proc/pid/smaps vma 里面 Private_Dirty 之和，是app自己提交的内存总数，包含了app自己主动申请的内存。
+* **Private Clean**: /proc/pid/smaps vma 里面 Private_Clean 之和，它包括该进程独自使用的so和dex。Clean内存的好处是在内存紧张时，可以释放物理内存。因为是clean的，所以不需要写回到disk，只需要下次读取该内存（导致缺页错误）时再从disk读入。
 * **SwapPss Dirty**: /proc/pid/smaps vma 里面 SwapPss 之和（这是开了 Zram 的，如果没开就是 Swap 之和，同时显示会变为 Swap Dirty）
 * **Heap Size**: Native Heap 是 mallinfo() 里面 usmblks 的值。mallinof() 这个是一个 glic 函数，用来获取当前 native heap 的信息，返回的是一个结构体，里面的字段可以 man mallinfo 查看。usmblks 是 heap 能申请的最大值。Dalvik Heap 是 java 类 Runtime 里面的 totalMemory() 函数获取的，是当前虚拟机的 heap 大小，这值会动态调整，初始大小和调整策略由 dalvik.vm.heapgrowthlimit 和 dalvik.vm.heapsize 属性控制。
 *  **Heap Alloc**: Native Heap 是 mallinfo() 里面 uordblks 的值，表示当前 native heap 已经申请的内存大小。Dalvik Heap 是 Runtime 里面 totalMemory() - freeMemory() 的值。此值大于 `Pss Total` 和 `Private Dirty`，这是因为您的进程是从 Zygote 派生的，且包含您的进程与所有其他进程共享的分配。
@@ -433,8 +438,8 @@ smaps 是 map 的扩展，它显示的信息更加详细，还是拿 systemui �
 * **Size:** vma 空间的大小。可以由地址计算出来。等于 Vss，进程有时候 malloc 了一大块内存，但是并没有真正使用。但是还是会计算这块内存的大小
 * **KernelPageSize:** kernel page size 的大小，一般是 4kb。
 * **MMUPageSize:** MMU page size 大小，一般等于 KernelPageSize。
-* **Rss:**表示进程实际占用内存的情况（包含共享资源）
-* **Pss:**表示进程实际占用内存的情况（共享资源按比例均分）
+* **Rss:** 表示进程实际占用内存的情况（包含共享资源）
+* **Pss:** 表示进程实际占用内存的情况（共享资源按比例均分）
 * **hared/Private:** 该 vma 是私有的还是共享的。对照前面的权限标志位的最后一位，确实 p 的 Shared 有数值，并且不等于 Pss（被均分了）；而 s 的就是 Private 的有数值，并等于 Pss（因为是私有的）
 * **Dirty/Clean:** 在页面被淘汰的时候，就会把该脏页面回写到交换分区（换出，swap out）。有一个标志位用于表示页面是否dirty。
 * **Referenced:** 当前页面被标记为已引用或者包含匿名映射。
