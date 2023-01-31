@@ -96,7 +96,7 @@ fun getProcessMemoryInfo(): ProcessMemInfo {
 
 无论哪种Bitmap创建方式，最终殊途同归。都会通过`Bitmap.cpp`中的`Bitmap::createBitmap`方法创建Bitmap对象。
 
-所以，我们只需要hook这个`createBitmap`p函数，就能够拿到每次图片创建时的bitmap的Java对象。通过该对象，可以获得`图片的尺寸大小`、`内存占用大小`，`堆栈`等信息，将这些信息上报到性能平台也就达到了检测与监控图片创建的目标。
+所以，我们只需要hook这个`createBitmap`函数，就能够拿到每次图片创建时的bitmap的Java对象。通过该对象，可以获得`图片的尺寸大小`、`内存占用大小`，`堆栈`等信息，将这些信息上报到性能平台也就达到了检测与监控图片创建的目标。
 
 这里hook的方案采用爱奇艺开源的`plt-hook`开源方案[xHook](https://github.com/iqiyi/xHook)来完成。关于`plt-hook`具体原理见[Native-Hook](https://blog.adison.top/perf-opt/Android/memory/Native-Hook/)。
 
@@ -163,9 +163,11 @@ fun getProcessMemoryInfo(): ProcessMemInfo {
 
 这样我们就得知经过app创建的所有Bitmap的内存大小。
 
-我们还可以更进一步，获取图片所在view的宽高，有时由于一些错误处理，会导致一个很小的view里面承载了一个内存宽高比它本身宽高大得多的图片，这样的话，解码图片时按照内存宽高来解码就很浪费了；另外，我们也可以获取图片文件大小。
+我们还可以更进一步，获取图片所在view的宽高，有时由于一些错误处理，会导致一个很小的view里面承载了一个内存宽高比它本身宽高大得多的图片，这样的话，解码图片时按照内存宽高来解码就很浪费了；
 
-我们可以通过字节码插桩技术来实现。
+另外，我们也可以获取图片文件大小。
+
+这里我们可以通过字节码插桩技术来实现。
 
 以hook `Okhttp`和`Glide`为例，核心源码如下:
 
@@ -299,6 +301,7 @@ public class GlideImageListener<R> implements RequestListener<R> {
 ### 2.3. 小结
 
 这样，我们就能得到应用创建的`Bitmap的内存大小`，`加载的view的大小`、`图片文件大小`等信息，通过这些信息，我们可以对图片进行优化，比如：
+
 1. 是否存在过大内存的图片
     在清晰度要求不高的场景下，可以适当的缩小原始原图, 譬如一些磨砂模糊图片
 2. 是否存在Bitmap的内存宽高远大于view大小的情况
@@ -363,7 +366,7 @@ public class GlideImageListener<R> implements RequestListener<R> {
 
 对于线下检查，不需要过于考虑性能影响，我们基于“应检尽检”原则，主动出击，发现一例检查一例，尽可以覆盖各种场景和情况。
 
-基于 LeakCanary基本原理（对象销毁时加入弱引用队列，然后检测目标是否被回收） 以及`KOOM`在线下设计了一套自动分析上报内存泄露的工具，主要流程如下：
+基于 LeakCanary基本原理（**对象销毁时加入弱引用队列，然后检测目标是否被回收**） 以及`KOOM`我们在线下设计了一套自动分析上报内存泄露的工具，主要流程如下：
 
 ![](./assets/mem_monitor.png)
 
@@ -375,7 +378,7 @@ public class GlideImageListener<R> implements RequestListener<R> {
 
 #### 原理
 
-##### **镜像采集**
+**镜像采集**
 
 镜像采集采用虚拟机`supend->fork虚拟机进程->虚拟机resume->dump内存`镜像的策略，将传统Dump冻结进程20s的时间缩减至20ms以内。
 
@@ -432,7 +435,7 @@ for (;;) {
 }
 ```
 
-##### **HPROF 裁剪**
+ **HPROF 裁剪**
 
 主要是去除了无用信息
 
@@ -448,7 +451,7 @@ for (;;) {
 
 ![](./assets/aHR0cHM6Ly9wNi1qdWVqaW4uYnl0ZWltZy5jb20vdG9zLWNuLWktazN1MWZicGZjcC9mM2ZkMzQyMmJiNWI0Zjc2ODljMjVmZDU1NGY1Yzg4Zn50cGx2LWszdTFmYnBmY3Atem9vbS0xLmltYWdl.png)
 
-##### **hprof解析性能优化**
+**hprof解析性能优化**
 
 Shark是LeakCanary 2.0推出的全新解析组件，主要做了以下几项优化：
 
@@ -497,7 +500,7 @@ internal class SortedBytesMap(
 ) {
 ```
 
-所谓hppc是High Performance Primitive Collection[7]的缩写，shark使用kotlin将其重写了。hppc只支持基本类型，所以没有了装、拆箱的性能损耗，相关集合操作也做了大量优化。
+所谓hppc是High Performance Primitive Collection的缩写，shark使用kotlin将其重写了。hppc只支持基本类型，所以没有了装、拆箱的性能损耗，相关集合操作也做了大量优化。
 
 Koom对其主要做了以下几点优化：
 
@@ -516,7 +519,7 @@ Koom对其主要做了以下几点优化：
 它的核心原理如下
 
 * hook malloc/free 等内存分配器方法，用于记录 Native 内存分配元数据「大小、堆栈、地址等」
-* 周期性的使用 mark-and-sweep 分析整个进程 Native Heap，获取不可达的内存块信息「地址、大小」
+* 周期性的使用 `mark-and-sweep` 分析整个进程 Native Heap，获取不可达的内存块信息「地址、大小」
 * 利用不可达的内存块的地址、大小等从我们记录的元数据中获取其分配堆栈，产出泄漏数据「不可达内存块地址、大小、分配堆栈等」
 
 这里内部主要是利用[libmemunreachable](https://android.googlesource.com/platform/system/memory/libmemunreachable/+/master/README.md)来实现
@@ -602,7 +605,7 @@ Koom对其主要做了以下几点优化：
 
 > Either pthread_join(3) or pthread_detach() should be called foreach thread that an application creates, so that system resourcesfor the thread can be released.
 
-`system resource `，其实主要就是指栈内存。只有 detach 状态的线程，才会在线程执行完退出时自动释放栈内存，否则就需要等待调用 join 来释放内存6，而使用默认参数创建的 pthread 都是 joinable 状态的。
+`system resource `，其实主要就是指栈内存。只有 detach 状态的线程，才会在线程执行完退出时自动释放栈内存，否则就需要等待调用 join 来释放内存，而使用默认参数创建的 pthread 都是 joinable 状态的。
 
 我们可以在创建线程时就通过 `pthread_attr_t` 参数把线程设置为 `PTHREAD_CREATE_DETACHED` 状态，那么创建的这个线程就不需要再显式调用 `pthread_detach` 或 `pthread_join` 了，Android 的 [Java 线程](https://cs.android.com/android/platform/superproject/+/master:art/runtime/thread.cc;l=915?q=thread.cc)在创建的时候就设置了此状态。
 
