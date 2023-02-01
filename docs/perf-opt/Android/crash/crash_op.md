@@ -194,7 +194,9 @@ UV 异常率 = 发生异常退出或崩溃的 UV / 登录 UV
 通常有两种做法去发现应用中的 ANR 异常。
 
 1. **使用 FileObserver 监听 /data/anr/traces.txt 的变化**。非常不幸的是，很多高版本的 ROM，已经没有读取这个文件的权限了。这个时候你可能只能思考其他路径，海外可以使用 Google Play 服务，而国内微信利用[Hardcoder](https://mp.weixin.qq.com/s/9Z8j3Dv_5jgf7LDQHKA0NQ?)框架（HC 框架是一套独立于安卓系统实现的通信框架，它让 App 和厂商 ROM 能够实时“对话”了，目标就是充分调度系统资源来提升 App 的运行速度和画质，切实提高大家的手机使用体验）向厂商获取了更大的权限。
-1. **监控消息队列的运行时间**。这个方案无法准确地判断是否真正出现了 ANR 异常，也无法得到完整的 ANR 日志。在我看来，更应该放到卡顿的性能范畴。（目前大部分ANR监控使用这种方式）
+2. **监控消息队列的运行时间**。这个方案无法准确地判断是否真正出现了 ANR 异常，也无法得到完整的 ANR 日志。在我看来，更应该放到卡顿的性能范畴。（目前大部分ANR监控使用这种方式）
+
+> ANR监控可以参考：[这篇文章](https://blog.adison.top/perf-opt/Android/anr/anr_monitor/)
 
 ### 3.3 异常退出
 
@@ -287,7 +289,7 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
    
 2. **系统信息**
    系统的信息有时候会带有一些关键的线索，对我们解决问题有非常大的帮助。
-     * Logcat。这里包括应用、系统的运行日志。由于系统权限问题，获取到的 Logcat 可能只包含与当前 App 相关的。其中系统的 `event logcat` 会记录 App 运行的一些基本情况，记录在文件 `/system/etc/event-log-tags` 中
+     * Logcat。这里包括应用、系统的运行日志。由于系统权限问题，获取到的 Logcat 可能只包含与当前 App 相关的。其中系统的 `event logcat` 会记录 App 运行的一些基本情况，记录在文件 `/system/etc/event-log-tags` 中，我们可以通过 `adb logcat -b events` 查看。
 
        ```shell
        system logcat:
