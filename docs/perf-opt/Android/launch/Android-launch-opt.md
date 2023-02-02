@@ -243,7 +243,7 @@ Starting: Intent
 
 ### 4.3 [cpu profiler](https://developer.android.com/studio/profile/cpu-profiler?hl=zh-cn)
 
-整体通过 JVM Agent 实现，具有完成方法调用栈输出，且支持 Java、C/C++方法的耗时检测，上手比较简单，但其存在性能损耗较大的问题，且一般仅用于 debug 包，release 包需要额外添加 debuggable 的配置；
+整体通过 JVM Agent 实现，具有完全方法调用栈输出，且支持 Java、C/C++方法的耗时检测，上手比较简单，但其存在性能损耗较大的问题，且一般仅用于 debug 包，release 包需要额外添加 debuggable 的配置；
 
 ### 4.4 [Nanoscope](https://github.com/uber/nanoscope)
 ```shell
@@ -254,6 +254,7 @@ nanoscope start --package=com.example.app
 调试方便，性能损耗小，得出的结果真实，不过暂时只支持 Nexus 6P 和 x86 模拟器，无法针对中低端机做测试
 ### 4.5 [Systrace/Perfetto](https://developer.android.com/topic/performance/tracing)
 调试方便，性能损耗小，得出的结果真实，可以很方便地追踪关键系统调用的耗时情况，如例如 GC、System Server、CPU 调度等；另外也可以通过代码插桩支持应用程序代码的耗时分析
+
 查看手机支持的systrace 类型
 
 ```shell
