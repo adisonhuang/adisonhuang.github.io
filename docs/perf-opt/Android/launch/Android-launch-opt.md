@@ -300,21 +300,78 @@ class Test {
 2. **合并闪屏和主页面的 Activity**
 ![1](./1.png)
 减少一个 Activity 会给线上带来 100 毫秒左右的优化。但是如果这样做的话，管理时会非常复杂，在进入后台再通过最近任务栏启动、通过`Deep Link`启动等启动流程会有不少问题。我们可以通过自己管理activity任务栈来解决。譬如对于我司项目，我通过`SingleTop+栈管理`实现了类似`SingleTask`的效果。
-![2](./2.png)
-![3](./3.png)
+
+例如：下面就是模拟`SingleTask`的 `cleanTop` 操作
+```java
+    protected void onCreate(Bundle savedInstanceState) {
+        if (ActivityStackManager.getInstance().checkMainExist(this)) {
+            super.onCreate(savedInstanceState);
+            //如果主页面已经存在，直接finish掉当前页面
+            finish();
+            //并且之前的主页面拉到前台
+            handleForOriginActivity();
+            return;
+        }
+    }
+
+    private void handleForOriginActivity() {
+        if (ActivityStackManager.getInstance().isAppForeground()) {
+            //前台直接模拟newIntent即可
+            mockSingleTaskLaunchMode();
+        } else {
+            //后台时通过FLAG_ACTIVITY_REORDER_TO_FRONT重新拉起到前台
+            Intent originIntent = getIntent();
+            if (originIntent == null || !originIntent.hasExtra(INTENT_EXTRA_FORCE_TO_FRONT)) {
+                startOriginActivityByReorderToFront(originIntent);
+            }
+        }
+    }
+
+      private void mockSingleTaskLaunchMode() {
+        ActivityStackManager.getInstance().finishActivitysTopofMain();
+        MainActivity originMainActivity =
+                (MainActivity) ActivityStackManager.getInstance().getMainActivity();
+        originMainActivity.onNewIntent(getIntent());
+        originMainActivity.onRestart();
+        originMainActivity.onStart();
+        originMainActivity.onResume();
+    }
+
+    private void startOriginActivityByReorderToFront(Intent originIntent) {
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName(this,
+                MainActivity.class));
+        if (originIntent != null) {
+            Bundle extras = originIntent.getExtras();
+            if (extras == null) {
+                extras = new Bundle();
+            }
+            extras.putBoolean(INTENT_EXTRA_FORCE_TO_FRONT, true);
+            intent.putExtras(extras);
+        }
+
+        intent.addFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION);
+        Activity firstMainActivity = ActivityStackManager.getInstance().getFirstMainActivity();
+        if (firstMainActivity instanceof MainActivity) {
+            firstMainActivity.startActivity(intent);
+            ((MainActivity) firstMainActivity).onNewIntent(originIntent);
+        }
+    }
+```
 ### 5.2 业务优化
-我们首先需要梳理清楚当前启动过程正在运行的每一个模块，哪些是一定需要的、哪些可以砍掉、哪些可以懒加载。我们也可以根据业务场景来决定不同的启动模式，例如通过扫一扫启动只需要加载需要的几个模块即可。对于中低端机器，我们要学会降级，学会推动产品经理做一些功能取舍。但是需要注意的是，**懒加载要防止集中化，否则容易出现首页显示后用户无法操作的情形。**
+我们首先需要梳理清楚当前启动过程正在运行的每一个模块，哪些是一定需要的、哪些可以砍掉、哪些可以懒加载。我们也可以根据业务场景来决定不同的启动模式。对于中低端机器，我们要学会降级，学会推动产品经理做一些功能取舍。但是需要注意的是，**懒加载要防止集中化，否则容易出现首页显示后用户无法操作的情形。**
+
 优化策略如下
 
-* 异步必要且耗时业务
-* 延时加载非必要但耗时业务
-* 删除非必要预加载
-* 懒加载服务模块
-启动过程发现各种服务模块都是直接初始化的，修改成**服务注册机制，用时加载**。
+* **异步必要且耗时业务**
+* **延时加载非必要但耗时业务**
+* **删除非必要预加载**
+* **懒加载服务模块**，例如，我发现启动过程各种服务模块都是直接初始化的，修改成 **服务注册机制，用时加载**。
 * 主线程循环业务需要特别注意，当循环数据源是动态获取的，累计效果可能会很耗时。
 ![4](./4.png)
 ### 5.3 线程优化
-线程的优化主要在于减少 CPU 调度带来的波动，让应用的启动时间更加稳定。
+线程的优化主要在于 **减少 CPU 调度带来的波动，让应用的启动时间更加稳定**。
+
 启动过程中如果有太多的线程一起启动，会导致CPU时间片抢占情况严重，尤其是低端机。这样会导致主线程Sleep状态变多，从而增加启动时间。
 ![5](./5.png)
 
@@ -328,12 +385,10 @@ proc/[pid]/sched:
 ```
 优化策略如下：
 
-* 使用统一线程池并且根据机器性能控制线程数量
-* 删除非必要线程操作
-譬如我们项目`datamodel`的`setter`方法会触发依赖的`kvo`模块（类似`eventbus`）的线程操作,启动过程创建`datamodel`可以通过构造的方式代替`setter`方式，这样就不会触发`kvo`模块的线程操作。
-* 延时进入调度队列
-启动过程不需要立马执行的线程任务可以延迟执行
-* 锁优化
+* **使用统一线程池并且根据机器性能控制线程数量**
+* **删除非必要线程操作**，譬如我们项目`datamodel`的`setter`方法会触发依赖的`kvo`模块（类似`eventbus`）的线程操作,启动过程创建`datamodel`可以通过构造的方式代替`setter`方式，这样就不会触发`kvo`模块的线程操作。
+* **延时进入调度队列**，动过程不需要立马执行的线程任务可以延迟执行
+* **锁优化**
     * 如果主线程和别的线程竞争锁，可能会导致主线程等待,需要排查这些等待是否可以优化
     通过`systrace` 可以看到锁等待的事件
     ![6](./6.png)
@@ -348,6 +403,8 @@ proc/[pid]/sched:
 ### 5.3 IO优化
 在负载过高的时候，I/O 性能下降得会比较快。特别是对于低端机，同样的 I/O 操作耗时可能是高端机器的几十倍。启动过程不建议出现网络 I/O，相比之下，磁盘 I/O 是启动优化一定要抠的点。
 
+优化方案如下：
+
 1. **编译期根据布局XML动态生成布局代码**
 编译期根据布局XML动态生成布局代码，这样可以节省掉布局`inflate`时间，在中低端机上有比较可观的收益。
    ![8](./8-1.png)
@@ -356,10 +413,8 @@ proc/[pid]/sched:
    我们在启动过程只需要读取 `Setting.sp` 的几项数据，不过 `SharedPreference` 在初始化的时候还是要全部数据一起解析。如果它的数据量超过 1000 条，启动过程解析时间可能就超过 100 毫秒。如果只解析启动过程用到的数据项则会很大程度减少解析时间。我么可以使用单独的sp文件存储启动过程使用的数据项
 
 ### 5.4 系统调用优化
-* 在启动过程，我们尽量不要做系统调用，
-  例如 `PackageManagerService` 操作、`Binder` 调用等待。
-* 在启动过程也不要过早地拉起应用的其他进程
- `System Server` 和新的进程都会竞争 CPU 资源。特别是系统内存不足的时候，当我们拉起一个新的进程，可能会成为“压死骆驼的最后一根稻草”。它可能会触发系统的 low memory killer 机制，导致系统杀死和拉起（保活）大量的进程，从而影响前台进程的 CPU。
+* **在启动过程，我们尽量不要做系统调用**，例如 `PackageManagerService` 操作、`Binder` 调用等待。
+* **在启动过程也不要过早地拉起应用的其他进程**，`System Server` 和新的进程都会竞争 CPU 资源。特别是系统内存不足的时候，当我们拉起一个新的进程，可能会成为“压死骆驼的最后一根稻草”。它可能会触发系统的 low memory killer 机制，导致系统杀死和拉起（保活）大量的进程，从而影响前台进程的 CPU。
 ### 5.5 GC 优化
 在启动过程，要尽量减少 GC 的次数，避免造成主线程长时间的卡顿，特别是对 Dalvik 来说，我们可以通过 systrace 单独查看整个启动过程 GC 的时间。
 ```shell
@@ -443,9 +498,10 @@ verify_ = verifier::VerifyMode::kNone;
 ### 6.1 实验室监控
 如果想客观地反映启动的耗时，视频录制会是一个非常好的选择。特别是我们很难拿到竞品的线上数据，所以实验室监控也非常适合做竞品的对比测试。它的难点在于如何让实验系统准确地找到启动结束的点，这里可以通过下面两种方式。
 
-* **`80%` 绘制**。当页面绘制超过 80% 的时候认为是启动完成，不过可能会把闪屏当成启动结束的点，不一定是我们所期望的。图像识别。
-* **手动输入一张启动结束的图片**，当实验系统认为当前截屏页面有 `80% `以上相似度时，就认为是启动结束。这种方法更加灵活可控，但是实现难度会稍微高一点。
+* **`80%` 绘制**。当页面绘制超过 80% 的时候认为是启动完成，不过可能会把闪屏当成启动结束的点，不一定是我们所期望的。
+* **图像识别**。手动输入一张启动结束的图片，当实验系统认为当前截屏页面有 `80% `以上相似度时，就认为是启动结束。这种方法更加灵活可控，但是实现难度会稍微高一点。
 ![acbbb4f9b147d68bfe9ab519642616fd](./acbbb4f9b147d68bfe9ab519642616fd.webp)
+
 启动的实验室监控可以定期自动去跑，需要注意的是，我们应该覆盖高、中、低端机不同的场景。但是使用录屏的方式也有一个缺陷，就是出现问题时我们需要人工二次定位具体是什么代码所导致的。
 ### 6.2 线上监控
 实验室覆盖的场景和机型还是有限的，是驴是马我们还是要发布到线上进行验证。针对线上，启动监控会更加复杂一些。[Android Vitals](https://developer.android.google.cn/topic/performance/vitals/launch-time#av)可以对应用冷启动、温启动时间做监控。
@@ -464,13 +520,13 @@ verify_ = verifier::VerifyMode::kNone;
 
 * **快开慢开比**。例如 2 秒快开比、5 秒慢开比，我们可以看到有多少比例的用户体验非常好，多少比例的用户比较槽糕。
 * **90% 用户的启动时间**。如果 90% 的用户启动时间都小于 5 秒，那么我们 90% 区间启动耗时就是 5 秒。
-
-此外我们还要区分启动的类型。这里要统计首次安装启动、覆盖安装启动、冷启动和温启动这些类型，一般我们都使用普通的**冷启动时间**作为指标。另一方面热启动的占比也可以反映出我们程序的活跃或保活能力。
+ 
+此外我们还要区分启动的类型。这里要统计首次安装启动、覆盖安装启动、冷启动和温启动这些类型，一般我们都使用普通的 **冷启动时间** 作为指标。另一方面热启动的占比也可以反映出我们程序的活跃或保活能力。
 
 除了指标的监控，启动的线上堆栈监控更加困难。Facebook 会利用 [Profilo](https://github.com/facebookincubator/profilo) 工具对启动的整个流程耗时做监控，并且在后台直接对不同的版本做自动化对比，监控新版本是否有新增耗时的函数。
 
 ## 7. 总结
-在这么多的优化方案中，业务优化是最快出成果同时也是风险最小的。很多产品经理为了提升自己负责的模块的数据，总会逼迫开发做各种各样的预加载。比如只有 1% 用户使用的功能，却让所有用户都做预加载。面对这种情况，我们要狠下心来，只留下那些真正不能删除的业务，或者通过场景化直接找到那 1% 的用户。跟产品经理 PK 可能不是那么容易，关键在于**数据。我们需要证明启动优化带来整体留存、转化的正向价值，是大于某个业务取消预加载带来的负面影响。**
+在这么多的优化方案中，业务优化是最快出成果同时也是风险最小的。很多产品经理为了提升自己负责的模块的数据，总会逼迫开发做各种各样的预加载。比如只有 1% 用户使用的功能，却让所有用户都做预加载。面对这种情况，我们要狠下心来，只留下那些真正不能删除的业务，或者通过场景化直接找到那 1% 的用户。跟产品经理 PK 可能不是那么容易，关键在于 **数据。我们需要证明启动优化带来整体留存、转化的正向价值，是大于某个业务取消预加载带来的负面影响。**
 
 启动优化需要耐得住寂寞，把整个流程摸清摸透，一点点把时间抠出来，特别是对于低端机和系统繁忙的场景。当我们足够熟悉底层的知识时，也可以利用系统的特性去做更加深层次的优化。
 
