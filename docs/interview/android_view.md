@@ -138,7 +138,8 @@
     * **GPU（Graphics Processing Unit，图形处理器** 主要用于处理图形运算，通常所说“显卡”的核心部件就是GPU。 和CPU不同的是，GPU就是为实现大量数学运算设计的。GPU的控制器比较简单，但包含了大量ALU。GPU中的ALU使用了并行设计，且具有较多浮点运算单元, 更擅长数学运算
     
     > **控制器**，用于协调控制整个CPU的运行，包括取出指令、控制其他模块的运行等
-    > **ALU（Arithmetic Logic Unit）**是算术逻辑单元，用于进行数学、逻辑运算
+    
+    > **ALU（Arithmetic Logic Unit）** 是算术逻辑单元，用于进行数学、逻辑运算
        
        
 
@@ -163,22 +164,22 @@
 
     * **LAYER_TYPE_SOFTWARE**：Software layerType , 标识这个 View 有一个软件实现的 Layer ，怎么个软件实现法呢，实际上就是把这个 View，根据一定的条件，变成一个 Bitmap 对象
 
-    * **LAYER_TYPE_HARDWARE**：Hardware layerType ，标识这个 View 有一个硬件实现的 Layer ，这里的硬件指的是 GPU ，那么硬件实现的 Layer 顾名思义就是通过 GPU 来实现的，通常是OpenGL硬件上的**帧缓冲对象或FBO（离屏渲染 Buffer）** 。
+    * **LAYER_TYPE_HARDWARE**：Hardware layerType ，标识这个 View 有一个硬件实现的 Layer ，这里的硬件指的是 GPU ，那么硬件实现的 Layer 顾名思义就是通过 GPU 来实现的，通常是OpenGL硬件上的 **帧缓冲对象或FBO（离屏渲染 Buffer）** 。
 
     注意：这里 Hardware layerType 是依赖硬件加速的，如果硬件加速开启，那么才会有 FBO 或者帧缓冲 ； 如果硬件加速关闭，那么就算你设置一个 View 的 LayerType 是 Hardware Layer ，也会按照 Software Layer 去做处理
 
     **Hardware layer 的作用：**
 
-        * 硬件层可用于将特定颜色过滤器和/或混合模式和/或半透明应用于视图及其所有子视图
+    * 硬件层可用于将特定颜色过滤器和/或混合模式和/或半透明应用于视图及其所有子视图
 
-        * 硬件层可用于将复杂视图树缓存到纹理中，并降低绘制操作的复杂性。 例如，在使用转换动画复杂视图树时，可以使用硬件层仅渲染视图树一次，这个是最主要的一个点
+    * 硬件层可用于将复杂视图树缓存到纹理中，并降低绘制操作的复杂性。 例如，在使用转换动画复杂视图树时，可以使用硬件层仅渲染视图树一次，这个是最主要的一个点
 
-        * 在视图上应用旋转变换时，还可以使用硬件层来提高渲染质量。 它还可用于在视图上应用3D变换时防止潜在的剪切问题
+    * 在视图上应用旋转变换时，还可以使用硬件层来提高渲染质量。 它还可用于在视图上应用3D变换时防止潜在的剪切问题
 
-    ** 应用**
+    **应用**
 
     Hardware Layer 对 `alpha \ translation \ scale \ rotation \ pivot` 这几个属性动画性能有帮助，这也是 `Hardware Layer` 使用最频繁的优化 
-    (也就是我们常说的 ： 在做上述动画的时候，在动画开始前，将这个 View 的 LayerType 设置为 LAYER_TYPE_HARDWARE ，在动画结束后，将 layerType 重新设置为 LAYER_TYPE_NONE , 设置回来的原因是 Hardware Layer 使用的是 Video Memory，设置为 NONE 之后这部分使用的内存将会回收 )
+    (也就是我们常说的 ： 在做上述动画的时候，在动画开始前，将这个 View 的 LayerType 设置为 LAYER_TYPE_HARDWARE ，在动画结束后，将 layerType 重新设置为 LAYER_TYPE_NONE , 设置回来的原因是 Hardware Layer 使用的是 显存(Video Memory)，设置为 NONE 之后这部分使用的内存将会回收 )
 
     **注意属性动画的过程中( 比如 AnimationUpdate 回调中)，不要做除了上述属性更新之外的其他事情，比如添加删除子 View、修改 View 的显示内容等，这会使得 `FBO` 失效，性能反而变差**
 
@@ -205,23 +206,23 @@
 
     2. 对DisplayList进行优化、加工
 
-    3. 与SurfaceFliFlinger通信，获取Buffer
+    3. 与SurfaceFlinger通信，获取Buffer
 
     4. 调用 OpenGL 的绘制接口，执行真正的DrawOp
 
-    5. 将绘制好的Buffer swap 给SurfaceFliFlinger进行合成，由它负责将Buffer显示到屏幕上
+    5. 将绘制好的Buffer swap 给SurfaceFlinger进行合成，由它负责将Buffer显示到屏幕上
     
 !!! question "说下Invalidate"
 ??? note "回答"
     invalidate()方法必须在主线程执行,而scheduleTraversals()所引发的“遍历”也是在主线程执行(因为scheduleTraversals()是向主线程的Handler发送消息)。
-    所以**调用invalidate()方法并不会使得“遍历”立即开始**,这是因为在调用invalidate()的方法执行完毕之前(准确地说是主线程的Looper处理完其他消息之前),主线程根本没有机会处理scheduleTraversals()所发出的消息。
+    所以 **调用invalidate()方法并不会使得“遍历”立即开始**,这是因为在调用invalidate()的方法执行完毕之前(准确地说是主线程的Looper处理完其他消息之前),主线程根本没有机会处理scheduleTraversals()所发出的消息。
     这种机制带来的好处是:
 
     * 在一个方法中可以连续调用多个控件的invalidate()方法,而不用担心会由于多次重绘而产生的的效率问题。
 
     * 另外,多次调用invalidate()方法会使得ViewRootImpl多次接收到设置脏区域的请求,ViewRootImpl会将这些脏区域累加到mDirty中,进而在随后的“遍历”中一次性地完成所有脏区域的重绘。
 
-    View.invalidate()在回溯到ViewRootImpl的过程中会将沿途的控件标记为脏的,也就是将`PFLAG_DIRTY`或`P`FLAG_DIRTY_OPAQUE`两者之一添加到`View.mPrivateFlags`成员中。
+    View.invalidate()在回溯到ViewRootImpl的过程中会将沿途的控件标记为脏的,也就是将`PFLAG_DIRTY`或`PFLAG_DIRTY_OPAQUE`两者之一添加到`View.mPrivateFlags`成员中。
     两者都表示控件需要随后进行重绘,不过二者在重绘效率上有区别。
     在invalidate()的过程中,如果控件是“实心”的,则会将此控件标记为`PFLAG_DIRTY_OPAQUE`,否则为`PFLAG_DIRTY`。
     控件系统在重绘过程中区分这两种标记以决定是否为此控件绘制背景。对“实心”控件来说,其背景是被onDraw()的内容完全遮挡的,因此便可跳过背景的绘制工作从而提高效率。
@@ -252,25 +253,26 @@
     关键点1是启用硬件加速的条件，必须支持硬件并且开启了硬件加速才可以，满足，就利用 HardwareRenderer.draw，否则 drawSoftware（软件绘制）
 
     **drawSoftware**
+
     drawSoftware()主要有4步工作:
 
-        1. 通过Surface.lockCanvas()获取一个用于绘制的Canvas。
-        
-        2. 对Canvas进行变换以实现滚动效果。
+    1. 通过Surface.lockCanvas()获取一个用于绘制的Canvas。
+    
+    2. 对Canvas进行变换以实现滚动效果。
 
-        3. 通过mView.draw()将根控件绘制在Canvas上。
+    3. 通过mView.draw()将根控件绘制在Canvas上。
 
-        4. 通过Surface.unlockCanvasAndPost()显示绘制后的内容。
+    4. 通过Surface.unlockCanvasAndPost()显示绘制后的内容。
 
     其中 draw()主要执行以下工作
 
-        * 绘制背景,注意背景不会受到滚动的影响。
+    * 绘制背景,注意背景不会受到滚动的影响。
 
-        * 通过调用onDraw()方法绘制控件自身的内容
+    * 通过调用onDraw()方法绘制控件自身的内容
 
-        * 通过调用dispatchDraw()绘制其子控件。
+    * 通过调用dispatchDraw()绘制其子控件。
 
-        * 绘制控件的装饰,即滚动条     
+    * 绘制控件的装饰,即滚动条     
 
     **HardwareRender.draw**
 
@@ -282,9 +284,13 @@
     
     由于硬件绘制的过程位于HardwareRenderer内部,因此ViewRootImpl需要在onHardwarePreDraw()回调中完成这个操作。
 
-    * 绘制控件内容。**这是硬件加速绘制与软件绘制最根本的区别**。软件绘制是通过View.draw()以递归的方式将整个控件树用给定的Canvas直接绘制在Surface上。而硬件加速绘制则先通过View.getDisplayList()获取根控件的DisplayList,然后再将这个DisplayList绘制在Surface上。通过View.getDisplayList()所获取的DisplayList中包含了已编译过的用于绘制整个控件树的绘图指令。如果说软件绘制是直接绘制,那么硬件加速绘制则是通过过DisplayList间接绘制。
+    * 绘制控件内容。
+    
+    **这是硬件加速绘制与软件绘制最根本的区别**。软件绘制是通过View.draw()以递归的方式将整个控件树用给定的Canvas直接绘制在Surface上。而硬件加速绘制则先通过View.getDisplayList()获取根控件的DisplayList,然后再将这个DisplayList绘制在Surface上。通过View.getDisplayList()所获取的DisplayList中包含了已编译过的用于绘制整个控件树的绘图指令。如果说软件绘制是直接绘制,那么硬件加速绘制则是通过过DisplayList间接绘制。
 
-    * 将绘制结果显示出来。硬件加速绘制通过sEgl.swapBuffers()将绘制内容显示出来。其本质与Surface.unlockCanvasAndPost()方法一致,都是通过ANativeWindow::queueBuffer()将绘制内容发布给SurfaceFlinger。
+    * 将绘制结果显示出来。
+    
+    硬件加速绘制通过sEgl.swapBuffers()将绘制内容显示出来。其本质与Surface.unlockCanvasAndPost()方法一致,都是通过ANativeWindow::queueBuffer()将绘制内容发布给SurfaceFlinger。
 
 
 
@@ -371,13 +377,32 @@
 
 !!! question "说下SurfaceView"
 ??? note "回答"
-    SurfaceView是从View基类中派生出来的显示类，他和View的区别有：
 
-        - View需要在UI线程对画面进行刷新，而SurfaceView可在子线程进行页面的刷新
+    **SurfaceView和View区别**：
 
-        - View适用于主动更新的情况，而SurfaceView适用于被动更新，如频繁刷新，这是因为如果使用View频繁刷新会阻塞主线程，导致界面卡顿
-        
-        - SurfaceView在底层已实现双缓冲机制，而View没有，因此SurfaceView更适用于需要频繁刷新、刷新时数据处理量很大的页面
+    SurfaceView第一印象它是一个view，因为它继承了View，有两个直接子类GLSurfaceView,VideoView。但SurfaceView和普通的view又有较大区别。
+
+    最显著的区别就是普通view和它的宿主窗口共享一个绘图表面（Surface），SurfaceView虽然也在View的树形结构中，但是它有属于自己的绘图表面，Surface 内部持有一个Canvas，可以利用这个Canvas绘制。
+
+    SurfaceView提供一个直接的绘图表面（Surface）嵌入到视图结构层次中。你可以控制这个Surface的格式，大小，SurfaceView负责在屏幕上正确的摆放Surface。简单说就是SurfaceView拥有自己的Surface，它与宿主窗口是分离的。
+
+    我们知道窗口中的view共享一个window，window又对应一个Surface，所以窗口中的view共享一个Surface，而SurfaceView拥有自己的Surface。SurfaceView会创建一个置于应用窗口之后的新窗口，SurfaceView相当于在Window上挖一个洞，它就是显示在这个洞里，其他的View是显示在Window上，所以View可以显示在 SurfaceView之上，也可以添加一些层在SurfaceView之上。
+
+    SurfaceView的窗口刷新的时候不需要重绘应用程序的窗口而android普通窗口的视图绘制机制是一层一层的，任何一个子元素或者是局部的刷新都会导致整个视图结构全部重绘一次。
+
+    对于普通的view，Android中的窗口界面包括多个View组成的View Hierachy的树形结构，只有最顶层的DecorView才对WMS可见，这个DecorView在WMS中有一个对应的WindowState，此时APP请求创建Surface时，会在SurfaceFlinger内部建立对应的Layer。而对于SurfaceView它自带一个Surface，这个Surface在WMS有自己对应的WindowState，在SurfaceFlinger中有自己对应的layer。SurfaceView从APP端看它仍然在View hierachy结构中，但在WMS和SurfaceFlinger中它与宿主窗口是分离的。因此SurfaceView的Surface的渲染可以放到单独线程去做，不会影响主线程对事件的响应。但因为这个Surface不在View hierachy中，它的显示也不受View的属性控制，所以不能进行平移，缩放等变换（对SurfaceView进行ScrollBy，ScrollTo操作没有效果（还有透明度，旋转），普通View进行平移操作，内部内容会移动，SurfaceView进行这些操作内部不会移动。如果对包裹它的ViewGroup进行平移旋转等操作，也无法达到我们想要的效果。同时SurfaceView不能放在类似RecyclerView或ScrollView中，一些View中的特性也无法使用。
+
+    > SurfaceView不支持平移，缩放，旋转等动画，但是当我们利用SurfaceView测试这些不支持的动画时，如果使用的是7.0 甚至更高版本的Android系统，会发现SurfaceView也支持平移，缩放的动画操作。 
+
+    **SurfaceView使用场景**：
+
+    * View适用主动更新，SurfaceView 适用被动更新，如频繁的刷新
+    * View在UI线程更新，在非UI线程更新会报错，当在主线程更新view时如果耗时过长也会出错, SurfaceView在子线程刷新不会阻塞主线程，适用于界面频繁更新、对帧率要求较高的情况。
+    * SurfaceView可以控制刷新频率。
+    * SurfaceView底层利用双缓存机制，绘图时不会出现闪烁问题。
+
+    >  双缓冲技术是游戏开发中的一个重要的技术，主要是为了解决 反复局部刷屏带来的闪烁。游戏，视频等画面变化较频繁，前面还没有显示完，程序又请求重新绘制，这样屏幕就会不停地闪烁。双缓冲技术会把要处理的图片在内存中处理好之后，把要画的东西先画到一个内存区域里，然后整体的一次性画出来，将其显示在屏幕上。
+    
 
 
 
