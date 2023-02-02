@@ -154,6 +154,7 @@ nav:
         - Android 动画原理: front-end/android/daily/Android_animation.md   
         - Android消息机制-Handler: front-end/android/system/handler.md 
         - 解析Binder框架: front-end/android/daily/binder.md   
+        - Dialog 对应的 Context 必须是 Activity吗？: front-end/android/daily/dialog_token.md   
         - APK文件分析: front-end/android/daily/apk_analyze.md 
         - Android 开机流程: front-end/android/system/bootloader.md    
         - Android Transform: front-end/android/system/android-transform.md    
