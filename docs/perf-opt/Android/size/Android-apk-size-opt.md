@@ -132,6 +132,7 @@ DebugItem 里面主要包含两种信息：
   从 Eclipse 时代开始，我们就开始使用Lint这个静态代码扫描工具，它里面就支持 `Unused Resources` 扫描。
   我们既可以通过gradle脚本方式引入
   ![图片 1](./图片 1.png)
+  
   也可以直接直接通过AS执行
   ![f09d7215a06d330bb19d72869df80580](./f09d7215a06d330bb19d72869df80580.webp)
   然后我们直接选择`“Remove All Unused Resources”`，就可以轻松删除所有的无用资源了。

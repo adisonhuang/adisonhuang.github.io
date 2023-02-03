@@ -1,6 +1,4 @@
-# 抖音 Android 包体积优化探索：从 Class 字节码入手精简 DEX 体积     
-
-> 转自 https://juejin.cn/post/7052614577216815134
+# 从 Class 字节码入手精简 DEX 体积     
 
 ## 前言
 
@@ -793,3 +791,7 @@ protected void onCreate(android.os.Bundle);
    c.  如果`getstatic`指令的目标 Field 为`public static int[]`类型，则使用`newarray`指令将`getstatic`替换，将`<clinit>`中 Field 的数组赋值导入。
 
 > 抖音上线此优化后减少包体积约 30.5M。抖音能产生这么大的收益是因为抖音的 R 十分巨大，包含的 field 非常多，同时由于单个 DEX 能定义的 field 最多为 65536 个，如果不做精简则会导致 DEX 数量的剧增，从而出现 DEX 总体积暴涨的情况。
+
+## 参考
+
+转自 https://juejin.cn/post/7052614577216815134

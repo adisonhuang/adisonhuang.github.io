@@ -1,7 +1,5 @@
 # Android对so体积优化的探索与实践
 
-> 摘自[https://tech.meituan.com/2022/06/02/meituans-technical-exploration-and-practice-of-android-so-volume-optimization.html](https://tech.meituan.com/2022/06/02/meituans-technical-exploration-and-practice-of-android-so-volume-optimization.html)
-
 ## 1. 背景
 
 应用安装包的体积影响着用户的下载时长、安装时长、磁盘占用空间等诸多方面，因此减小安装包的体积对于提升用户体验和下载转化率都大有益处。Android 应用安装包其实是一个 zip 文件，主要由 dex、assets、resource、so 等各类型文件压缩而成。目前业内常见的包体积优化方案大体分为以下几类：
@@ -433,9 +431,4 @@ nm -D --defined-only xxx.so
 
 ## 8. 参考资料
 
-1. https://www.cs.cmu.edu/afs/cs/academic/class/15213-f00/docs/elf.pdf
-2. https://llvm.org/docs/LinkTimeOptimization.html
-3. https://gcc.gnu.org/onlinedocs/gccint/LTO-Overview.html
-4. https://sourceware.org/binutils/docs/ld/VERSION.html
-5. https://clang.llvm.org/docs
-6. https://gcc.gnu.org/onlinedocs/gcc
+> 摘自[https://tech.meituan.com/2022/06/02/meituans-technical-exploration-and-practice-of-android-so-volume-optimization.html](https://tech.meituan.com/2022/06/02/meituans-technical-exploration-and-practice-of-android-so-volume-optimization.html)
