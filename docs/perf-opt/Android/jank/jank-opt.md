@@ -51,7 +51,7 @@
 
 ## 2. 卡顿分析
 
-造成卡顿的原因可能有千百种，不过最终都会反映到 **CPU 时间**上。我们可以把 CPU 时间分为两种：用户时间和系统时间。用户时间就是执行用户态应用程序代码所消耗的时间；系统时间就是执行内核态系统调用所消耗的时间，包括 I/O、锁、中断以及其他系统调用的时间。
+造成卡顿的原因可能有千百种，不过最终都会反映到 **CPU 时间** 上。我们可以把 CPU 时间分为两种：用户时间和系统时间。用户时间就是执行用户态应用程序代码所消耗的时间；系统时间就是执行内核态系统调用所消耗的时间，包括 I/O、锁、中断以及其他系统调用的时间。
 
 评价一个 CPU 的性能，需要看`主频`、`核心数`、`缓存`等参数，具体表现出来的是计算能力和指令执行能力，也就是每秒执行的浮点计算数和每秒执行的指令数。
 
@@ -83,7 +83,7 @@ proc/self/stat:
 !!! warning ""
 	**如果 CPU 使用率长期大于 60% ，表示系统处于繁忙状态，就需要进一步分析用户时间和系统时间的比例。对于普通应用程序，系统时间不会长期高于 30%，如果超过这个值，我们就应该进一步检查是 I/O 过多，还是其他的系统调用问题。**
 	
-Android 是站在 Linux 巨人的肩膀上，虽然做了不少修改也砍掉了一些工具，但还是保留了很多有用的工具可以协助我们更容易地排查问题，这里我给你介绍几个常用的命令。例如，[**`top 命令`**](https://blog.adison.top/android/perf/top/)可以帮助我们查看哪个进程是 CPU 的消耗大户；**`vmstat 命令`**可以实时动态监视操作系统的虚拟内存和 CPU 活动；**`strace 命令`**可以跟踪某个进程中所有的系统调用。
+Android 是站在 Linux 巨人的肩膀上，虽然做了不少修改也砍掉了一些工具，但还是保留了很多有用的工具可以协助我们更容易地排查问题，这里我给你介绍几个常用的命令。例如，[**`top 命令`**](https://blog.adison.top/android/perf/top/)可以帮助我们查看哪个进程是 CPU 的消耗大户；**`vmstat 命令`** 可以实时动态监视操作系统的虚拟内存和 CPU 活动；**`strace 命令`** 可以跟踪某个进程中所有的系统调用。
 
 
 
@@ -91,9 +91,9 @@ Android 是站在 Linux 巨人的肩膀上，虽然做了不少修改也砍掉�
 
 CPU 饱和度反映的是线程排队等待 CPU 的情况，也就是 CPU 的 **负载情况**。
 
-CPU 饱和度首先会跟应用的 **线程数**有关，如果启动的线程过多，容易导致系统不断地切换执行的线程，把大量的时间浪费在上下文切换，我们知道每一次 CPU 上下文切换都需要刷新寄存器和计数器，至少需要几十纳秒的时间。
+CPU 饱和度首先会跟应用的 **线程数** 有关，如果启动的线程过多，容易导致系统不断地切换执行的线程，把大量的时间浪费在上下文切换，我们知道每一次 CPU 上下文切换都需要刷新寄存器和计数器，至少需要几十纳秒的时间。
 
-我们可以通过使用`vmstat命令`或者`/proc/[pid]/schedstat文件`来查看 CPU 上下文切换次数，这里特别需要注意 **`nr_involuntary_switches`**被动切换的次数。
+我们可以通过使用`vmstat命令`或者`/proc/[pid]/schedstat文件`来查看 CPU 上下文切换次数，这里特别需要注意 **`nr_involuntary_switches`** 被动切换的次数。
 
 ``` shell
 
@@ -116,7 +116,7 @@ proc/self/sched:
 load average: 13.91, 14.70, 14.32
 ```
 
-另外一个会影响 CPU 饱和度的是**线程优先级**，线程优先级会影响 Android 系统的调度策略，它主要由 `nice` 和 `cgroup` 类型共同决定。nice 值越低，抢占 CPU 时间片的能力越强。
+另外一个会影响 CPU 饱和度的是 **线程优先级**，线程优先级会影响 Android 系统的调度策略，它主要由 `nice` 和 `cgroup` 类型共同决定。nice 值越低，抢占 CPU 时间片的能力越强。
 
 !!! warning ""
 	**当 CPU 空闲时，线程的优先级对执行效率的影响并不会特别明显，但在 CPU 繁忙的时候，线程调度会对执行效率有非常大的影响。**
@@ -140,7 +140,7 @@ Android 在 ftrace 的基础上封装了atrace，并增加了更多特有的探�
 
 #### [Perfetto](https://perfetto.dev/)
 
-在Android 9.0（API级别28）或更高版本的设备上，可以使用 systrace 在设备上记录系统跟踪。Perfetto 工具是Android下一代全新的统一的 trace 收集和分析框架，可以抓取平台和app的 trace 信息，是用来取代 systrace 的，但 systrace 由于历史原因也还会一直存在，并且 Perfetto 抓取的 trace 文件也可以同样转换成 systrace 视图，如果习惯用 systrace 的，可以用 Perfetto UI 的 Open with legacy UI 转换成 systrace 视图来看
+在Android 9.0（API级别28）或更高版本的设备上，可以使用 Perfetto 在设备上记录系统跟踪。Perfetto 工具是Android下一代全新的统一的 trace 收集和分析框架，可以抓取平台和app的 trace 信息，是用来取代 systrace 的，但 systrace 由于历史原因也还会一直存在，并且 Perfetto 抓取的 trace 文件也可以同样转换成 systrace 视图，如果习惯用 systrace 的，可以用 Perfetto UI 的 Open with legacy UI 转换成 systrace 视图来看
 
 > 更多介绍 见 [Perfetto入门](https://www.jianshu.com/p/f4cf101cc64f)
 
@@ -243,7 +243,7 @@ for (;;) {
 }
 ```
 
-无论是通过反射替换Looper的 *mLogging* 还是通过 *setMessageLogging* 设置printer，我们只需要替换主线程Looper的printer对象，通过计算执行dispatchMessage方法之后和之前打印字符串的时间的差值，就可以拿到到 *dispatchMessage* 方法执行的时间。而 **大部分的主线程的操作最终都会执行到这个*dispatchMessage*方法中** 。
+无论是通过反射替换Looper的 *mLogging* 还是通过 *setMessageLogging* 设置printer，我们只需要替换主线程Looper的printer对象，通过计算执行dispatchMessage方法之后和之前打印字符串的时间的差值，就可以拿到到 *dispatchMessage* 方法执行的时间。而 **大部分的主线程的操作最终都会执行到这个 *dispatchMessage* 方法中** 。
 
 另外利用系统 Choreographer 模块，向该模块注册一个 FrameCallback 监听对象，并在每次 Vsync 事件 doFrame 通知回来时，循环注册该监听对象，间接统计两次 Vsync 事件的时间间隔。这样可以很方便统计到帧率以及每帧的耗时。
 
@@ -271,7 +271,7 @@ for (;;) {
 
 #### 4.2.2  无法被监控到的卡顿
 
-使用`Looper Printer`这种方式监控， **不会随机漏报，无需轮询，一劳永逸**，但是**某些类型的卡顿无法被监控到**，因为有些情况的卡顿，这种方案从原理上就无法监控到。看到上面的 *queue.next()*，这里给了注释：**might block** ，直接跟你说这里是可能会卡住的，Printer无法监控到next里面发生的卡顿， 这时候再计算 *dispatchMessage* 方法的耗时显然就没有意义了。
+使用`Looper Printer`这种方式监控， **不会随机漏报，无需轮询，一劳永逸**，但是 **某些类型的卡顿无法被监控到**，因为有些情况的卡顿，这种方案从原理上就无法监控到。看到上面的 *queue.next()*，这里给了注释：**might block** ，直接跟你说这里是可能会卡住的，Printer无法监控到next里面发生的卡顿， 这时候再计算 *dispatchMessage* 方法的耗时显然就没有意义了。
 
 如果排除主线程空闲的情况，究竟会是什么原因会卡在 *MessageQueue* 的 *next* 方法中呢？下图是 *next* 方法简化过后的源码，
 
@@ -322,7 +322,7 @@ for (;;) {
 
 ### 4.3 监控IdleHandler卡顿
 
-***IdleHandler*** 的 *queueIdle()*回调方法会在主线程空闲的时候被调用。然而实际上，很多开发同学都先入为主的认为这个时候反正主线程空闲，做一些耗时操作也没所谓。**其实主线程MessageQueue的*queueIdle*默认当然也是执行在主线程中**，所以这里的耗时操作其实是很容易引起卡顿和ANR的。
+***IdleHandler*** 的 *queueIdle()* 回调方法会在主线程空闲的时候被调用。然而实际上，很多开发同学都先入为主的认为这个时候反正主线程空闲，做一些耗时操作也没所谓。**其实主线程MessageQueue的 *queueIdle* 默认当然也是执行在主线程中**，所以这里的耗时操作其实是很容易引起卡顿和ANR的。
 
 
 
@@ -404,7 +404,7 @@ InputDispatcher会与我们的应用进程建立连接，它是socket的服务�
 
 ### 4.4. 监控SyncBarrier泄漏
 
-当我们每次通过invalidate来刷新UI时，最终都会调用到*ViewRootImpl*中的*scheduleTraversals*方法，会向主线程的Looper中post一个SyncBarrier，其目的是为了在刷新UI时，主线程的同步消息都被跳过，此时渲染UI的异步消息就可以得到优先处理。但是我们注意到这个方法是**线程不安全**的，如果在非主线程中调用到了这里，就有可能会同时post多个SyncBarrier，但只**能remove掉最后一个**，从而有一个SyncBarrier就永远无法被remove，就导致了主线程Looper无法处理同步消息（Message默认就是同步消息），导致卡死。当然，这种情况还是比较少见的。
+当我们每次通过invalidate来刷新UI时，最终都会调用到 *ViewRootImpl* 中的 *scheduleTraversals* 方法，会向主线程的Looper中post一个SyncBarrier，其目的是为了在刷新UI时，主线程的同步消息都被跳过，此时渲染UI的异步消息就可以得到优先处理。但是我们注意到这个方法是 **线程不安全** 的，如果在非主线程中调用到了这里，就有可能会同时post多个SyncBarrier，但 **只能remove掉最后一个**，从而有一个SyncBarrier就永远无法被remove，就导致了主线程Looper无法处理同步消息（Message默认就是同步消息），导致卡死。当然，这种情况还是比较少见的。
 
 ```java
 
@@ -438,7 +438,7 @@ void unscheduleTraversals() {
 1. 开个子线程，轮询检查主线程的MessageQueue里面的message，检查是否有同步屏障消息的when已经过去了很久了，但还没得到移除
 2. 此时可以合理怀疑该同步屏障消息可能已泄露，但还不能确定（有可能是主线程卡顿，导致没有及时移除）
 3. 这个时候，往主线程发一个同步消息和一个异步消息（可以间隔地多发几次，增加可信度），如果同步消息没有得到执行，但异步消息得到执行了，这说明什么？说明主线程有处理消息的能力，不卡顿，且主线程的MessageQueue中有一个同步屏障一直没得到移除，所以同步消息才没得到执行，而异步消息得到执行了。
-4. 此时，可以激进一点，**我们甚至可以反射调用*MessageQueue*的*removeSyncBarrier*方法，手动把这个SyncBarrier移除掉，从而从错误状态中恢复**。
+4. 此时，可以激进一点，**我们甚至可以反射调用 *MessageQueue* 的 *removeSyncBarrier* 方法，手动把这个SyncBarrier移除掉，从而从错误状态中恢复**。
 
 核心源码如下：
 
