@@ -184,8 +184,8 @@ input的超时机制并非时间到了一定就会爆炸，而是处理后续上
 
 1. InputReader线程通过EventHub监听底层上报的输入事件，一旦收到输入事件则将其放至mInBoundQueue队列，并唤醒InputDispatcher线程
 2. InputDispatcher开始分发输入事件，设置埋雷的起点时间。先检测是否有正在处理的事件(mPendingEvent)，如果没有则取出mInBoundQueue队头的事件，并将其赋值给mPendingEvent，且重置ANR的timeout；否则不会从mInBoundQueue中取出事件，也不会重置timeout。然后检查窗口是否就绪(checkWindowReadyForMoreInputLocked)，满足以下任一情况，则会进入扫雷状态(检测前一个正在处理的事件是否超时)，终止本轮事件分发，否则继续执行步骤3。
-   - 对于按键类型的输入事件，则outboundQueue或者waitQueue不为空，
-   - 对于非按键的输入事件，则waitQueue不为空，且等待队头时间超时500ms
+    - 对于按键类型的输入事件，则outboundQueue或者waitQueue不为空，
+    - 对于非按键的输入事件，则waitQueue不为空，且等待队头时间超时500ms
 3. 当应用窗口准备就绪，则将mPendingEvent转移到outBoundQueue队列
 4. 当outBoundQueue不为空，且应用管道对端连接状态正常，则将数据从outboundQueue中取出事件，放入waitQueue队列
 5. InputDispatcher通过socket告知目标应用所在进程可以准备开始干活
@@ -194,7 +194,7 @@ input的超时机制并非时间到了一定就会爆炸，而是处理后续上
 
 !!! question "input超时机制为什么是扫雷，而非定时爆炸呢？"
 
-	由于对于input来说即便某次事件执行时间超过timeout时长，只要用户后续在没有再生成输入事件，则不会触发ANR。 这里的扫雷是指当前输入系统中正在处理着某个耗时事件的前提下，后续的每一次input事件都会检测前一个正在处理的事件是否超时（进入扫雷状态），检测当前的时间距离上次输入事件分发时间点是否超过timeout时长。如果前一个输入事件，则会重置ANR的timeout，从而不会爆炸。
+	由于对于input来说即便某次事件执行时间超过timeout时长，只要用户后续在没有再生成输入事件，则不会触发ANR。 这里的扫雷是指当前输入系统中正在处理着某个耗时事件的前提下，后续的每一次input事件都会检测前一个正在处理的事件是否超时（进入扫雷状态），检测当前的时间距离上次输入事件分发时间点是否超过timeout时长。如果前一个输入事件没有超时，则会重置ANR的timeout，从而不会爆炸。
 
 
 
