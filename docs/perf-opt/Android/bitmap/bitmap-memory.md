@@ -402,7 +402,7 @@ static inline int64_t sk_64_mul(int64_t a, int64_t b) {
 
 **bitmapInRam = bitmapWidth\*bitmapHeight \*4 bytes**
 
-至此，我们论证了图片占用内存和色彩格式的关系，但**bitmap宽高不一定等于图片本身宽高**，下面我们以实验用到的方法`BitmapFactory.decodeResource`看下bitmap宽高和图片本身宽高的关系
+至此，我们论证了图片占用内存和色彩格式的关系，但 **bitmap宽高不一定等于图片本身宽高**，下面我们以实验用到的方法`BitmapFactory.decodeResource`看下bitmap宽高和图片本身宽高的关系
 
 #### BitmapFactory.decodeResource
 
