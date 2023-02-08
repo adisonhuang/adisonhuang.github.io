@@ -109,8 +109,7 @@ apply 接口整体的详细设计思路如下图（基于 Android8.0 及以下�
 整体的思路简单梳理如下：
 
 1. sp.apply()，写入内存同时得到需要同步写入文件的数据集合 MemoryCommitResult：
-
-   ![](./assets/MemoryCommitResult.png)
+![](./assets/MemoryCommitResult.png)
 
 2. 将 MemoryCommitResult 封装成 Runnable 抛到子线程 queued-work-looper 中；
 
@@ -119,12 +118,10 @@ apply 接口整体的详细设计思路如下图（基于 Android8.0 及以下�
 4. 文件写入完成以后，会执行 MemoryCommitResult 的 setDiskWriteResult 方法，关键的步骤 **writtenToDiskLatch.countDown()** 出现了；
 
 5. 如下当主线中执行到 QueuedWork.waitToFinish()的时候；
-
-   ![](./assets/QueuedWork.png)
+![](./assets/QueuedWork.png)
 
 6. 主线程到底在干什么，这个时候得从 QueuedWork.add(Runnable finisher)入手，具体 Runnable 如下图，这个地方就是啥也没干，直接等在了 mcr.writtenToDiskLatch.await()上，这里大家应该有点印象，就是步骤 4 中子线程在写完文件以后直接释放的那个锁
-
-   ![](./assets/Runnable.png)
+![](./assets/Runnable.png)
 
 **结论：** 尽管整体 API 的流程分析异常的复杂，把一个 runnable 封装了一层又一层，从这个线程抛到那个线程，子线程执行完写入文件以后会释放锁，主线程执行到某些地方得等待子线程把写入文件的行为执行完毕，但是整体的思路还是比较简单的。**造成这个问题的根源就是太多 pending 的 apply 行为没有写入到文件，主线程在执行到指定消息的时候会有等待行为，等待时间过长就会出现 ANR。**
 
@@ -134,9 +131,9 @@ apply 接口整体的详细设计思路如下图（基于 Android8.0 及以下�
 
 ## 2 .解决方案
 
-**问题一：**针对加载很慢的问题，一般使用的比较多的是采用预加载的方式来触发到这个 sp 文件的加载和解析，这样在真正使用的时候大概率 sp 已经加载解析完毕了；真正需要处理的是核心场景的 sp 一定不能太大，Google 官方的声明还是有必要遵守一下，轻量级的数据持久化存储方式，不要存太多数据，避免文件过大，导致前期的加载解析耗时过久。
+**问题一**：针对加载很慢的问题，一般使用的比较多的是采用预加载的方式来触发到这个 sp 文件的加载和解析，这样在真正使用的时候大概率 sp 已经加载解析完毕了；真正需要处理的是核心场景的 sp 一定不能太大，Google 官方的声明还是有必要遵守一下，轻量级的数据持久化存储方式，不要存太多数据，避免文件过大，导致前期的加载解析耗时过久。
 
-**问题二：**至于 Google 为什么要这么设计，提出了自己的几个猜想：
+**问题二**：至于 Google 为什么要这么设计，提出了自己的几个猜想：
 
 1. Google 希望做到数据可能尽可能及时的写入文件，但是这样等待没有任何意义，主线程直接等待并不会提升写入的效率；
 2. 期望 sp 实时写入文件，以方便跨进程的时候可以实时的访问到 sp 内的文件，这种异步写入方式本身就没办法确保实时性；
