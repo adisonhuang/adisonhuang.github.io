@@ -1,22 +1,17 @@
 # Bitmap: 从出生到死亡
 ## 1. 基本概念
 
-* 像素（`Pixel`）：
-  指可以表现亮度甚至色彩变化的一个点，是构成数字图像的最小单位。像素具有大小相同、明暗和颜色的变化。特点是有固定的位置和特定的颜色值。
+* **像素（`Pixel`）**： 指可以表现亮度甚至色彩变化的一个点，是构成数字图像的最小单位。像素具有大小相同、明暗和颜色的变化。特点是有固定的位置和特定的颜色值。
 
-* `color depth`、`bit depth`
-  每个像素RBG若各用8位表示，`bit depth`就是8bit，那么这个像素就用24位表示，`color depth`就是24bit。一个像素`color depth`越深，像素表达的颜色和亮度的位数越多，文件就越大。一个`color depth`中每个`channel`的深度就是`bit depth`。用32位表示一个像素的话，RBG占用24位，还有8位称为`alpha channel`。
+* **`color depth`、`bit depth`**：每个像素RBG若各用8位表示，`bit depth`就是8bit，那么这个像素就用24位表示，`color depth`就是24bit。一个像素`color depth`越深，像素表达的颜色和亮度的位数越多，文件就越大。一个`color depth`中每个`channel`的深度就是`bit depth`。用32位表示一个像素的话，RBG占用24位，还有8位称为`alpha channel`。
 
-* `alpha composite`、`alpha blend`、`alpha channel`
-  渲染图片的时候，图片有时有很多图层，然后再将多个图层组合起来，这叫做`alpha composite`。在这个过程中，多个图层每个对应像素合成的过程叫做`alpha blend`。透过看到下一图层，就需要记录一些哪里透明、哪里不透明的信息，这些信息就被存在一个`alpha channel`中了。
+* **`alpha composite`、`alpha blend`、`alpha channel`**： 渲染图片的时候，图片有时有很多图层，然后再将多个图层组合起来，这叫做`alpha composite`。在这个过程中，多个图层每个对应像素合成的过程叫做`alpha blend`。透过看到下一图层，就需要记录一些哪里透明、哪里不透明的信息，这些信息就被存在一个`alpha channel`中了。
 
-* 图片分辨率
-  计算机显示的图像是由像素点组成的，图片尺寸为640 x 480，代表图片水平有640个像素点，垂直有480像素点。
+* **图片分辨率**：计算机显示的图像是由像素点组成的，图片尺寸为640 x 480，代表图片水平有640个像素点，垂直有480像素点。
 
 > 各种图片格式目的是在网络传输和存储的时候使用更少的字节，即起到压缩的作用，或者支持多张图片组合成一张动态图。在图片格式解码后，无论哪种图片的格式，图片数据都是像素数组。
 
-* Bitmap
-  位图，又称为点阵图像、像素图或栅格图像，是由像素（图片元素）的单个点组成。这些点可以进行不同的排列和染色以构成图样。Bitmap的承载容器是`jpg`、`png`等格式的文件，是对bitmap的压缩。当jpg、png等文件需要展示在手机上的控件时，就会解析成Bitmap并绘制到view上。
+* **Bitmap**：位图，又称为点阵图像、像素图或栅格图像，是由像素（图片元素）的单个点组成。这些点可以进行不同的排列和染色以构成图样。Bitmap的承载容器是`jpg`、`png`等格式的文件，是对bitmap的压缩。当jpg、png等文件需要展示在手机上的控件时，就会解析成Bitmap并绘制到view上。
 > Bitmap同时也表示一种数据结构，用一个bit位来标记某个元素对应的Value， 而Key即是该元素。由于采用了Bit为单位来存储数据，因此在存储空间方面，可以大大节省。具体参见[什么是Bit-map](https://wizardforcel.gitbooks.io/the-art-of-programming-by-july/content/06.07.html)
 
 
@@ -44,7 +39,7 @@ App开发不可避免的要和图片打交道，由于其占用内存非常大�
 
 **为什么 Android 2.3.3 中 Native 的内存释放不可预测？在 Java 对象的 finalize 被调用时直接释放的方案有何不妥?Android 8.0 的 NativeAllocationRegistry 的引入是为了解决什么问题?**
 
-带着疑问，我们去了解下Bitmap其内存是如何被分配和销毁以及学习一下 NativeAllocationRegistry 的技术。
+带着疑问，我们去了解下Bitmap其内存是如何被分配和销毁以及学习一下`NativeAllocationRegistry`的技术。
 
 ## 3. Bitmap 创建
 创建 Bitmap 的方式很多，
@@ -815,7 +810,7 @@ Bitmap 创建之后, 其构造函数内部的操作如下
   }
   ```
 
-native 层的 Finalizer 即 Bitmap_destruct 函数, 有了这个函数, 我们便可以快速的是否 native 的 BitmapWrapper 内存了
+native 层的 Finalizer 即 Bitmap_destruct 函数, 有了这个函数, 我们便可以快速的回收 native 的 BitmapWrapper 内存了
 
 * **NativeAllocationRegistry 的创建**
 
