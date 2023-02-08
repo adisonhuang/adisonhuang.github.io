@@ -203,9 +203,9 @@ final class LifecycleLifecycle implements Lifecycle, LifecycleObserver {
 ```
 #### 小结
 
-1.获取对应Activity的`Lifecycle`, 把`LifecycleLifecycle`作为 LifecycleObserver 注册到 `Activity Lifecycle`；
-2.在创建`RequestManager`时，RequestManager 作为 `LifecycleListener` 注册到 LifecycleLifecycle，从而间接注册到 Activity Lifecycle;
-3.这样当Activity生命周期变化的时候，就能通过接口回调去通知RequestManager处理请求.
+1. 获取对应Activity的`Lifecycle`, 把`Lifecycle`作为 LifecycleObserver 注册到 `Activity Lifecycle`；
+2. 在创建`RequestManager`时，RequestManager 作为 `LifecycleListener` 注册到 Lifecycle，从而间接注册到 Activity Lifecycle;
+3. 这样当Activity生命周期变化的时候，就能通过接口回调去通知RequestManager处理请求.
 
 > 以上是Glide支持官方的lyfecycle方案的处理流程，其实默认Glide是自己实现了一套生命周期感知方案，这里不做分析，感兴趣的可以自己去看源码或者查看网上相关文章。
 

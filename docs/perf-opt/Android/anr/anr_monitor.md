@@ -86,7 +86,7 @@ public void run() {
 
 **该方案从思路上来说优于第一种方案，并且遵循系统信息获取方式，获取的线程信息及虚拟机信息更加全面，但缺点是对性能影响比较大，对于复杂的 App 来说，统计其耗时，部分场景一次 Dump 耗时可能要超过 10S。**
 
-Linux系统提供了两种监听信号的方法，一种是SignalCatcher线程使用的*sigwait*方法进行同步、阻塞地监听，另一种是使用*sigaction*方法注册signal handler进行异步监听，我们都来试试。
+Linux系统提供了两种监听信号的方法，一种是SignalCatcher线程使用的 *sigwait* 方法进行同步、阻塞地监听，另一种是使用 *sigaction* 方法注册signal handler进行异步监听，我们都来试试。
 
 ### 2.1 sigwait
 
@@ -108,11 +108,11 @@ pthread_create(&pid, nullptr, mySigQuitCatcher, nullptr);
 pthread_detach(pid);
 ```
 
-这个时候就有了两个不同的线程*sigwait*同一个SIGQUIT，具体会走到哪个呢，我们在*sigwait*的文档中找到了这样的描述（*sigwait*方法是由*sigwaitinfo*方法实现的）
+这个时候就有了两个不同的线程 *sigwait* 同一个SIGQUIT，具体会走到哪个呢，我们在 *sigwait* 的文档中找到了这样的描述（ *sigwait* 方法是由 *sigwaitinfo* 方法实现的）
 
 ![](./assets/sigwait.png)
 
-原来 **当有两个线程通过*sigwait*方法监听同一个信号时，具体是哪一个线程收到信号时不能确定的**。不确定可不行，当然不满足我们的需求
+原来 **当有两个线程通过 *sigwait* 方法监听同一个信号时，具体是哪一个线程收到信号时不能确定的**。不确定可不行，当然不满足我们的需求
 
 ### 2.2  Signal Handler
 
@@ -131,9 +131,9 @@ sa.sa_flags = SA_ONSTACK | SA_SIGINFO | SA_RESTART;
 sigaction(SIGQUIT, &sa, nullptr);
 ```
 
-建立了Signal Handler之后，我们发现在同时有*sigwait*和signal handler的情况下，信号没有走到我们的signal handler而是依然被系统的Signal Catcher线程捕获到了，这是什么原因呢？
+建立了Signal Handler之后，我们发现在同时有 *sigwait* 和signal handler的情况下，信号没有走到我们的signal handler而是依然被系统的Signal Catcher线程捕获到了，这是什么原因呢？
 
-原来是Android默认把SIGQUIT设置成了BLOCKED，所以只会响应*sigwait*而不会进入到我们设置的handler方法中。我们通过   *pthread_sigmask*或者*sigprocmask*把SIGQUIT设置为UNBLOCK，那么再次收到SIGQUIT时，就一定会进入到我们的handler方法中。需要这样设置：
+原来是Android默认把SIGQUIT设置成了BLOCKED，所以只会响应 *sigwait* 而不会进入到我们设置的handler方法中。我们通过 *pthread_sigmask* 或者 *sigprocmask* 把SIGQUIT设置为UNBLOCK，那么再次收到SIGQUIT时，就一定会进入到我们的handler方法中。需要这样设置：
 
 ```c++
 sigset_t sigSet;
@@ -142,7 +142,7 @@ sigaddset(&sigSet, SIGQUIT);
 pthread_sigmask(SIG_UNBLOCK, &sigSet, nullptr);
 ```
 
-最后需要注意，我们通过Signal Handler抢到了SIGQUIT后，原本的Signal Catcher线程中的*sigwait*就不再能收到SIGQUIT了，原本的dump堆栈的逻辑就无法完成了，**我们为了ANR的整个逻辑和流程跟原来完全一致，需要在Signal Handler里面重新向Signal Catcher线程发送一个SIGQUIT**：
+最后需要注意，我们通过Signal Handler抢到了SIGQUIT后，原本的Signal Catcher线程中的 *sigwait* 就不再能收到SIGQUIT了，原本的dump堆栈的逻辑就无法完成了，**我们为了ANR的整个逻辑和流程跟原来完全一致，需要在Signal Handler里面重新向Signal Catcher线程发送一个SIGQUIT**：
 
 ```c++
 int tid = getSignalCatcherThreadId(); //遍历/proc/[pid]目录，找到SignalCatcher线程的tid
@@ -166,7 +166,7 @@ tgkill(getpid(), tid, SIGQUIT);
 考虑下面两种情况：
 
 - **其他进程的ANR**：上面提到过，发生ANR之后，发生ANR的进程并不是唯一需要dump堆栈的进程，系统会收集许多其他的进程进行dump，也就是说当一个应用发生ANR的时候，其他的应用也有可能收到SIGQUIT信号。**进一步，我们监控到SIGQUIT时，可能是监听到了其他进程产生的ANR，从而产生误报。**
-- **非ANR发送SIGQUIT**：发送SIGQUIT信号其实是很容易的一件事情，开发者和厂商都可以很容易的发送一个SIGQUIT（java层调用*android.os.Process.sendSignal*方法；Native层调用*kill或者tgkill*方法），**所以我们可能会收到非ANR流程发送的SIGQUIT信号，从而产生误报。**
+- **非ANR发送SIGQUIT**：发送SIGQUIT信号其实是很容易的一件事情，开发者和厂商都可以很容易的发送一个SIGQUIT（java层调用 *android.os.Process.sendSignal* 方法；Native层调用 *kill或者tgkill* 方法），**所以我们可能会收到非ANR流程发送的SIGQUIT信号，从而产生误报。**
 
 怎么解决这些误报的问题呢，我重新回到ANR流程开始的地方:
 
@@ -203,7 +203,7 @@ private void makeAppNotRespondingLocked(String activity, String shortMsg, String
 }
 ```
 
-在ANR弹窗前，会执行到*makeAppNotRespondingLocked*方法中，在这里会给发生ANR进程标记一个*NOT_RESPONDING*的flag。而这个flag我们可以通过ActivityManager来获取。
+在ANR弹窗前，会执行到 *makeAppNotRespondingLocked* 方法中，在这里会给发生ANR进程标记一个 *NOT_RESPONDING* 的flag。而这个flag我们可以通过ActivityManager来获取。
 
 ```java
 private static boolean checkErrorState() {
