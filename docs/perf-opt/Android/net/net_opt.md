@@ -158,9 +158,10 @@ PING www.a.shifen.com (163.177.151.110): 56 data bytes
 4 packets transmitted, 4 packets received, 0.0% packet loss
 round-trip min/avg/max/stddev = 4.636/4.918/5.344/0.262 ms
 ```
+
 * bytes值：数据包大小，也就是字节。
 * time值：响应时间，这个时间越小，说明你连接这个地址速度越快。
-* ttl值：Time To Live,表示DNS记录在DNS服务器上存在的时间，它是IP协议包的一个值，告诉路由器该数据包何时需要被丢弃。
+* ttl值：Time To Live, 生存时间，指示了IP数据包可以经过最大的路由器数量，当一个ip数据包每经过一个路由器时，该TTL的值就会减1，当经过的路由器个数超过TTL的值时，该IP数据包就会被路由器抛弃，这样就可以避免数据包在网络中无限传输。
 
 > 更多关于 `ping` 的内容，可以参考 [ping命令](https://www.runoob.com/linux/linux-comm-ping.html)
 
