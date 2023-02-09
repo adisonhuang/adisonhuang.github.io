@@ -312,11 +312,11 @@ if (pids != null) {
 }
 ```
 
-发生ANR后，为了能让开发者知道ANR的原因，方便定位问题，**会dump很多信息到ANR Trace文件里，**上面的逻辑就是选择需要dump的进程。ANR Trace文件是包含**许多进程**的Trace信息的，因为产生ANR的原因有可能是其他的进程抢占了太多资源，或者IPC到其他进程（尤其是系统进程）的时候卡住导致的。
+发生ANR后，为了能让开发者知道ANR的原因，方便定位问题，**会dump很多信息到ANR Trace文件里**，上面的逻辑就是选择需要dump的进程。ANR Trace文件是包含 **许多进程** 的Trace信息的，因为产生ANR的原因有可能是其他的进程抢占了太多资源，或者IPC到其他进程（尤其是系统进程）的时候卡住导致的。
 
 选择需要dump的进程是一段挺有意思逻辑，我们稍微分析下：需要被dump的进程被分为了firstPids、nativePids以及extraPids三类：
 
-- **firstPIds**：firstPids是需要首先dump的重要进程，发生ANR的进程无论如何是一定要被dump的，也是首先被dump的，所以第一个被加到firstPids中。如果是SilentAnr（即后台ANR），不用再加入任何其他的进程。如果不是，需要进一步添加其他的进程：如果发生ANR的进程不是system_server进程的话，需要添加system_server进程；接下来轮询AMS维护的一个LRU的进程List，如果最近访问的进程包含了persistent的进程，或者带有*BIND_TREAT_LIKE_ACTVITY*标签的进程，都添加到firstPids中。
+- **firstPIds**：firstPids是需要首先dump的重要进程，发生ANR的进程无论如何是一定要被dump的，也是首先被dump的，所以第一个被加到firstPids中。如果是SilentAnr（即后台ANR），不用再加入任何其他的进程。如果不是，需要进一步添加其他的进程：如果发生ANR的进程不是system_server进程的话，需要添加system_server进程；接下来轮询AMS维护的一个LRU的进程List，如果最近访问的进程包含了persistent的进程，或者带有 *BIND_TREAT_LIKE_ACTVITY* 标签的进程，都添加到firstPids中。
 - **extraPids**：LRU进程List中的其他进程，都会首先添加到lastPids中，然后lastPids会进一步被选出最近CPU使用率高的进程，进一步组成extraPids；
 - **nativePids**：nativePids最为简单，是一些固定的native的系统进程，定义在WatchDog.java中。
 
@@ -333,7 +333,8 @@ File tracesFile = ActivityManagerService.dumpStackTraces(firstPids,
 //frameworks/base/services/core/java/com/android/server/am/ActivityManagerService.java：
 public static Pair<Long, Long> dumpStackTraces(String tracesFile, ArrayList<Integer> firstPids,
         ArrayList<Integer> nativePids, ArrayList<Integer> extraPids) {
-		//这是一个重要的变量，规定了我们dump所有进程的最长时间，因为dump进程所有线程的堆栈，本身就是一个重操作，何况是要dump许多进程，所以规定了发生ANR之后，dump全部进程的总时间不能超过20秒，如果超过了，马上返回，确保ANR弹窗可以及时的弹出（或者被kill掉）
+		//这是一个重要的变量，规定了我们dump所有进程的最长时间，因为dump进程所有线程的堆栈，本身就是一个重操作，何况是要dump许多进程，
+        //所以规定了发生ANR之后，dump全部进程的总时间不能超过20秒，如果超过了，马上返回，确保ANR弹窗可以及时的弹出（或者被kill掉）
     long remainingTime = 20 * 1000;
     
     //......
@@ -388,7 +389,7 @@ bool debuggerd_trigger_dump(pid_t tid, DebuggerdDumpType dump_type, unsigned int
 }
 ```
 
-这里会通过 *sigqueue*向需要dump堆栈的进程发送SIGQUIT信号，也就是signal 3信号，而发生ANR的进程是一定会被dump的，也是第一个被dump的。
+这里会通过 *sigqueue* 向需要dump堆栈的进程发送SIGQUIT信号，也就是signal 3信号，而发生ANR的进程是一定会被dump的，也是第一个被dump的。
 
 **每一个应用进程都会有一个SignalCatcher线程，专门处理SIGQUIT**
 
@@ -423,7 +424,7 @@ void* SignalCatcher::Run(void* arg) {
 
 *WaitForSignal* 方法调用了 *sigwait* 方法，这是一个阻塞方法。这里的死循环，就会一直不断的等待监听SIGQUIT和SIGUSR1这两个信号的到来。
 
-SignalCatcher 线程接收到信号后，首先 Dump 当前虚拟机有关信息，如内存状态，对象，加载 Class，GC 等等，接下来设置各线程标记位(check_point)，以请求线程起态(suspend)。其它线程运行过程进行上下文切换时，会检查该标记，如果发现有挂起请求，会主动将自己挂起。等到所有线程挂起后，SignalCatcher 线程开始遍历 Dump 各线程的堆栈和线程数据，结束之后再唤醒线程。期间如果某些线程一直无法挂起直到超时，那么本次 Dump 流程则失败，并主动抛出超时异常。
+SignalCatcher 线程接收到信号后，首先 Dump 当前虚拟机有关信息，如内存状态，对象，加载 Class，GC 等等，接下来设置各线程标记位(check_point)，以请求线程挂起(suspend)。其它线程运行过程进行上下文切换时，会检查该标记，如果发现有挂起请求，会主动将自己挂起。等到所有线程挂起后，SignalCatcher 线程开始遍历 Dump 各线程的堆栈和线程数据，结束之后再唤醒线程。期间如果某些线程一直无法挂起直到超时，那么本次 Dump 流程则失败，并主动抛出超时异常。
 
 ![](./assets/640 (1).png)
 
