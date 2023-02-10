@@ -178,7 +178,7 @@ fun getResponseWithInterceptorChain(): Response {
   }
 ```
 
-代码中的注释已经写得比较清楚了，总结起来就是创建下一级责任链，然后取出当前拦截器，调用其intercept方法并传入创建的责任链。++为保证责任链能依次进行下去，必须保证除最后一个拦截器（CallServerInterceptor）外，其他所有拦截器intercept方法内部必须调用一次chain.proceed()方法++，如此一来整个责任链就运行起来了。
+代码中的注释已经写得比较清楚了，总结起来就是创建下一级责任链，然后取出当前拦截器，调用其intercept方法并传入创建的责任链。**为保证责任链能依次进行下去，必须保证除最后一个拦截器（CallServerInterceptor）外，其他所有拦截器intercept方法内部必须调用一次chain.proceed()方法**，如此一来整个责任链就运行起来了。
 
 比如ConnectInterceptor源码中：
 
@@ -233,7 +233,8 @@ object ConnectInterceptor : Interceptor {
 ### 5.1 连接复用
 
 `ConnectInterceptor`的主要工作就是负责建立`TCP`连接，建立`TCP`连接需要经历三次握手四次挥手等操作，如果每个`HTTP`请求都要新建一个`TCP`消耗资源比较多
- 而`Http1.1`已经支持`keep-alive`,即多个`Http`请求复用一个`TCP`连接，`OKHttp`也做了相应的优化，下面我们来看下`OKHttp`是怎么复用`TCP`连接的
+
+而`Http1.1`已经支持`keep-alive`,即多个`Http`请求复用一个`TCP`连接，`OKHttp`也做了相应的优化，下面我们来看下`OKHttp`是怎么复用`TCP`连接的
 
 `ConnectInterceptor`中查找连接的代码会最终会调用到`ExchangeFinder.findConnection`方法，具体如下
 
@@ -288,7 +289,7 @@ private RealConnection findConnection(int connectTimeout, int readTimeout, int w
 上面精简了部分代码，可以看出，连接拦截器使用了5种方法查找连接
 
 1. 首先会尝试使用 已给请求分配的连接。（已分配连接的情况例如重定向时的再次请求，说明上次已经有了连接）
-2. 若没有 已分配的可用连接，就尝试从连接池中 匹配获取。因为此时没有路由信息，所以匹配条件：`address`一致——`host`、`port`、代理等一致，且匹配的连接可以接受新的请求。
+2. 若没有 已分配的可用连接，就尝试从连接池中 匹配获取。因为此时没有路由信息，所以匹配条件：`address`一致（`host`、`port`、代理等一致），且匹配的连接可以接受新的请求。
 3. 若从连接池没有获取到，则传入`routes`再次尝试获取，这主要是针对`Http2.0`的一个操作,`Http2.0`可以复用`square.com`与`square.ca`的连接
 4. 若第二次也没有获取到，就创建`RealConnection`实例，进行`TCP + TLS`握手，与服务端建立连接。
 5. 此时为了确保`Http2.0`连接的多路复用性，会第三次从连接池匹配。因为新建立的连接的握手过程是非线程安全的，所以此时可能连接池新存入了相同的连接。
@@ -397,7 +398,9 @@ private RealConnection findConnection(int connectTimeout, int readTimeout, int w
 
 # 参考
 [Android开发高手课](https://time.geekbang.org/column/article/77990)
+
 [OkHttp 原理 8 连问](https://juejin.cn/post/7020027832977850381)
+
 [听说你熟悉OkHttp原理?](https://juejin.cn/post/6844904087788453896)
 
 
