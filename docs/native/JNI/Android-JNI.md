@@ -89,9 +89,9 @@ typedef const struct JNIInvokeInterface* JavaVM;
 
 `__cplusplus` 是 C++ 编译器中定义的宏 , C 语言编译器中没有定义该宏 , 通过该宏定义 , 可以区分当前是 C++ 环境还是 C语言环境 ;
 
-##### C语言环境
+**C语言环境**
 
-**在C 语言 环境下**结构如下图所示：
+**在C语言环境下** 结构如下图所示：
 
 ![img](assets/1236123-20210926180121079-937093016.png)
 
@@ -139,7 +139,7 @@ struct JNINativeInterface {
 
 ```
 
-##### C++ 环境
+**C++ 环境**
 
 而在 C++ 中 , 将 _JNIEnv 结构体类型 通过 typedef 为其声明别名 JNIEnv ;
 
@@ -188,7 +188,7 @@ jclass 是 native 函数里的第二个参数类型，但却不是一定的。
 
 如果该 native 方法是一个静态 static 方法，那么第二个参数就是 jclass 类型，指的是调用该函数的类。
 
-如果是一个实例方法，那么第二个参数就是 jclass 类型，指的是调用该函数的对象。
+如果是一个实例方法，那么第二个参数就是 jobject 类型，指的是调用该函数的对象。
 
 ### 3.3 JNIEXPORT和JNICALL
 

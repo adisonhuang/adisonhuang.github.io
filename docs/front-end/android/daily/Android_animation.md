@@ -54,8 +54,6 @@ ObjectAnimator.ofFloat(imageView, "translationX", 0f, 200f)
 
   虽然 `View` 做了属性上的改变，但其实并没有更改 `View` 的 `left`、`right`、`top`、`bottom` 这些属性，而这些属性恰恰决定了 `ViewGroup` 的触摸区域判断。
 
-  虽然 `View` 做了属性上的改变，但其实并没有更改 `View` 的 `left`、`right`、`top`、`bottom` 这些属性，而这些属性恰恰决定了 `ViewGroup` 的触摸区域判断。
-
   ```kotlin
   tv1.animate().setDuration(1000).translationX(500f)
   ```

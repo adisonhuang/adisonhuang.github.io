@@ -252,13 +252,16 @@ JDK1.2 以后，Java 对引用的概念进行了扩充，将引用分为强引�
 
 特别注意，在程序设计中一般很少使用弱引用与虚引用，使用软引用的情况较多，这是因为 **软引用可以加速 JVM 对垃圾内存的回收速度，可以维护系统的运行安全，防止内存溢出（OutOfMemory）等问题的产生**。
 
-!!!  Warning "Android 放弃了 SoftReference "
+!!! warning "Android 放弃了 SoftReference "
 	
 	[Avoid Soft References for Caching](https://developer.android.com/reference/java/lang/ref/SoftReference.html#avoid-soft-references-for-caching)
 	
-	移动设备对内存比较敏感，而SoftReference 无法提供足够的信息可以让 runtime 很轻松		地决定 clear 它还是 keep 它。举个例子，如果有 10 个 SoftReference 变量，并且他	 们所引用的变量都没有了 Strong Reference，那么 runtime 就懵逼了，因为它不知道该 	clear 哪几个或者 keep 哪几个。更要命的是，runtime 不知道应该是 clear 掉 	  		SoftReference 还是增大 Heap。所以Android认为 **软引用对于缓存来说是低效的。**
+	移动设备对内存比较敏感，而SoftReference 无法提供足够的信息可以让 runtime 很轻松地决定 clear 它还是 keep 它。
+    举个例子，如果有 10 个 SoftReference 变量，并且他们所引用的变量都没有了 Strong Reference，那么 runtime 就懵逼了，因为它不知道该clear 哪几个或者 keep 哪几个。
+    更要命的是，runtime 不知道应该是 clear 掉 SoftReference 还是增大 Heap。所以Android认为 **软引用对于缓存来说是低效的。**
 
-	缺乏关于每个引用对应用程序的价值的信息限制了软引用的有用性。过早清除引用会导致不必要	的工作；那些太晚清除的会浪费内存。所以Android推荐使用 android.util.LruCache 做 	 Cache 管理，至少 LruCache 可以根据变量的使用频次来决定是否应该 clear 掉它，这样	就比单纯使用 SoftReference 多了一个决策条件 - **使用频次**。 **或者直接使用弱引	用**
+	缺乏关于每个引用对应用程序的价值的信息限制了软引用的有用性。过早清除引用会导致不必要的工作；那些太晚清除的会浪费内存。
+    所以Android推荐使用 android.util.LruCache 做Cache 管理，至少 LruCache 可以根据变量的使用频次来决定是否应该 clear 掉它，这样就比单纯使用 SoftReference 多了一个决策条件 - **使用频次**。 **或者直接使用弱引用**
 
 
 
