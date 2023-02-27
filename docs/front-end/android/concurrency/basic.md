@@ -277,9 +277,9 @@ protected final boolean compareAndSetState(int expect, int update) {
 **AQS 定义两种资源共享方式**
 
 - **Exclusive**（独占）：只有一个线程能执行，如 `ReentrantLock`。又可分为公平锁和非公平锁：
-  - 公平锁：按照线程在队列中的排队顺序，先到者先拿到锁
-  - 非公平锁：当线程要获取锁时，无视队列顺序直接去抢锁，谁抢到就是谁的
-- **Share**（共享）：多个线程可同时执行，如`CountDownLatch`、`Semaphore`、`CountDownLatch`、 `CyclicBarrier`、`ReadWriteLock`。
+  * 公平锁：按照线程在队列中的排队顺序，先到者先拿到锁
+  * 非公平锁：当线程要获取锁时，无视队列顺序直接去抢锁，谁抢到就是谁的
+- **Share**（共享）：多个线程可同时执行，如`CountDownLatch`、`Semaphore`、 `CyclicBarrier`、`ReadWriteLock`。
 
 不同的自定义同步器争用共享资源的方式也不同。自定义同步器在实现时只需要实现共享资源 state 的获取与释放方式即可，至于具体线程等待队列的维护（如获取资源失败入队/唤醒出队等），AQS 已经在顶层实现好了。
 
