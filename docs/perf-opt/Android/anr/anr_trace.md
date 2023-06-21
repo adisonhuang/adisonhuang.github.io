@@ -2,8 +2,9 @@
 
 ## 前置知识：ANR原理概述
 ### ANR弹窗
-1. **弹出ANR对话框的message标识**
+**弹出ANR对话框的message标识**
 > ActivityManagerService.java#SHOW_NOT_RESPONDING_UI_MSG
+
 ```java
 public void handleMessage(Message msg) {
     switch (msg.what) {
@@ -17,8 +18,9 @@ public void handleMessage(Message msg) {
 其调用`AppErrors`的`handleShowAnrUi`方法，这个方法里面它会创建一个`AppNotRespondingDialog`(系统的自定义Dialog)，最终会以`TYPE_SYSTEM_ERROR`的方式弹出。
 **所以，弹出ANR对话框的条件就是AMS中的UiHandler收到了what为SHOW_NOT_RESPONDING_UI_MSG的消息**
 
-2. **这个消息是在哪里发出**
+**这个消息是在哪里发出**
 > ProcessErrorStateRecord#appNotResponding
+
 ```java
 void appNotResponding(...) {
         ...
@@ -42,8 +44,10 @@ void appNotResponding(...) {
         ...
 }
 ```
+
 可以看到，在这个方法里会给AMS(那个mService就是AMS的实例)的UiHandler发送请求弹出ANR对话框，那到底在哪些地方调用这个方法的呢？
 一共有5处，分别是：
+
 * ActiveServices#serviceTimeout方法
     * 后台服务超时
 * ActiveServices#serviceForegroundTimeout；
@@ -56,7 +60,7 @@ void appNotResponding(...) {
     * input事件分派的时候超时(处理事件时被阻塞)所发出的，input事件，这里分两种，一种是KeyEvent(按键)，另一种是MotionEvent(触摸)。
 
 ### 超时一定会出现ANR弹框吗？
-* **`SilentAnr`不会弹窗**
+* **`SilentAnr`不会弹窗**，
 所谓“沉默的ANR”，其实就是后台ANR，后台ANR跟前台ANR会有不同的表现：**前台ANR会弹无响应的Dialog，后台ANR会直接杀死进程**。前后台ANR的判断的原则是：**如果发生ANR的进程对用户来说是有感知的，就会被认为是前台ANR，否则是后台ANR**。另外，如果在开发者选项中勾选了“显示后台ANR”，那么全部ANR都会被认为是前台ANR。
     ```shell
     // A package is considered interesting if any of the following is true :
@@ -71,6 +75,7 @@ void appNotResponding(...) {
     ```
 * **input事件分派超时处于debug或者来自子进程(这个情况下会直接kill掉子进程)不会弹窗**
 > ActivityManagerService.java#inputDispatchingTimedOut
+
 ```java
     boolean inputDispatchingTimedOut(...) {
         synchronized (this) {
@@ -93,6 +98,7 @@ void appNotResponding(...) {
     }
 ```
 > ActivityManagerService.java#attachApplicationLocked
+
 ```java
     private boolean attachApplicationLocked(...) {
     ...
@@ -102,6 +108,7 @@ void appNotResponding(...) {
 ```
 
 > AppProfiler.java#setupProfilerInfoLocked
+
 ```java
     ProfilerInfo setupProfilerInfoLocked(...) {
             ...
@@ -483,22 +490,35 @@ DALVIK THREADS (248):
 1. 查看对应Trace日志
     1. 业务堆栈耗时（线程处于runnable但堆栈对应调用很耗时）
     2. 主线程等待锁或者发生死锁（线程状态处于block/wait）
-    3. 如果确定是上述问题，那恭喜你，解决方案很简单，**处理耗时调用或者处理锁等待/死锁**问题即可
+    3. 如果确定是上述问题，那恭喜你，解决方案很简单，**处理耗时调用或者处理锁等待/死锁** 问题即可
 2. 但如果发现Trace堆栈完全处于空闲状态（nativePollOnce）或者没有命中耗时堆栈，那么很不幸，就需要扩大参考面；
     1. **分析cpuinfo 信息**：
         1. **系统负载(Load)** ：
-           ![](./assets/16871684175942.jpg)
-           分别代表 ANR 发生前 1 分钟，前 5 分钟，前 15 分钟各个时间段系统 CPU 负载，具体数值代表单位时间等待系统调度的任务数(可以理解为线程)。如果这个数值过高，则表示当前系统中面临 CPU 或 IO 竞争，此时，普通进程或线程调度将会受到影响。
+
+        ![](./assets/16871684175942.jpg)
+
+        分别代表 ANR 发生前 1 分钟，前 5 分钟，前 15 分钟各个时间段系统 CPU 负载，具体数值代表单位时间等待系统调度的任务数(可以理解为线程)。如果这个数值过高，则表示当前系统中面临 CPU 或 IO 竞争，此时，普通进程或线程调度将会受到影响。
+
         2. **进程 CPU 使用率**：
-          ![](./assets/16871684613046.jpg)
-           可以清晰的看到哪类进程CPU偏高，如果存在明显偏高的进程，那么ANR和此进程抢占CPU有一定关系。当然，如发现`Kswapd`，`emmc`或者`mmcqd`进程也在top中，则说明遇到系统内存压力或文件IO开销。
+
+        ![](./assets/16871684613046.jpg)
+
+        可以清晰的看到哪类进程CPU偏高，如果存在明显偏高的进程，那么ANR和此进程抢占CPU有一定关系。当然，如发现`Kswapd`，`emmc`或者`mmcqd`进程也在top中，则说明遇到系统内存压力或文件IO开销。
+
         3. **系统 CPU 分布**：
-          ![](./assets/16871684899925.jpg)
-           反映一段时间内，系统整体 CPU 使用率，以及 user，kernel，iowait 方向的 CPU 占比，如果发生大量文件读写或内存紧张的场景，则 iowait 占比较高
+
+        ![](./assets/16871684899925.jpg)
+
+        反映一段时间内，系统整体 CPU 使用率，以及 user，kernel，iowait 方向的 CPU 占比，如果发生大量文件读写或内存紧张的场景，则 iowait 占比较高
+
         4. **对比各线程 CPU 占比，以及线程内部 user 和 kernel 占比**
-          ![](./assets/16872493238994.jpg)
+
+        ![](./assets/16872493238994.jpg)
+
         在 Trace 日志的线程信息里也可以清晰的看到每个线程的 utm，stm 耗时
+
         ![](./assets/16872493741804.jpg)
+
     2. **分析syslog信息**：
         1. **分析线程和句柄**
         先看线程数和句柄数是否有异常，如果有异常，再看下是否有明显大量重复线程和句柄
@@ -508,50 +528,51 @@ DALVIK THREADS (248):
         搜索关键字`onTrimMemory`、`am_low_memory或者lowmemorykiller`, `slow_operation`，`Kwork`，判断当前系统是否存在资源(CPU，Mem，IO)紧张的情况，另外也可以搜索`binder_sample`查看主线程的binder调用耗时， `binder starved`查看binder通信是否处于饥饿状态,,`dvm_lock_sample`查看同步锁竞争记录
         
 #### 疑难参数解释 
-* **dvm_lock_sample**
-  在同步锁发生content的时候，虚拟机会将这个竞争记录在eventlog中, 实现可以参考`art/runtime/monitor_android.cc#LogContentionEvent`函数
 
-  * log格式: `dvm_lock_sample (process|3),(main|1|5),(thread|3),(time|1|3),(file|3),(line|1|5),(ownerfile|3),(ownerline|1|5),(sample_percent|1|6)`
-  
-  * log解释： `所属进程，是否为主线程，线程名，获取锁所用的时间，获取锁代码所在的源文件，行号，锁被占有的代码所在的源文件（如果与file相同，用"-"表示），行号，等待百分比`
-  * 示例
+* **dvm_lock_sample**：在同步锁发生content的时候，虚拟机会将这个竞争记录在eventlog中, 实现可以参考`art/runtime/monitor_android.cc#LogContentionEvent`函数
+    * log格式: `dvm_lock_sample (process|3),(main|1|5),(thread|3),(time|1|3),(file|3),(line|1|5),(ownerfile|3),(ownerline|1|5),(sample_percent|1|6)`
+    * log解释： `所属进程，是否为主线程，线程名，获取锁所用的时间，获取锁代码所在的源文件，行号，锁被占有的代码所在的源文件（如果与file相同，用"-"表示），行号，等待百分比`
+    * 示例
     ```java
     dvm_lock_sample: [com.yy.hiyo,1,main,516,,-1,net.ihago.base.srv.splash.UserSplashConfig com.yy.hiyo.module.splash.SplashManager.getWillLoadSplashData(),-,-1,void com.yy.hiyo.module.splash.SplashManager.readLocalData(),100]
       
     含义： com.yy.hiyo进程，主线程执行到SplashManager.getWillLoadSplashData()时，等待相同文件里面的SplashManager.readLocalData()持有的锁，阻塞了516ms
     ```   
-* **binder_sample**    
-  监控每个进程的主线程的binde调用的耗时情况,实现可以参考`frameworks/base/core/jni/android_util_Binder.cpp#conditionally_log_binder_call`函数
+* **binder_sample** ：监控每个进程的主线程的binde调用的耗时情况,实现可以参考`frameworks/base/core/jni/android_util_Binder.cpp#conditionally_log_binder_call`函数
   
-  * log 格式： `binder_sample (descriptor|3),(method_num|1|5),(time|1|3),(blocking_package|3),(sample_percent|1|6)`
-  * log 解释：
-  
-    | 参数             | 意义     | 备注       |
-    | :--------------- | :---------------- | :------------ |
-    | descriptor       | 接口描述符，表示被卡住的binder调用对应的interface接口 | 任何一个binder都实现一个接口，IPC调用用的API，任何一个接口都有一个描述符，即一个字符串） |
-    | method_num       | 调用方法的序列号                                      |                                                              |
-    | time             | 该方法调用耗用的时间                                  |                                                              |
-    | blocking_package | 从哪个进程发起的调用                                  |                                                              |
-    | sample_percent   | 被卡住的百分比                                        | 暂时不关注                                                   | 
-  * 示例：
+    * log 格式： `binder_sample (descriptor|3),(method_num|1|5),(time|1|3),(blocking_package|3),(sample_percent|1|6)`
+    * log 解释：
+
+    | 参数      | 意义                          | 备注        |
+    | ----------- | ------------------------------------ |-------------|
+    | `descriptor`       | 接口描述符，表示被卡住的binder调用对应的interface接口 |任何一个binder都实现一个接口，IPC调用用的API，任何一个接口都有一个描述符，即一个字符串|
+    | `method_num`       | 调用方法的序列号 ||
+    | `time`    | 该方法调用耗用的时间 ||
+    | `blocking_package`    | 从哪个进程发起的调用 ||
+    | `sample_percent`    | 被卡住的百分比 |暂时不关注|
+
+    * 示例：
     ```java
     I/binder_sample(  520):[com.android.internal.telephony.ITelephonyRegistry,7,12518,com.android.phone,100]
     
     含义：从com.android.phone主线程发起了一个ITelephonyRegistry接口的第7个方法的binder调用，耗时12s。
     ```
 
-* **binder starved**
-  当system_server等进程的线程池使用完, 无空闲线程时, 则binder通信都处于饥饿状态, 则饥饿状态超过一定阈值则输出信息;
+* **binder starved**：当system_server等进程的线程池使用完, 无空闲线程时, 则binder通信都处于饥饿状态, 则饥饿状态超过一定阈值则输出信息;
   
-  * 示例
+    * 示例
       ```java
       1232 1232 "binder thread pool (16 threads) starved for 100 ms"
       
       含义：system_server进程的 线程池已满的持续长达100ms
       ```
+
 * **kswapd**   
+
   是 linux 中用于页面回收的内核线程，主要用来维护可用内存与文件缓存的平衡，以追求性能最大化，当该线程 CPU 占用过高，说明系统可用内存紧张，或者内存碎片化严重，需要进行 file cache 回写或者内存交换(交换到磁盘)，线程 CPU 过高则系统整体性能将会明显下降，进而影响所有应用调度。
+
 * **mmcqd** 
+
   内核线程，主要作用是把上层的 IO 请求进行统一管理和转发到 Driver 层，当该线程 CPU 占用过高，说明系统存在大量文件读写，当然如果内存紧张也会触发文件回写和内存交换到磁盘，所以 kswapd 和 mmcqd 经常是同步出现的。
 
 
