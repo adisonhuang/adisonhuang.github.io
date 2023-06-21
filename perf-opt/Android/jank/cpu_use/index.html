@@ -1,0 +1,5324 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="网站描述">
+      
+      
+        <meta name="author" content="Adison">
+      
+      
+        <link rel="canonical" href="https://adisonhuang.github.io/perf-opt/Android/jank/cpu_use/">
+      
+      
+        <link rel="prev" href="../jank-opt/">
+      
+      
+        <link rel="next" href="../../anr/anr/">
+      
+      <link rel="icon" href="../../../../assets/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.16">
+    
+    
+      
+        <title>Linux环境下进程的CPU占用率 - Adison's Blog</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.26e3688c.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.ecc896b0.min.css">
+      
+      
+  
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+    
+    
+  
+  
+  <style>:root{--md-admonition-icon--note:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M1 7.775V2.75C1 1.784 1.784 1 2.75 1h5.025c.464 0 .91.184 1.238.513l6.25 6.25a1.75 1.75 0 0 1 0 2.474l-5.026 5.026a1.75 1.75 0 0 1-2.474 0l-6.25-6.25A1.752 1.752 0 0 1 1 7.775Zm1.5 0c0 .066.026.13.073.177l6.25 6.25a.25.25 0 0 0 .354 0l5.025-5.025a.25.25 0 0 0 0-.354l-6.25-6.25a.25.25 0 0 0-.177-.073H2.75a.25.25 0 0 0-.25.25ZM6 5a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z"/></svg>');--md-admonition-icon--abstract:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M2.5 1.75v11.5c0 .138.112.25.25.25h3.17a.75.75 0 0 1 0 1.5H2.75A1.75 1.75 0 0 1 1 13.25V1.75C1 .784 1.784 0 2.75 0h8.5C12.216 0 13 .784 13 1.75v7.736a.75.75 0 0 1-1.5 0V1.75a.25.25 0 0 0-.25-.25h-8.5a.25.25 0 0 0-.25.25Zm13.274 9.537v-.001l-4.557 4.45a.75.75 0 0 1-1.055-.008l-1.943-1.95a.75.75 0 0 1 1.062-1.058l1.419 1.425 4.026-3.932a.75.75 0 1 1 1.048 1.074ZM4.75 4h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM4 7.75A.75.75 0 0 1 4.75 7h2a.75.75 0 0 1 0 1.5h-2A.75.75 0 0 1 4 7.75Z"/></svg>');--md-admonition-icon--info:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>');--md-admonition-icon--tip:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M3.499.75a.75.75 0 0 1 1.5 0v.996C5.9 2.903 6.793 3.65 7.662 4.376l.24.202c-.036-.694.055-1.422.426-2.163C9.1.873 10.794-.045 12.622.26 14.408.558 16 1.94 16 4.25c0 1.278-.954 2.575-2.44 2.734l.146.508.065.22c.203.701.412 1.455.476 2.226.142 1.707-.4 3.03-1.487 3.898C11.714 14.671 10.27 15 8.75 15h-6a.75.75 0 0 1 0-1.5h1.376a4.484 4.484 0 0 1-.563-1.191 3.835 3.835 0 0 1-.05-2.063 4.647 4.647 0 0 1-2.025-.293.75.75 0 0 1 .525-1.406c1.357.507 2.376-.006 2.698-.318l.009-.01a.747.747 0 0 1 1.06 0 .748.748 0 0 1-.012 1.074c-.912.92-.992 1.835-.768 2.586.221.74.745 1.337 1.196 1.621H8.75c1.343 0 2.398-.296 3.074-.836.635-.507 1.036-1.31.928-2.602-.05-.603-.216-1.224-.422-1.93l-.064-.221c-.12-.407-.246-.84-.353-1.29a2.425 2.425 0 0 1-.507-.441 3.075 3.075 0 0 1-.633-1.248.75.75 0 0 1 1.455-.364c.046.185.144.436.31.627.146.168.353.305.712.305.738 0 1.25-.615 1.25-1.25 0-1.47-.95-2.315-2.123-2.51-1.172-.196-2.227.387-2.706 1.345-.46.92-.27 1.774.019 3.062l.042.19a.884.884 0 0 1 .01.05c.348.443.666.949.94 1.553a.75.75 0 1 1-1.365.62c-.553-1.217-1.32-1.94-2.3-2.768L6.7 5.527c-.814-.68-1.75-1.462-2.692-2.619a3.737 3.737 0 0 0-1.023.88c-.406.495-.663 1.036-.722 1.508.116.122.306.21.591.239.388.038.797-.06 1.032-.19a.75.75 0 0 1 .728 1.31c-.515.287-1.23.439-1.906.373-.682-.067-1.473-.38-1.879-1.193L.75 5.677V5.5c0-.984.48-1.94 1.077-2.664.46-.559 1.05-1.055 1.673-1.353V.75Z"/></svg>');--md-admonition-icon--success:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"/></svg>');--md-admonition-icon--question:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.92 6.085h.001a.749.749 0 1 1-1.342-.67c.169-.339.436-.701.849-.977C6.845 4.16 7.369 4 8 4a2.756 2.756 0 0 1 1.637.525c.503.377.863.965.863 1.725 0 .448-.115.83-.329 1.15-.205.307-.47.513-.692.662-.109.072-.22.138-.313.195l-.006.004a6.24 6.24 0 0 0-.26.16.952.952 0 0 0-.276.245.75.75 0 0 1-1.248-.832c.184-.264.42-.489.692-.661.103-.067.207-.132.313-.195l.007-.004c.1-.061.182-.11.258-.161a.969.969 0 0 0 .277-.245C8.96 6.514 9 6.427 9 6.25a.612.612 0 0 0-.262-.525A1.27 1.27 0 0 0 8 5.5c-.369 0-.595.09-.74.187a1.01 1.01 0 0 0-.34.398ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/></svg>');--md-admonition-icon--warning:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/></svg>');--md-admonition-icon--failure:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M2.344 2.343h-.001a8 8 0 0 1 11.314 11.314A8.002 8.002 0 0 1 .234 10.089a8 8 0 0 1 2.11-7.746Zm1.06 10.253a6.5 6.5 0 1 0 9.108-9.275 6.5 6.5 0 0 0-9.108 9.275ZM6.03 4.97 8 6.94l1.97-1.97a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l1.97 1.97a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-1.97 1.97a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734L6.94 8 4.97 6.03a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018Z"/></svg>');--md-admonition-icon--danger:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M9.504.43a1.516 1.516 0 0 1 2.437 1.713L10.415 5.5h2.123c1.57 0 2.346 1.909 1.22 3.004l-7.34 7.142a1.249 1.249 0 0 1-.871.354h-.302a1.25 1.25 0 0 1-1.157-1.723L5.633 10.5H3.462c-1.57 0-2.346-1.909-1.22-3.004L9.503.429Zm1.047 1.074L3.286 8.571A.25.25 0 0 0 3.462 9H6.75a.75.75 0 0 1 .694 1.034l-1.713 4.188 6.982-6.793A.25.25 0 0 0 12.538 7H9.25a.75.75 0 0 1-.683-1.06l2.008-4.418.003-.006a.036.036 0 0 0-.004-.009l-.006-.006-.008-.001c-.003 0-.006.002-.009.004Z"/></svg>');--md-admonition-icon--bug:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M4.72.22a.75.75 0 0 1 1.06 0l1 .999a3.488 3.488 0 0 1 2.441 0l.999-1a.748.748 0 0 1 1.265.332.75.75 0 0 1-.205.729l-.775.776c.616.63.995 1.493.995 2.444v.327c0 .1-.009.197-.025.292.408.14.764.392 1.029.722l1.968-.787a.75.75 0 0 1 .556 1.392L13 7.258V9h2.25a.75.75 0 0 1 0 1.5H13v.5c0 .409-.049.806-.141 1.186l2.17.868a.75.75 0 0 1-.557 1.392l-2.184-.873A4.997 4.997 0 0 1 8 16a4.997 4.997 0 0 1-4.288-2.427l-2.183.873a.75.75 0 0 1-.558-1.392l2.17-.868A5.036 5.036 0 0 1 3 11v-.5H.75a.75.75 0 0 1 0-1.5H3V7.258L.971 6.446a.75.75 0 0 1 .558-1.392l1.967.787c.265-.33.62-.583 1.03-.722a1.677 1.677 0 0 1-.026-.292V4.5c0-.951.38-1.814.995-2.444L4.72 1.28a.75.75 0 0 1 0-1.06Zm.53 6.28a.75.75 0 0 0-.75.75V11a3.5 3.5 0 1 0 7 0V7.25a.75.75 0 0 0-.75-.75ZM6.173 5h3.654A.172.172 0 0 0 10 4.827V4.5a2 2 0 1 0-4 0v.327c0 .096.077.173.173.173Z"/></svg>');--md-admonition-icon--example:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M5 5.782V2.5h-.25a.75.75 0 0 1 0-1.5h6.5a.75.75 0 0 1 0 1.5H11v3.282l3.666 5.76C15.619 13.04 14.543 15 12.767 15H3.233c-1.776 0-2.852-1.96-1.899-3.458Zm-2.4 6.565a.75.75 0 0 0 .633 1.153h9.534a.75.75 0 0 0 .633-1.153L12.225 10.5h-8.45ZM9.5 2.5h-3V6c0 .143-.04.283-.117.403L4.73 9h6.54L9.617 6.403A.746.746 0 0 1 9.5 6Z"/></svg>');--md-admonition-icon--quote:url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M1.75 2.5h10.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Zm4 5h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1 0-1.5Zm0 5h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1 0-1.5ZM2.5 7.75v6a.75.75 0 0 1-1.5 0v-6a.75.75 0 0 1 1.5 0Z"/></svg>');}</style>
+
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script id="__analytics">function __md_analytics(){window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-112420326-1","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),document$.subscribe(function(){var a=document.forms.feedback;if(void 0!==a)for(var e of a.querySelectorAll("[type=submit]"))e.addEventListener("click",function(e){e.preventDefault();var t=document.location.pathname,e=this.getAttribute("data-md-value");ga("send","event","feedback","click",t,e),a.firstElementChild.disabled=!0;e=a.querySelector(".md-feedback__note [data-md-value='"+e+"']");e&&(e.hidden=!1)}),a.hidden=!1}),location$.subscribe(function(e){ga("send","pageview",e.pathname)})});var e=document.createElement("script");e.async=!0,e.src="https://www.google-analytics.com/analytics.js",document.getElementById("__analytics").insertAdjacentElement("afterEnd",e)}</script>
+
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+    
+   <link href="../../../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
+        html.glightbox-open { overflow: initial; height: 100%; }
+        .gslide-title { margin-top: 0px; user-select: text; }
+        .gslide-desc { color: #666; user-select: text; }
+        .gslide-image img { background: white; }
+        
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}
+            </style> <script src="../../../../assets/javascripts/glightbox.min.js"></script></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="white">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#linuxcpu" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../../../.." title="Adison&#39;s Blog" class="md-header__button md-logo" aria-label="Adison's Blog" data-md-component="logo">
+      
+  <img src="../../../../assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Adison's Blog
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Linux环境下进程的CPU占用率
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="white"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5c-.84 0-1.65.15-2.39.42L12 2M3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29L3.34 7m.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14L3.36 17M20.65 7l-1.77 3.79a7.023 7.023 0 0 0-2.38-4.15l4.15.36m-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29L20.64 17M12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44L12 22Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="black"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3 3.19.09m3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95 2.06.05m-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31Z"/></svg>
+              </label>
+            
+          
+        </form>
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="分享" aria-label="分享" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08Z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../front-end/" class="md-tabs__link">
+        大前端
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../" class="md-tabs__link md-tabs__link--active">
+        Android性能优化
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../native/" class="md-tabs__link">
+        Native
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../design/" class="md-tabs__link">
+        设计&架构
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../interview/" class="md-tabs__link">
+        面试
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../basic/" class="md-tabs__link">
+        计算机基础
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../tools/" class="md-tabs__link">
+        开发工具
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../back-end/" class="md-tabs__link">
+        后端&运维
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../game/" class="md-tabs__link">
+        游戏开发
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../read/" class="md-tabs__link">
+        读书笔记
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="Adison&#39;s Blog" class="md-nav__button md-logo" aria-label="Adison's Blog" data-md-component="logo">
+      
+  <img src="../../../../assets/logo.png" alt="logo">
+
+    </a>
+    Adison's Blog
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+          大前端
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_1">
+          <span class="md-nav__icon md-icon"></span>
+          大前端
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/" class="md-nav__link">
+        大前端
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_1_2" id="__nav_1_2_label" tabindex="0">
+          Android
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_1_2">
+          <span class="md-nav__icon md-icon"></span>
+          Android
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_1" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_1_2_1" id="__nav_1_2_1_label" tabindex="0">
+          必知必会
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_1_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_1_2_1">
+          <span class="md-nav__icon md-icon"></span>
+          必知必会
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/daily/Android_animation/" class="md-nav__link">
+        Android 动画原理
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/system/handler/" class="md-nav__link">
+        Android消息机制-Handler
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/daily/binder/" class="md-nav__link">
+        解析Binder框架
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/daily/dialog_token/" class="md-nav__link">
+        Dialog 对应的 Context 必须是 Activity吗？
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/daily/apk_analyze/" class="md-nav__link">
+        APK文件分析
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/system/bootloader/" class="md-nav__link">
+        Android 开机流程
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/system/android-transform/" class="md-nav__link">
+        Android Transform
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/system/asm-basic/" class="md-nav__link">
+        ASM 简介
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/system/ASM-Core-Api/" class="md-nav__link">
+        ASM Core Api 详解
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_2" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_1_2_2" id="__nav_1_2_2_label" tabindex="0">
+          Kotlin
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_1_2_2">
+          <span class="md-nav__icon md-icon"></span>
+          Kotlin
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/koltin/Kotlin_nline%2C%20noinline%2C%20crossinline/" class="md-nav__link">
+        Kotlin中inline, noinline, crossinline的区别
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/koltin/Kotlin-takeIf-or-takeUnless/" class="md-nav__link">
+        使用Kotlin takeIf（或takeUnless）
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/koltin/Mastering%20Kotlin%20standard%20functions/" class="md-nav__link">
+        掌握Kotlin标准函数：run, with, let, also and apply
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_3" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_1_2_3" id="__nav_1_2_3_label" tabindex="0">
+          并发
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_1_2_3">
+          <span class="md-nav__icon md-icon"></span>
+          并发
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/concurrency/thread-lifecycle/" class="md-nav__link">
+        线程的生命周期，真的没那么简单
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/concurrency/process%20and%20thread/" class="md-nav__link">
+        进程与线程的一个简单解释
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/concurrency/basic/" class="md-nav__link">
+        并发基础总结
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/concurrency/thread-pool/" class="md-nav__link">
+        线程池总结
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_4" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_1_2_4" id="__nav_1_2_4_label" tabindex="0">
+          JVM
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_4_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_1_2_4">
+          <span class="md-nav__icon md-icon"></span>
+          JVM
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/jvm/memory-area/" class="md-nav__link">
+        Java 内存区域详解
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/jvm/jvm-garbage-collection/" class="md-nav__link">
+        JVM 垃圾回收详解
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/daily/Android_classloader/" class="md-nav__link">
+        Android ClassLoader机制
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_2_5" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_1_2_5" id="__nav_1_2_5_label" tabindex="0">
+          杂记
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_1_2_5_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_1_2_5">
+          <span class="md-nav__icon md-icon"></span>
+          杂记
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/android/daily/flask_android_8/" class="md-nav__link">
+        Mac10.14编译Android 8.1源码及刷入nexus 6p
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+          Flutter
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_1_3">
+          <span class="md-nav__icon md-icon"></span>
+          Flutter
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/flutter/tools/fvm/" class="md-nav__link">
+        使用fvm管理多个版本flutter
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../front-end/flutter/learn/Dart/" class="md-nav__link">
+        Dart 简介
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          Android性能优化
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Android性能优化
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../" class="md-nav__link">
+        性能优化
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+          内存优化
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2_2">
+          <span class="md-nav__icon md-icon"></span>
+          内存优化
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../memory/Android_memory_manager/" class="md-nav__link">
+        Android内存管理
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../memory/Android_memory_tools/" class="md-nav__link">
+        Android 内存分析工具(命令行)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../memory/Android_memory_tools_gc/" class="md-nav__link">
+        Android 内存分析工具(查看GC)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../memory/MAT-Startup/" class="md-nav__link">
+        Android 内存分析工具(MAT入门)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../memory/MAT-Advanced/" class="md-nav__link">
+        Android 内存分析工具(MAT进阶)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../memory/Android_fd_leak/" class="md-nav__link">
+        Android句柄泄漏分析
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../memory/native-backtrace/" class="md-nav__link">
+        Android Native 栈回溯
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../memory/android-memory-gov/" class="md-nav__link">
+        Android内存综合治理
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+          崩溃优化
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2_3">
+          <span class="md-nav__icon md-icon"></span>
+          崩溃优化
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../crash/crash_op/" class="md-nav__link">
+        Android 崩溃优化
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../crash/native-catch/" class="md-nav__link">
+        Android 平台 Native 代码的崩溃捕获机制及实现
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../crash/native-crash-signal/" class="md-nav__link">
+        native 崩溃信号介绍
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../crash/KillApplicationHandler/" class="md-nav__link">
+        为啥Android子线程抛出异常主线程会崩溃
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+          启动优化
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2_4">
+          <span class="md-nav__icon md-icon"></span>
+          启动优化
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../launch/Android-launch-opt/" class="md-nav__link">
+        Android启动优化
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+          包体积优化
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2_5">
+          <span class="md-nav__icon md-icon"></span>
+          包体积优化
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../size/Android-apk-size-opt/" class="md-nav__link">
+        Android 包体积优化
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../size/douyin/" class="md-nav__link">
+        从 Class 字节码入手精简 DEX 体积
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../size/Android-so-opt/" class="md-nav__link">
+        Android对so体积优化的探索与实践
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6" checked>
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="0">
+          卡顿优化
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="true">
+        <label class="md-nav__title" for="__nav_2_6">
+          <span class="md-nav__icon md-icon"></span>
+          卡顿优化
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jank-principle/" class="md-nav__link">
+        Android卡顿掉帧问题分析之原理篇
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jank-tool/" class="md-nav__link">
+        Android卡顿掉帧问题分析之工具篇
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jank-shizhan/" class="md-nav__link">
+        Android卡顿掉帧问题分析之实战篇
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jank-opt/" class="md-nav__link">
+        Android卡顿优总结
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Linux环境下进程的CPU占用率
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Linux环境下进程的CPU占用率
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1linux-cpu" class="md-nav__link">
+    1、Linux 环境下查看 CPU 信息
+  </a>
+  
+    <nav class="md-nav" aria-label="1、Linux 环境下查看 CPU 信息">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-cpu" class="md-nav__link">
+    1.1、查看 CPU 详细信息
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-cpu" class="md-nav__link">
+    1.2、查看多核 CPU 信息
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-linux-cpu" class="md-nav__link">
+    2、在 Linux 环境下计算进程的 CPU 占用
+  </a>
+  
+    <nav class="md-nav" aria-label="2、在 Linux 环境下计算进程的 CPU 占用">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-procstat-cpu" class="md-nav__link">
+    2.1、通过 /proc/stat 文件查看所有的 CPU 活动信息
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-procpidstat-cpu" class="md-nav__link">
+    2.2、通过 /proc/[PID]/stat 文件查看某一进程的 CPU 活动信息
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-procpidtasktidstat" class="md-nav__link">
+    2.3、通过 /proc/[PID]/task/[TID]/stat 文件查看某一进程下的某一线程的活动信息
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-cpu" class="md-nav__link">
+    2.4、单核情况下 CPU 使用率的计算
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-cpu" class="md-nav__link">
+    2.5、多核情况下 CPU 使用率的计算
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26" class="md-nav__link">
+    2.6、问题
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27-cpu" class="md-nav__link">
+    2.7、一个计算总的 CPU 占用率的小程序
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3linux" class="md-nav__link">
+    3、Linux 环境查看进程运行相关信息
+  </a>
+  
+    <nav class="md-nav" aria-label="3、Linux 环境查看进程运行相关信息">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-ps" class="md-nav__link">
+    3.1、使用 ps 命令查看进程信息
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-top" class="md-nav__link">
+    3.2、使用 top 命令查看进程信息
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    参考
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="0">
+          ANR优化
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2_7">
+          <span class="md-nav__icon md-icon"></span>
+          ANR优化
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../anr/anr/" class="md-nav__link">
+        ANR 原理
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../anr/anr_monitor/" class="md-nav__link">
+        ANR 监控
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../anr/anr_trace/" class="md-nav__link">
+        ANR 分析
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../anr/sp/" class="md-nav__link">
+        告别 SharedPreference 等待
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="0">
+          图片优化
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2_8">
+          <span class="md-nav__icon md-icon"></span>
+          图片优化
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../bitmap/image/" class="md-nav__link">
+        图片文件技术原理
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../bitmap/imge-format/" class="md-nav__link">
+        了解各种图形格式的编码方式
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../bitmap/bitmap-from-birth-to-death/" class="md-nav__link">
+        Bitmap从出生到死亡
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../bitmap/bitmap-memory/" class="md-nav__link">
+        Bitmap 内存占用分析
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../bitmap/glide/" class="md-nav__link">
+        Glide 核心知识
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_9" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_9" id="__nav_2_9_label" tabindex="0">
+          网络优化
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_9_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2_9">
+          <span class="md-nav__icon md-icon"></span>
+          网络优化
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../net/net_opt/" class="md-nav__link">
+        移动网络优化
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../net/okhttp/" class="md-nav__link">
+        OKhttp 核心解析
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_10" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2_10" id="__nav_2_10_label" tabindex="0">
+          基础
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_10_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_2_10">
+          <span class="md-nav__icon md-icon"></span>
+          基础
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../memory/Native-Hook/" class="md-nav__link">
+        native-hook
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../command/dumpsys/" class="md-nav__link">
+        dumpsys
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../command/top/" class="md-nav__link">
+        top命令
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../net/log/" class="md-nav__link">
+        线上疑难问题该如何排查和跟踪？
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          Native
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Native
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../native/" class="md-nav__link">
+        C&C++
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+          C/C++
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_2">
+          <span class="md-nav__icon md-icon"></span>
+          C/C++
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../native/basic/Cbasic/" class="md-nav__link">
+        C基础知识
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../native/basic/C%2B%2Bbasic/" class="md-nav__link">
+        C++基础知识
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../native/basic/compilation-principle/" class="md-nav__link">
+        编译原理基础
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../native/basic/pointer%281%29/" class="md-nav__link">
+        深度长文教你彻底掌握C++/C指针(一):基石
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../native/basic/pointer%282%29/" class="md-nav__link">
+        深度长文教你彻底掌握C++/C指针(二):指针和数组与字符串
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../native/basic/Cplus_auto/" class="md-nav__link">
+        C++ auto类型推导完全攻略
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../native/basic/Cplus_decltype/" class="md-nav__link">
+        C++ decltype类型推导完全攻略
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../native/basic/Cplus_nullptr/" class="md-nav__link">
+        C++11 nullptr：初始化空指针
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../native/basic/Cplus_shared_ptr/" class="md-nav__link">
+        C++11 shared_ptr智能指针
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+          JNI
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_3">
+          <span class="md-nav__icon md-icon"></span>
+          JNI
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../native/JNI/JNI-op/" class="md-nav__link">
+        JNI优化
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../native/JNI/Android-JNI/" class="md-nav__link">
+        JNI使用总结
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+          疑难问题
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_3_4">
+          <span class="md-nav__icon md-icon"></span>
+          疑难问题
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../native/basic/__emutls_get_address/" class="md-nav__link">
+        dlopen时找不到__emutls_get_address符号
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          设计&架构
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          设计&架构
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/" class="md-nav__link">
+        设计 & 架构
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/design-patterns/framework%20design/" class="md-nav__link">
+        架构设计
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/design-patterns/Design%20Principles/" class="md-nav__link">
+        六大设计原则
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/design-patterns/design-patterns/" class="md-nav__link">
+        设计模式概述
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="0">
+          设计模式
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_5_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_4_5">
+          <span class="md-nav__icon md-icon"></span>
+          设计模式
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5_1" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_5_1" id="__nav_4_5_1_label" tabindex="0">
+          创建型模式
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_5_1_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_4_5_1">
+          <span class="md-nav__icon md-icon"></span>
+          创建型模式
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/design-patterns/index_creational/" class="md-nav__link">
+        概述
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/design-patterns/singleton/" class="md-nav__link">
+        单例
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/design-patterns/factory/" class="md-nav__link">
+        工厂模式
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/design-patterns/prototype/" class="md-nav__link">
+        原型模式
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/design-patterns/builder/" class="md-nav__link">
+        建造者模式
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5_2" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_5_2" id="__nav_4_5_2_label" tabindex="0">
+          结构型模式
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_5_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_4_5_2">
+          <span class="md-nav__icon md-icon"></span>
+          结构型模式
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/design-patterns/index_structural/" class="md-nav__link">
+        概述
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/design-patterns/adapter/" class="md-nav__link">
+        适配器模式
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/design-patterns/proxy/" class="md-nav__link">
+        代理模式
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/design-patterns/facade/" class="md-nav__link">
+        外观模式
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/design-patterns/wrapper/" class="md-nav__link">
+        装饰模式
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5_3" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_5_3" id="__nav_4_5_3_label" tabindex="0">
+          行为模式
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_5_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_4_5_3">
+          <span class="md-nav__icon md-icon"></span>
+          行为模式
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/design-patterns/index_behavioral/" class="md-nav__link">
+        概述
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/design-patterns/strategy/" class="md-nav__link">
+        策略模式
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/design-patterns/summary/" class="md-nav__link">
+        总结
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
+          其他
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_4_6">
+          <span class="md-nav__icon md-icon"></span>
+          其他
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/other/fail-fast%26fail-safe/" class="md-nav__link">
+        fail-fast&fail-safe
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../design/other/singleton_extra/" class="md-nav__link">
+        各种单例写法
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+          面试
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          面试
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../interview/" class="md-nav__link">
+        Android面试题题目
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+          Android
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_5_2">
+          <span class="md-nav__icon md-icon"></span>
+          Android
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../interview/android_components/" class="md-nav__link">
+        Android 四大组件
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../interview/android_screen/" class="md-nav__link">
+        Android 屏幕适配
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../interview/android_communication/" class="md-nav__link">
+        Android 通信相关
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../interview/android_view/" class="md-nav__link">
+        Android 视图相关
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../interview/android_event/" class="md-nav__link">
+        Android 事件相关
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../interview/android_sys/" class="md-nav__link">
+        Android 系统原理
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_3" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
+          Java
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_5_3">
+          <span class="md-nav__icon md-icon"></span>
+          Java
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../interview/java_basic/" class="md-nav__link">
+        Java 基础
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../interview/java_collection/" class="md-nav__link">
+        Java 容器
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../interview/java_thread/" class="md-nav__link">
+        Java 多线程
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../interview/java_jvm/" class="md-nav__link">
+        Java JVM
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+          计算机基础
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_6">
+          <span class="md-nav__icon md-icon"></span>
+          计算机基础
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/" class="md-nav__link">
+        计算机基础
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
+          操作系统
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_6_2">
+          <span class="md-nav__icon md-icon"></span>
+          操作系统
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/system/shell/" class="md-nav__link">
+        shell核心语法
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_3" id="__nav_6_3_label" tabindex="0">
+          网络
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_6_3">
+          <span class="md-nav__icon md-icon"></span>
+          网络
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/net/net/" class="md-nav__link">
+        基础知识
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/net/5g/" class="md-nav__link">
+        讲清楚5G
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_4" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_4" id="__nav_6_4_label" tabindex="0">
+          数据结构与算法
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_4_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_6_4">
+          <span class="md-nav__icon md-icon"></span>
+          数据结构与算法
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_4_1" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_4_1" id="__nav_6_4_1_label" tabindex="0">
+          数组
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_4_1_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_6_4_1">
+          <span class="md-nav__icon md-icon"></span>
+          数组
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/algo/array_algo_1/" class="md-nav__link">
+        实现一个支持动态扩容的数组
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/algo/array_algo_2/" class="md-nav__link">
+        实现一个大小固定的有序数组，支持动态增删改操作
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/algo/array_algo_3/" class="md-nav__link">
+        合并两个有序数组
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_4_2" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_4_2" id="__nav_6_4_2_label" tabindex="0">
+          链表
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_4_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_6_4_2">
+          <span class="md-nav__icon md-icon"></span>
+          链表
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/algo/linklist_1/" class="md-nav__link">
+        实现单链表、循环链表、双向链表，支持增删操作
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/algo/linklist_lru/" class="md-nav__link">
+        实现LRU缓存
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/algo/linklist_2/" class="md-nav__link">
+        常见链表操作
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_4_3" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_4_3" id="__nav_6_4_3_label" tabindex="0">
+          栈
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_4_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_6_4_3">
+          <span class="md-nav__icon md-icon"></span>
+          栈
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/algo/stack_1/" class="md-nav__link">
+        顺序栈、链式栈
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/algo/stack_2/" class="md-nav__link">
+        常见栈操作
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_4_4" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_4_4" id="__nav_6_4_4_label" tabindex="0">
+          队列
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_4_4_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_6_4_4">
+          <span class="md-nav__icon md-icon"></span>
+          队列
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/algo/queue/" class="md-nav__link">
+        常见队列实现
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_4_5" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_4_5" id="__nav_6_4_5_label" tabindex="0">
+          递归
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_4_5_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_6_4_5">
+          <span class="md-nav__icon md-icon"></span>
+          递归
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/algo/recursive/" class="md-nav__link">
+        常见递归算法
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_4_6" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_4_6" id="__nav_6_4_6_label" tabindex="0">
+          排序与二分查找
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_4_6_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_6_4_6">
+          <span class="md-nav__icon md-icon"></span>
+          排序与二分查找
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/algo/sort/" class="md-nav__link">
+        常见排序算法
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/algo/bsearch/" class="md-nav__link">
+        二分查找算法
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_4_7" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_4_7" id="__nav_6_4_7_label" tabindex="0">
+          散列表
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_4_7_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_6_4_7">
+          <span class="md-nav__icon md-icon"></span>
+          散列表
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/algo/hashTable/" class="md-nav__link">
+        常见散列表实现
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_4_8" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_4_8" id="__nav_6_4_8_label" tabindex="0">
+          二叉树
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_4_8_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_6_4_8">
+          <span class="md-nav__icon md-icon"></span>
+          二叉树
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/algo/tree/" class="md-nav__link">
+        二叉查找树
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_4_9" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_4_9" id="__nav_6_4_9_label" tabindex="0">
+          堆
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_4_9_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_6_4_9">
+          <span class="md-nav__icon md-icon"></span>
+          堆
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/algo/heap/" class="md-nav__link">
+        小顶堆、大顶堆、优先级队列
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../basic/algo/heap_1/" class="md-nav__link">
+        常见堆算法
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+          开发工具
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          开发工具
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../tools/" class="md-nav__link">
+        开发工具
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+          GIT
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          GIT
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../tools/git/git_submodule/" class="md-nav__link">
+        Git submodule 子模块的管理和使用
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+          VIM
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_7_3">
+          <span class="md-nav__icon md-icon"></span>
+          VIM
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../tools/vim/vim-common/" class="md-nav__link">
+        Vim常用命令
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+          后端&运维
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          后端&运维
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../back-end/" class="md-nav__link">
+        后端&运维
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8_2" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8_2" id="__nav_8_2_label" tabindex="0">
+          Python
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_2_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_8_2">
+          <span class="md-nav__icon md-icon"></span>
+          Python
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../back-end/python/python_func_time/" class="md-nav__link">
+        python函数执行时间分析
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../back-end/python/centos_flask/" class="md-nav__link">
+        CentOS部署flask项目
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../back-end/python/pycharm_remote_debug/" class="md-nav__link">
+        Pycharm远程调试
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../back-end/python/PyCharm_root_debug/" class="md-nav__link">
+        以Root权限运行/调试 PyCharm
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+          游戏开发
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          游戏开发
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../game/" class="md-nav__link">
+        游戏开发
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../game/perf/tools/" class="md-nav__link">
+        Unity3D性能优化——工具篇
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../game/perf/cpu/" class="md-nav__link">
+        Unity3D性能优化——CPU篇
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../game/perf/render/" class="md-nav__link">
+        Unity3D性能优化——渲染篇
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          读书笔记
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_10">
+          <span class="md-nav__icon md-icon"></span>
+          读书笔记
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/" class="md-nav__link">
+        开卷有益
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/jvm/jvm/" class="md-nav__link">
+        《深入理解java虚拟机》阅读笔记
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_3" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_10_3" id="__nav_10_3_label" tabindex="0">
+          《数据结构与算法之美》笔记
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_3_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_10_3">
+          <span class="md-nav__icon md-icon"></span>
+          《数据结构与算法之美》笔记
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/Complexity%20Analysis/" class="md-nav__link">
+        复杂度分析
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/array/" class="md-nav__link">
+        数组
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/linked-list/" class="md-nav__link">
+        链表
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/stack/" class="md-nav__link">
+        栈
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/queue/" class="md-nav__link">
+        队列
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/recursion/" class="md-nav__link">
+        递归
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/basic_sort/" class="md-nav__link">
+        基础排序算法
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/sort-advance/" class="md-nav__link">
+        高级排序算法
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/sort-op/" class="md-nav__link">
+        排序优化
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/bsearch/" class="md-nav__link">
+        二分查找
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/skip-list/" class="md-nav__link">
+        跳表
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/hashmap/" class="md-nav__link">
+        散列表
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/hashalgo.md" class="md-nav__link">
+        哈希算法
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/binary-tree/" class="md-nav__link">
+        二叉树
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/Red-Black-Tree/" class="md-nav__link">
+        红黑树
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/digui-tree/" class="md-nav__link">
+        递归树
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../read/beautiful-algo/heap/" class="md-nav__link">
+        堆
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1linux-cpu" class="md-nav__link">
+    1、Linux 环境下查看 CPU 信息
+  </a>
+  
+    <nav class="md-nav" aria-label="1、Linux 环境下查看 CPU 信息">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-cpu" class="md-nav__link">
+    1.1、查看 CPU 详细信息
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-cpu" class="md-nav__link">
+    1.2、查看多核 CPU 信息
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-linux-cpu" class="md-nav__link">
+    2、在 Linux 环境下计算进程的 CPU 占用
+  </a>
+  
+    <nav class="md-nav" aria-label="2、在 Linux 环境下计算进程的 CPU 占用">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-procstat-cpu" class="md-nav__link">
+    2.1、通过 /proc/stat 文件查看所有的 CPU 活动信息
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-procpidstat-cpu" class="md-nav__link">
+    2.2、通过 /proc/[PID]/stat 文件查看某一进程的 CPU 活动信息
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-procpidtasktidstat" class="md-nav__link">
+    2.3、通过 /proc/[PID]/task/[TID]/stat 文件查看某一进程下的某一线程的活动信息
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-cpu" class="md-nav__link">
+    2.4、单核情况下 CPU 使用率的计算
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-cpu" class="md-nav__link">
+    2.5、多核情况下 CPU 使用率的计算
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26" class="md-nav__link">
+    2.6、问题
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27-cpu" class="md-nav__link">
+    2.7、一个计算总的 CPU 占用率的小程序
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3linux" class="md-nav__link">
+    3、Linux 环境查看进程运行相关信息
+  </a>
+  
+    <nav class="md-nav" aria-label="3、Linux 环境查看进程运行相关信息">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-ps" class="md-nav__link">
+    3.1、使用 ps 命令查看进程信息
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-top" class="md-nav__link">
+    3.2、使用 top 命令查看进程信息
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    参考
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="linuxcpu">Linux环境下进程的CPU占用率<a class="headerlink" href="#linuxcpu" title="Permanent link">&para;</a></h1>
+<h2 id="1linux-cpu">1、Linux 环境下查看 CPU 信息<a class="headerlink" href="#1linux-cpu" title="Permanent link">&para;</a></h2>
+<h3 id="11-cpu">1.1、查看 CPU 详细信息<a class="headerlink" href="#11-cpu" title="Permanent link">&para;</a></h3>
+<p>通过 <code>cat /proc/cpuinfo</code> 命令，可以查看 CPU 相关的信息：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>[root@rh ~]$ cat /proc/cpuinfo
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>processor : 0
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>vendor_id : GenuineIntel
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>cpu family : 6
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>model : 44
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>model name : Intel(R) Xeon(R) CPU           E5620  @ 2.40GHz
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>stepping : 2
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>cpu MHz : 1596.000
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>cache size : 12288 KB
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>physical id : 0
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>siblings : 8
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>core id : 0
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>cpu cores : 4
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>apicid : 0
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>initial apicid : 0
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>fpu : yes
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>fpu_exception : yes
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>cpuid level : 11
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>wp : yes
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>flags : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good xtopology nonstop_tsc aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 cx16 xtpr pdcm pcid dca sse4_1 sse4_2 popcnt aes lahf_lm arat epb dts tpr_shadow vnmi flexpriority ept vpid
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>bogomips : 4800.15
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>clflush size : 64
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>cache_alignment : 64
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>address sizes : 40 bits physical, 48 bits virtual
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>power management:
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>......
+</code></pre></div>
+<p>在查看到的相关信息中，通常有些信息比较让人迷惑，这里列出一些解释：</p>
+<ul>
+<li>physical id: 指的是物理封装的处理器的 id。</li>
+<li>cpu cores: 位于相同物理封装的处理器中的内核数量。</li>
+<li>core id: 每个内核的 id。</li>
+<li>siblings: 位于相同物理封装的处理器中的逻辑处理器的数量。</li>
+<li>processor: 逻辑处理器的 id。</li>
+</ul>
+<p>我们通常可以用下面这些命令获得这些参数的信息：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>[root@rh ~]$ cat /proc/cpuinfo | grep &quot;physical id&quot; | sort|uniq
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>physical id     : 0
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>physical id     : 1
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>[root@rh ~]$ cat /proc/cpuinfo | grep &quot;cpu cores&quot; | sort|uniq
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>cpu cores     : 4
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>[root@rh ~]# cat /proc/cpuinfo | grep &quot;core id&quot; | sort|uniq
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>core id          : 0
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>core id          : 1
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>core id          : 10
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>core id          : 9
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>[root@rh ~]$ cat /proc/cpuinfo | grep &quot;siblings&quot; | sort|uniq
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>siblings     : 8
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>[root@rh ~]$ cat /proc/cpuinfo | grep &quot;processor&quot; | sort|uniq
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>processor     : 0
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>processor     : 1
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>processor     : 10
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>processor     : 11
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>processor     : 12
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>processor     : 13
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>processor     : 14
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>processor     : 15
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>processor     : 2
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>processor     : 3
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>processor     : 4
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>processor     : 5
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>processor     : 6
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>processor     : 7
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>processor     : 8
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>processor     : 9
+</code></pre></div>
+<p>通过上面的结果，可以看出这台机器：</p>
+<ul>
+<li>1）有 2 个物理封装的处理器（physical id 有 2 个）；</li>
+<li>2）每个物理封装的处理器有 4 个内核（cpu cores 为 4）；</li>
+<li>3）每个物理封装的处理器有 8 个逻辑处理器（siblings 为 8），可见台机器的处理器开启了超线程技术，每个内核（core）被划分为了 2 个逻辑处理器（processor）；</li>
+<li>4）总共有 16 个逻辑处理器（processor 有 16 个）；</li>
+</ul>
+<p><code>超线程技术</code>：超线程技术就是利用特殊的硬件指令，把两个逻辑内核模拟成两个物理芯片，让单个处理器都能使用线程级并行计算，进而兼容多线程操作系统和软件，减少了CPU的闲置时间，提高的CPU的运行效率。</p>
+<h3 id="12-cpu">1.2、查看多核 CPU 信息<a class="headerlink" href="#12-cpu" title="Permanent link">&para;</a></h3>
+<p>可以使用 <code>mpstat</code> 命令或 <code>sar</code> 命令来查看。 具体使用可以通过 <code>man mpstat/sar</code> 来查看。</p>
+<h2 id="2-linux-cpu">2、在 Linux 环境下计算进程的 CPU 占用<a class="headerlink" href="#2-linux-cpu" title="Permanent link">&para;</a></h2>
+<h3 id="21-procstat-cpu">2.1、通过 /proc/stat 文件查看所有的 CPU 活动信息<a class="headerlink" href="#21-procstat-cpu" title="Permanent link">&para;</a></h3>
+<p>下面实例数据是内核 2.6.24-24 版本以上的：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>[root@rh ~]$ cat /proc/stat
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>cpu  223447 240 4504182 410802165 59753 412 586209 0 0
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>cpu0 17625 11 193414 25755165 34590 72 16780 0 0
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>cpu1 12412 9 139234 25860912 1139 27 15697 0 0
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>cpu2 14953 0 558618 25310182 230 73 87851 0 0
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>cpu3 4088 0 138057 25873479 3404 19 15862 0 0
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>cpu4 13417 17 161123 25829756 10429 22 17155 0 0
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>cpu5 23935 5 331837 25605479 369 20 26095 0 0
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>cpu6 19320 0 319132 25619728 2060 18 30690 0 0
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>cpu7 18430 0 324300 25616142 4170 20 33081 0 0
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>cpu8 31940 0 661718 25231911 1474 15 67661 0 0
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>cpu9 8079 87 152035 25829339 237 19 16308 0 0
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>cpu10 4247 24 140052 25869331 168 18 15059 0 0
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>cpu11 16305 4 401473 25567904 207 14 34674 0 0
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>cpu12 8227 0 157815 25853353 319 10 14808 0 0
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>cpu13 18894 46 479709 25354279 653 26 157885 0 0
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>cpu14 7000 30 204760 25769743 159 16 21059 0 0
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>cpu15 4567 1 140899 25855452 138 16 15536 0 0
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>intr 1146734384 997 0 0 1 1 0 0 0 1 0 0 0 0 0 1302607 0 0 262087 0 712704 0 0 0 &lt;...省略若干数据...&gt;
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>ctxt 89793364
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>btime 1366591448
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>processes 27283
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>procs_running 1
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>procs_blocked 0
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>softirq 1262462448 0 63122856 50789329 1074176388 225020 0 461213 9535581 76130 64075931
+</code></pre></div>
+<p>第一行的数据表示的是 CPU 总的使用情况。我们来解释一下这行数据各数值的含义：</p>
+<ul>
+<li>
+<p>1）这些数值的单位都是 jiffies，jiffies 是内核中的一个全局变量，用来记录系统启动以来产生的节拍数，在 Linux 中，一个节拍大致可以理解为操作系统进程调度的最小时间片，不同的 Linux 系统内核这个值可能不同，通常在 1ms 到 10ms 之间。</p>
+</li>
+<li>
+<p>2）cpu 223447 240 4504182 410802165 59753 412 586209 0 0</p>
+</li>
+</ul>
+<blockquote>
+<ul>
+<li><code>user</code>(223447) 从系统启动开始累积到当前时刻，处于用户态的运行时间，不包含 nice 值为负的进程。</li>
+<li><code>nice</code>(240) 从系统启动开始累积到当前时刻，nice 值为负的进程所占用的 CPU 时间。</li>
+<li><code>system</code>(4504182) 从系统启动开始累积到当前时刻，处于核心态的运行时间。</li>
+<li><code>idle</code>(410802165) 从系统启动开始累积到当前时刻，除 IO 等待时间以外的其他等待时间。</li>
+<li><code>iowait</code>(59753) 从系统启动开始累积到当前时刻，IO 等待时间。(since 2.5.41)</li>
+<li><code>irq</code>(412) 从系统启动开始累积到当前时刻，硬中断时间。(since 2.6.0-test4)</li>
+<li><code>softirq</code>(586209) 从系统启动开始累积到当前时刻，软中断时间。(since 2.6.0-test4)</li>
+<li><code>stealstolen</code>(0) Which is the time spent in other operating systems when running in a virtualized environment.(since 2.6.11)</li>
+<li><code>guest</code>(0) Which is the time spent running a virtual CPU for guest operating systems under the control of the Linux kernel.(since 2.6.24)</li>
+</ul>
+</blockquote>
+<p><strong>从以上信息我们可以得到总的 CPU 活动时间为：</strong></p>
+<p><strong>totalCPUTime = <code>user</code> + <code>nice</code> + <code>system</code> + <code>idle</code> + <code>iowait</code> + <code>irq</code> + <code>softirq</code> + <code>stealstolen</code> + <code>guest</code></strong></p>
+<h3 id="22-procpidstat-cpu">2.2、通过 /proc/[PID]/stat 文件查看某一进程的 CPU 活动信息<a class="headerlink" href="#22-procpidstat-cpu" title="Permanent link">&para;</a></h3>
+<p>2.2.1、存储进程信息的文件目录</p>
+<p>Linux 系统贯彻“一切都是文件”的思想，所有的进程的运行状态也都可以通过读取文件来获取。 <code>/proc</code> 文件系统是一个伪文件系统，它只存在内存当中，而不占用外存空间。它以文件系统的方式为内核与进程提供通信的接口。用户和应用程序可以通过 <code>/proc</code> 得到系统的信息，并可以改变内核的某些参数。</p>
+<p>在 <code>/proc/[PID]/</code> 目录下的各个文件记录着 这个进程的各项运行指标。 是进程号。</p>
+<p>2.2.2、查看进程运行的详细信息</p>
+<p>通过查看 <code>/proc/[PID]/stat</code> 文件，可以进程运行的详细信息，其中就包括 CPU 占用信息。 比如：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="o">[</span>root@rh<span class="w"> </span>~<span class="o">]</span>$<span class="w"> </span>cat<span class="w"> </span>/proc/1/stat
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="m">1</span><span class="w"> </span><span class="o">(</span>init<span class="o">)</span><span class="w"> </span>S<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>-1<span class="w"> </span><span class="m">4202752</span><span class="w"> </span><span class="m">3026</span><span class="w"> </span><span class="m">2635222</span><span class="w"> </span><span class="m">9</span><span class="w"> </span><span class="m">483</span><span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="m">165</span><span class="w"> </span><span class="m">102346</span><span class="w"> </span><span class="m">3188016</span><span class="w"> </span><span class="m">20</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">19820544</span><span class="w"> </span><span class="m">384</span><span class="w"> </span><span class="m">18446744073709551615</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">4096</span><span class="w"> </span><span class="m">536962595</span><span class="w"> </span><span class="m">18446744073709551615</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">34</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span>
+</code></pre></div>
+<p><code>/proc/[PID]/stat</code> 文件信息解释</p>
+<p>看到上面这些信息，肯定会很迷惑，不知道每个字段都是什么意思。</p>
+<p>1）我们可以通过 man 5 proc 命令查看文档，找到 /proc/[pid]/stat 节点，就可以看到各字段的意思了。如：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>/proc/<span class="o">[</span>pid<span class="o">]</span>/stat
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Status<span class="w"> </span>information<span class="w"> </span>about<span class="w"> </span>the<span class="w"> </span>process.<span class="w">  </span>This<span class="w"> </span>is<span class="w"> </span>used<span class="w"> </span>by<span class="w"> </span>ps<span class="o">(</span><span class="m">1</span><span class="o">)</span>.<span class="w">  </span>It<span class="w"> </span>is<span class="w"> </span>defined<span class="w"> </span><span class="k">in</span><span class="w"> </span>/usr/src/linux/fs/proc/array.c.
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>The<span class="w"> </span>fields,<span class="w"> </span><span class="k">in</span><span class="w"> </span>order,<span class="w"> </span>with<span class="w"> </span>their<span class="w"> </span>proper<span class="w"> </span>scanf<span class="o">(</span><span class="m">3</span><span class="o">)</span><span class="w"> </span>format<span class="w"> </span>specifiers,<span class="w"> </span>are:
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>pid<span class="w"> </span>%d<span class="w">      </span>The<span class="w"> </span>process<span class="w"> </span>ID.
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>comm<span class="w"> </span>%s<span class="w">     </span>The<span class="w">  </span>filename<span class="w">  </span>of<span class="w"> </span>the<span class="w"> </span>executable,<span class="w"> </span><span class="k">in</span><span class="w"> </span>parentheses.<span class="w">  </span>This<span class="w"> </span>is<span class="w"> </span>visible<span class="w"> </span>whether<span class="w"> </span>or<span class="w"> </span>not<span class="w"> </span>the<span class="w"> </span>executable<span class="w"> </span>is<span class="w"> </span>swapped<span class="w"> </span>out.
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>state<span class="w"> </span>%c<span class="w">    </span>One<span class="w"> </span>character<span class="w"> </span>from<span class="w"> </span>the<span class="w"> </span>string<span class="w"> </span><span class="s2">&quot;RSDZTW&quot;</span><span class="w"> </span>where<span class="w"> </span>R<span class="w"> </span>is<span class="w"> </span>running,<span class="w"> </span>S<span class="w"> </span>is<span class="w"> </span>sleeping<span class="w"> </span><span class="k">in</span><span class="w"> </span>an<span class="w"> </span>interruptible<span class="w">  </span>wait,<span class="w">  </span>D<span class="w">  </span>is<span class="w"> </span>waiting<span class="w"> </span><span class="k">in</span><span class="w"> </span>uninterruptible<span class="w"> </span>disk<span class="w"> </span>sleep,<span class="w"> </span>Z<span class="w"> </span>is<span class="w"> </span>zombie,<span class="w"> </span>T<span class="w"> </span>is<span class="w"> </span>traced<span class="w"> </span>or<span class="w"> </span>stopped<span class="w"> </span><span class="o">(</span>on<span class="w"> </span>a<span class="w"> </span>signal<span class="o">)</span>,<span class="w"> </span>and<span class="w"> </span>W<span class="w"> </span>is<span class="w"> </span>paging.
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>ppid<span class="w"> </span>%d<span class="w">     </span>The<span class="w"> </span>PID<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>parent.
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>......
+</code></pre></div>
+<p>2）具体解释，一个示例：</p>
+<ul>
+<li><code>pid</code>=6873 进程(包括轻量级进程，即线程)号</li>
+<li><code>comm</code>=a.out 应用程序或命令的名字。</li>
+<li><code>task_state</code>=R 任务的状态，R:runnign, S:sleeping (<code>TASK_INTERRUPTIBLE</code>), D:disk sleep (<code>TASK_UNINTERRUPTIBLE</code>), T: stopped, T:tracing stop, Z:zombie, X:dead。</li>
+<li><code>ppid</code>=6723 父进程ID。</li>
+<li><code>pgid</code>=6873 线程组号。</li>
+<li><code>sid</code>=6723 该任务所在的会话组 ID。</li>
+<li><code>tty_nr</code>=34819(pts/3) 该任务的 tty 终端的设备号，INT（34817/256）= 主设备号，（34817-主设备号）= 次设备号。</li>
+<li><code>tty_pgrp</code>=6873 终端的进程组号，当前运行在该任务所在终端的前台任务(包括 shell 应用程序)的 PID。</li>
+<li><code>task-&gt;flags</code>=8388608 进程标志位，查看该任务的特性。</li>
+<li><code>min_flt</code>=77 该任务不需要从硬盘拷数据而发生的缺页（次缺页）的次数。</li>
+<li><code>cmin_flt</code>=0 累计的该任务的所有的 waited-for 进程曾经发生的次缺页的次数目。</li>
+<li><code>maj_flt</code>=0 该任务需要从硬盘拷数据而发生的缺页（主缺页）的次数。</li>
+<li><code>cmaj_flt</code>=0 累计的该任务的所有的 waited-for 进程曾经发生的主缺页的次数目。</li>
+<li><code>utime</code>=1587 该任务在用户态运行的时间，单位为 jiffies。</li>
+<li><code>stime</code>=1 该任务在核心态运行的时间，单位为 jiffies。</li>
+<li><code>cutime</code>=0 累计的该任务的所有的 waited-for 进程曾经在用户态运行的时间，单位为 jiffies。</li>
+<li><code>cstime</code>=0 累计的该任务的所有的 waited-for 进程曾经在核心态运行的时间，单位为 jiffies。</li>
+<li><code>priority</code>=25 任务的动态优先级。</li>
+<li><code>nice</code>=0 任务的静态优先级。</li>
+<li><code>num_threads</code>=3 该任务所在的线程组里线程的个数。</li>
+<li><code>it_real_value</code>=0 由于计时间隔导致的下一个 SIGALRM 发送进程的时延，以 jiffy 为单位。</li>
+<li><code>start_time</code>=5882654 该任务启动的时间，单位为 jiffies。</li>
+<li><code>vsize</code>=1409024（page） 该任务的虚拟地址空间大小。</li>
+<li><code>rss</code>=56(page) 该任务当前驻留物理地址空间的大小；Number of pages the process has in real memory,minu 3 for administrative purpose. 这些页可能用于代码，数据和栈。</li>
+<li><code>rlim</code>=4294967295（bytes） 该任务能驻留物理地址空间的最大值。</li>
+<li><code>start_code</code>=134512640 该任务在虚拟地址空间的代码段的起始地址。</li>
+<li><code>end_code</code>=134513720 该任务在虚拟地址空间的代码段的结束地址。</li>
+<li><code>start_stack</code>=3215579040 该任务在虚拟地址空间的栈的结束地址。</li>
+<li><code>kstkesp</code>=0 esp(32 位堆栈指针) 的当前值, 与在进程的内核堆栈页得到的一致。</li>
+<li><code>kstkeip</code>=2097798 指向将要执行的指令的指针, EIP(32 位指令指针)的当前值。</li>
+<li><code>pendingsig</code>=0 待处理信号的位图，记录发送给进程的普通信号。</li>
+<li><code>block_sig</code>=0 阻塞信号的位图。</li>
+<li><code>sigign</code>=0 忽略的信号的位图。</li>
+<li><code>sigcatch</code>=082985 被俘获的信号的位图。</li>
+<li><code>wchan</code>=0 如果该进程是睡眠状态，该值给出调度的调用点。</li>
+<li><code>nswap</code> 被 swapped 的页数，当前没用。</li>
+<li><code>cnswap</code> 所有子进程被 swapped 的页数的和，当前没用。</li>
+<li><code>exit_signal</code>=17 该进程结束时，向父进程所发送的信号。</li>
+<li><code>task_cpu(task)</code>=0 运行在哪个 CPU 上。</li>
+<li><code>task_rt_priority</code>=0 实时进程的相对优先级别。</li>
+<li><code>task_policy</code>=0 进程的调度策略，0=非实时进程，1=FIFO实时进程；2=RR实时进程</li>
+</ul>
+<p>2.2.3、关于进程占用 CPU 的相关信息</p>
+<p>在上述的时间中，这些信息会在计算 CPU 占用率时用到：</p>
+<ul>
+<li><code>pid</code> 进程号。</li>
+<li><code>utime</code> 该任务在用户态运行的时间，单位为 jiffies。</li>
+<li><code>stime</code> 该任务在核心态运行的时间，单位为 jiffies。</li>
+<li><code>cutime</code> 累计的该任务的所有的 waited-for 进程曾经在用户态运行的时间，单位为 jiffies。</li>
+<li><code>cstime</code> 累计的该任务的所有的 waited-for 进程曾经在核心态运行的时间，单位为 jiffies。</li>
+</ul>
+<p><strong>该进程的 CPU 占用时间（该值包括其所有线程的 CPU 时间）：</strong></p>
+<p><strong>processCPUTime = utime + stime + cutime + cstime</strong></p>
+<h3 id="23-procpidtasktidstat">2.3、通过 /proc/[PID]/task/[TID]/stat 文件查看某一进程下的某一线程的活动信息<a class="headerlink" href="#23-procpidtasktidstat" title="Permanent link">&para;</a></h3>
+<p>该文件包含了某一轻量级进程（lwp，即通常所说的线程）所有的活动信息，该文件中的所有值都是从系统启动开始累计到当前时刻。该文件的内容格式以及各字段的含义与 <code>/proc/[PID]/stat</code> 文件类似。该文件中的 <code>tid</code> 字段表示的是轻量级线程号。</p>
+<p><strong>该线程的 CPU 占用时间：</strong></p>
+<p><strong>threadCPUTime = utime + stime</strong></p>
+<h3 id="24-cpu">2.4、单核情况下 CPU 使用率的计算<a class="headerlink" href="#24-cpu" title="Permanent link">&para;</a></h3>
+<p>2.4.1、基本思想</p>
+<p>首先，通过读取 <code>/proc/stat</code> 文件获取总的 CPU 时间，读取 <code>/proc/[PID]/stat</code> 获取进程 CPU 时间，读取 <code>/proc/[PID]/task/[TID]/stat</code> 获取线程 CPU 时间。然后，采样两个足够短的时间间隔的 CPU 快照与进程或线程快照来计算其 CPU 使用率。</p>
+<p>2.4.2、计算总的 CPU 使用率 totalCPUUse</p>
+<p>1）采样两个足够短的时间间隔的 CPU 快照，即读取 <code>/proc/stat</code> 文件，获取两个时间点的下列数据：</p>
+<ul>
+<li>CPUT1 (user1, nice1, system1, idle1, iowait1, irq1, softirq1, stealstolen1, guest1);</li>
+<li>CPUT2 (user2, nice2, system2, idle2, iowait2, irq2, softirq2, stealstolen2, guest2);</li>
+</ul>
+<p>2）计算总的 CPU 时间 totalCPUTime：</p>
+<ul>
+<li>CPUTime1 = user1 + nice1 + system1 + idle1 + iowait1 + irq1 + softirq1 + stealstolen1 + guest1;</li>
+<li>CPUTime2 = user2 + nice2 + system2 + idle2 + iowait2 + irq2 + softirq2 + stealstolen2 + guest2;</li>
+</ul>
+<p><strong>totalCPUTime = CPUTime2 – CPUTime1;</strong></p>
+<p>3）计算 CPU 空闲时间 idleCPUTime：</p>
+<p><strong>idleCPUTime = idle2 – idle1;</strong></p>
+<p>4）计算总的 CPU 使用率 totalCPUUse：</p>
+<p><strong>totalCPUUse = (totalCPUTime – idleCPUTime) / totalCPUTime;</strong></p>
+<p>2.4.3、计算某一进程的 CPU 使用率 processCPUUse</p>
+<p>1）采样两个足够短的时间间隔的 CPU 快照和对应的进程快照，即读取 <code>/proc/stat</code> 文件，获取两个时间点的下列数据：</p>
+<ul>
+<li>CPUT1 (user1, nice1, system1, idle1, iowait1, irq1, softirq1, stealstolen1, guest1);</li>
+<li>CPUT2 (user2, nice2, system2, idle2, iowait2, irq2, softirq2, stealstolen2, guest2);</li>
+</ul>
+<p>读取 <code>/proc/[PID]/stat</code> 文件，获取两个时间点的下列数据：</p>
+<ul>
+<li>ProcessT1 (utime1, stime1, cutime1, cstime1);</li>
+<li>ProcessT2 (utime2, stime2, cutime2, cstime2);</li>
+</ul>
+<p>2）计算总的 CPU 时间 totalCPUTime 和进程时间 processTime：</p>
+<ul>
+<li>CPUTime1 = user1 + nice1 + system1 + idle1 + iowait1 + irq1 + softirq1 + stealstolen1 + guest1;</li>
+<li>CPUTime2 = user2 + nice2 + system2 + idle2 + iowait2 + irq2 + softirq2 + stealstolen2 + guest2;</li>
+</ul>
+<p><strong>totalCPUTime = CPUTime2 – CPUTime1;</strong></p>
+<ul>
+<li>processTime1 = utime1 + stime1 + cutime1 + cstime1;</li>
+<li>processTime2 = utime2 + stime2 + cutime1 + cstime2;</li>
+</ul>
+<p><strong>processTime = processTime2 – processTime1;</strong></p>
+<p>3）计算该进程的 CPU 使用率 processCPUUse:</p>
+<p><strong>processCPUUse = processTime / totalCPUTime;</strong></p>
+<p>2.4.4、计算某一线程的 CPU 使用率 threadCPUUse</p>
+<p>1）采样两个足够短的时间间隔的 CPU 快照和对应的线程快照，即读取 <code>/proc/stat</code> 文件，获取两个时间点的下列数据：</p>
+<ul>
+<li>CPUT1 (user1, nice1, system1, idle1, iowait1, irq1, softirq1, stealstolen1, guest1);</li>
+<li>CPUT2 (user2, nice2, system2, idle2, iowait2, irq2, softirq2, stealstolen2, guest2);</li>
+</ul>
+<p>读取 <code>/proc/[PID]/task/[TID]/stat</code> 文件，获取两个时间点的下列数据：</p>
+<ul>
+<li>threadT1 (utime1, stime1);</li>
+<li>threadT2 (utime2, stime2);</li>
+</ul>
+<p>2）计算总的 CPU 时间 totalCPUTime 和线程时间 threadTime：</p>
+<ul>
+<li>CPUTime1 = user1 + nice1 + system1 + idle1 + iowait1 + irq1 + softirq1 + stealstolen1 + guest1;</li>
+<li>CPUTime2 = user2 + nice2 + system2 + idle2 + iowait2 + irq2 + softirq2 + stealstolen2 + guest2;</li>
+</ul>
+<p><strong>totalCPUTime = CPUTime2 – CPUTime1;</strong></p>
+<ul>
+<li>threadTime1 = utime1 + stime1;</li>
+<li>threadTime2 = utime2 + stime2;</li>
+</ul>
+<p><strong>threadTime = threadTime2 – threadTime1;</strong></p>
+<p>3）计算该线程的 CPU 使用率 threadCPUUse:</p>
+<p><strong>threadCPUUse = threadTime / totalCPUTime;</strong></p>
+<h3 id="25-cpu">2.5、多核情况下 CPU 使用率的计算<a class="headerlink" href="#25-cpu" title="Permanent link">&para;</a></h3>
+<p>2.5.1、基本思想</p>
+<p>首先，通过读取 <code>/proc/stat</code> 文件获取总的 CPU 时间，读取 <code>/proc/[PID]/stat</code> 获取进程 CPU 时间，读取 <code>/proc/[PID]/task/[TID]/stat</code> 获取线程 CPU 时间，读取 <code>/proc/cpuinfo</code> 获取 CPU 个数。</p>
+<p>在多核情况下计算进程或线程的 CPU 使用率，用上面的方式得到的通常是相对于 CPU 所有核的总共时间的占用率，而我们通常习惯得到进程或线程对某一个单核的占用率。所以我们可以按上面的方式计算得到 CPU 占用率，然后把结果乘上 CPU 的核数，即可得到进程或线程相对于一个单核的占用率。</p>
+<p>2.5.2、计算总的 CPU 使用率</p>
+<p>同 2.4.2。</p>
+<p>2.5.3、计算某一进程的 CPU 使用率 mProcessCPUUse</p>
+<p>1）同 2.4.3 计算某一进程的 CPU 使用率 processCPUUse；</p>
+<p>2）读取 /proc/cpuinfo 文件获取逻辑 CPU（processor） 的个数（参见 1.1）： processorNum</p>
+<p>3）多核情况下该进程的 CPU 使用率 mProcessCPUUse：</p>
+<p><strong>mProcessCPUUse = processCPUUse * processorNum;</strong></p>
+<p>2.5.4、计算某一线程的 CPU 使用率 mThreadCPUUse</p>
+<p>1）同 2.4.4 计算某一线程的 CPU 使用率 threadCPUUse；</p>
+<p>2）读取 /proc/cpuinfo 文件获取逻辑 CPU（processor） 的个数（参见 1.1）： processorNum</p>
+<p>3）多核情况下该线程的 CPU 使用率 mThreadCPUUse：</p>
+<p><strong>mThreadCPUUse = threadCPUUse * processorNum;</strong></p>
+<h3 id="26">2.6、问题<a class="headerlink" href="#26" title="Permanent link">&para;</a></h3>
+<ul>
+<li>1）不同内核版本 /proc/stat 文件格式不一致。/proc/stat 文件中第一行是总的 CPU 使用情况。</li>
+</ul>
+<blockquote>
+<ul>
+<li>各个内核版本都有的 4 个字段：user, nice, system, idle；</li>
+<li>2.5.41 版本新增字段：iowait；</li>
+<li>2.6.0-test4 版本新增字段：irq, softirq；</li>
+<li>2.6.11 版本新增字段：stealstolen；</li>
+<li>2.6.24 版本新增字段：guest；</li>
+</ul>
+</blockquote>
+<ul>
+<li>
+<p>2）/proc/[PID]/task 目录是 Linux 2.6.0-test6 之后才有的功能。</p>
+</li>
+<li>
+<p>3）关于 CPU 使用率为负的情况，解决方案是如果出现负值，连续采样计算 CPU 使用率直到为非负。</p>
+</li>
+<li>
+<p>4）有些线程生命周期较短，可能在采样期间就已经死掉了。</p>
+</li>
+</ul>
+<h3 id="27-cpu">2.7、一个计算总的 CPU 占用率的小程序<a class="headerlink" href="#27-cpu" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;unistd.h&gt;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdlib.h&gt;</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;time.h&gt;</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">procstat</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">     </span><span class="kt">char</span><span class="w"> </span><span class="n">processorName</span><span class="p">[</span><span class="mi">20</span><span class="p">];</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">     </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">user</span><span class="p">;</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">     </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">nice</span><span class="p">;</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">     </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">system</span><span class="p">;</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">     </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">idle</span><span class="p">;</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">     </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">iowait</span><span class="p">;</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">     </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">irq</span><span class="p">;</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">     </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">softirq</span><span class="p">;</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">     </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">stealstolen</span><span class="p">;</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">     </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">guest</span><span class="p">;</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="p">}</span><span class="w"> </span><span class="n">Procstat</span><span class="p">;</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="n">Procstat</span><span class="w"> </span><span class="nf">getCPUStatus</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">     </span><span class="c1">// Get &quot;/proc/stat&quot; info.</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="w">     </span><span class="kt">FILE</span><span class="o">*</span><span class="w"> </span><span class="n">inputFile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="w">     </span><span class="n">chdir</span><span class="p">(</span><span class="s">&quot;/proc&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="w">     </span><span class="n">inputFile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fopen</span><span class="p">(</span><span class="s">&quot;stat&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;r&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="w">     </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">inputFile</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="w">          </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;error: Can not open file.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a><span class="w">     </span><span class="p">}</span>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="w">     </span><span class="kt">char</span><span class="w"> </span><span class="n">buff</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="w">     </span><span class="n">fgets</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">buff</span><span class="p">),</span><span class="w"> </span><span class="n">inputFile</span><span class="p">);</span><span class="w"> </span><span class="c1">// Read 1 line.</span>
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="w">     </span><span class="n">printf</span><span class="p">(</span><span class="n">buff</span><span class="p">);</span><span class="w">     </span>
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="w">     </span><span class="n">Procstat</span><span class="w"> </span><span class="n">ps</span><span class="p">;</span>
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="w">     </span><span class="n">sscanf</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;%s %u %u %u %u %u %u %u %u %u&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ps</span><span class="p">.</span><span class="n">processorName</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ps</span><span class="p">.</span><span class="n">user</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ps</span><span class="p">.</span><span class="n">nice</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ps</span><span class="p">.</span><span class="n">system</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ps</span><span class="p">.</span><span class="n">idle</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ps</span><span class="p">.</span><span class="n">iowait</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ps</span><span class="p">.</span><span class="n">irq</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ps</span><span class="p">.</span><span class="n">softirq</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ps</span><span class="p">.</span><span class="n">stealstolen</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">ps</span><span class="p">.</span><span class="n">guest</span><span class="p">);</span><span class="w"> </span><span class="c1">// Scan from &quot;buff&quot;.     </span>
+<a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a><span class="w">     </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;user: %u</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ps</span><span class="p">.</span><span class="n">user</span><span class="p">);</span>
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>
+<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a><span class="w">     </span><span class="n">fclose</span><span class="p">(</span><span class="n">inputFile</span><span class="p">);</span>
+<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>
+<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a><span class="w">     </span><span class="k">return</span><span class="w"> </span><span class="n">ps</span><span class="p">;</span>
+<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a>
+<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a><span class="p">}</span>
+<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a>
+<a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a><span class="kt">float</span><span class="w"> </span><span class="nf">calculateCPUUse</span><span class="p">(</span><span class="n">Procstat</span><span class="w"> </span><span class="n">ps1</span><span class="p">,</span><span class="w"> </span><span class="n">Procstat</span><span class="w"> </span><span class="n">ps2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a><span class="w">     </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">totalCPUTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">ps2</span><span class="p">.</span><span class="n">user</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ps2</span><span class="p">.</span><span class="n">nice</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ps2</span><span class="p">.</span><span class="n">system</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ps2</span><span class="p">.</span><span class="n">idle</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ps2</span><span class="p">.</span><span class="n">iowait</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ps2</span><span class="p">.</span><span class="n">irq</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ps2</span><span class="p">.</span><span class="n">softirq</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ps2</span><span class="p">.</span><span class="n">stealstolen</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ps2</span><span class="p">.</span><span class="n">guest</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="n">ps1</span><span class="p">.</span><span class="n">user</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ps1</span><span class="p">.</span><span class="n">nice</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ps1</span><span class="p">.</span><span class="n">system</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ps1</span><span class="p">.</span><span class="n">idle</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ps1</span><span class="p">.</span><span class="n">iowait</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ps1</span><span class="p">.</span><span class="n">irq</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ps1</span><span class="p">.</span><span class="n">softirq</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ps1</span><span class="p">.</span><span class="n">stealstolen</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ps1</span><span class="p">.</span><span class="n">guest</span><span class="p">);</span>
+<a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a><span class="w">     </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">idleCPUTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ps2</span><span class="p">.</span><span class="n">idle</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">ps1</span><span class="p">.</span><span class="n">idle</span><span class="p">;</span>
+<a id="__codelineno-5-45" name="__codelineno-5-45" href="#__codelineno-5-45"></a>
+<a id="__codelineno-5-46" name="__codelineno-5-46" href="#__codelineno-5-46"></a><span class="w">     </span><span class="kt">float</span><span class="w"> </span><span class="n">CPUUse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">((</span><span class="kt">float</span><span class="p">)</span><span class="w"> </span><span class="n">totalCPUTime</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="w"> </span><span class="n">idleCPUTime</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="w"> </span><span class="n">totalCPUTime</span><span class="p">;</span>
+<a id="__codelineno-5-47" name="__codelineno-5-47" href="#__codelineno-5-47"></a>
+<a id="__codelineno-5-48" name="__codelineno-5-48" href="#__codelineno-5-48"></a><span class="w">     </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;totalCPUTime: %u</span><span class="se">\n</span><span class="s">idleCPUTime: %u</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">totalCPUTime</span><span class="p">,</span><span class="w"> </span><span class="n">idleCPUTime</span><span class="p">);</span>
+<a id="__codelineno-5-49" name="__codelineno-5-49" href="#__codelineno-5-49"></a>
+<a id="__codelineno-5-50" name="__codelineno-5-50" href="#__codelineno-5-50"></a><span class="w">     </span><span class="k">return</span><span class="w"> </span><span class="n">CPUUse</span><span class="p">;</span>
+<a id="__codelineno-5-51" name="__codelineno-5-51" href="#__codelineno-5-51"></a><span class="p">}</span>
+<a id="__codelineno-5-52" name="__codelineno-5-52" href="#__codelineno-5-52"></a>
+<a id="__codelineno-5-53" name="__codelineno-5-53" href="#__codelineno-5-53"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-54" name="__codelineno-5-54" href="#__codelineno-5-54"></a><span class="w">     </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Test CPU</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<a id="__codelineno-5-55" name="__codelineno-5-55" href="#__codelineno-5-55"></a>
+<a id="__codelineno-5-56" name="__codelineno-5-56" href="#__codelineno-5-56"></a><span class="w">     </span><span class="c1">// Get processor num.</span>
+<a id="__codelineno-5-57" name="__codelineno-5-57" href="#__codelineno-5-57"></a><span class="w">     </span><span class="kt">int</span><span class="w"> </span><span class="n">processorNum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sysconf</span><span class="p">(</span><span class="n">_SC_NPROCESSORS_CONF</span><span class="p">);</span><span class="w"> </span><span class="c1">// &quot;unistd.h&quot; is required.</span>
+<a id="__codelineno-5-58" name="__codelineno-5-58" href="#__codelineno-5-58"></a><span class="w">     </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Processors: %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">processorNum</span><span class="p">);</span>
+<a id="__codelineno-5-59" name="__codelineno-5-59" href="#__codelineno-5-59"></a>
+<a id="__codelineno-5-60" name="__codelineno-5-60" href="#__codelineno-5-60"></a>
+<a id="__codelineno-5-61" name="__codelineno-5-61" href="#__codelineno-5-61"></a><span class="w">     </span><span class="c1">// Test</span>
+<a id="__codelineno-5-62" name="__codelineno-5-62" href="#__codelineno-5-62"></a><span class="w">     </span><span class="n">Procstat</span><span class="w"> </span><span class="n">ps1</span><span class="p">,</span><span class="w"> </span><span class="n">ps2</span><span class="p">;</span>
+<a id="__codelineno-5-63" name="__codelineno-5-63" href="#__codelineno-5-63"></a><span class="w">     </span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-5-64" name="__codelineno-5-64" href="#__codelineno-5-64"></a><span class="w">     </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">100000</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-65" name="__codelineno-5-65" href="#__codelineno-5-65"></a>
+<a id="__codelineno-5-66" name="__codelineno-5-66" href="#__codelineno-5-66"></a><span class="w">          </span><span class="n">srand</span><span class="p">((</span><span class="kt">unsigned</span><span class="p">)</span><span class="w"> </span><span class="n">time</span><span class="p">(</span><span class="nb">NULL</span><span class="p">));</span>
+<a id="__codelineno-5-67" name="__codelineno-5-67" href="#__codelineno-5-67"></a><span class="w">          </span><span class="kt">int</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rand</span><span class="p">()</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">100000</span><span class="p">;</span>
+<a id="__codelineno-5-68" name="__codelineno-5-68" href="#__codelineno-5-68"></a><span class="w">          </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">rand</span><span class="p">()</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">100000</span><span class="p">;</span>
+<a id="__codelineno-5-69" name="__codelineno-5-69" href="#__codelineno-5-69"></a><span class="w">          </span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">n</span><span class="p">;</span>
+<a id="__codelineno-5-70" name="__codelineno-5-70" href="#__codelineno-5-70"></a>
+<a id="__codelineno-5-71" name="__codelineno-5-71" href="#__codelineno-5-71"></a><span class="w">          </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">10</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-72" name="__codelineno-5-72" href="#__codelineno-5-72"></a><span class="w">               </span><span class="n">ps1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getCPUStatus</span><span class="p">();</span>
+<a id="__codelineno-5-73" name="__codelineno-5-73" href="#__codelineno-5-73"></a><span class="w">          </span><span class="p">}</span>
+<a id="__codelineno-5-74" name="__codelineno-5-74" href="#__codelineno-5-74"></a>
+<a id="__codelineno-5-75" name="__codelineno-5-75" href="#__codelineno-5-75"></a><span class="w">          </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">10000</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-76" name="__codelineno-5-76" href="#__codelineno-5-76"></a><span class="w">               </span><span class="n">ps2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getCPUStatus</span><span class="p">();</span><span class="w">     </span>
+<a id="__codelineno-5-77" name="__codelineno-5-77" href="#__codelineno-5-77"></a><span class="w">          </span><span class="p">}</span>
+<a id="__codelineno-5-78" name="__codelineno-5-78" href="#__codelineno-5-78"></a><span class="w">     </span><span class="p">}</span>
+<a id="__codelineno-5-79" name="__codelineno-5-79" href="#__codelineno-5-79"></a><span class="w">     </span><span class="kt">float</span><span class="w"> </span><span class="n">CPUUse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">calculateCPUUse</span><span class="p">(</span><span class="n">ps1</span><span class="p">,</span><span class="w"> </span><span class="n">ps2</span><span class="p">);</span>
+<a id="__codelineno-5-80" name="__codelineno-5-80" href="#__codelineno-5-80"></a><span class="w">     </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;CPUUse: %f</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">CPUUse</span><span class="p">);</span>
+<a id="__codelineno-5-81" name="__codelineno-5-81" href="#__codelineno-5-81"></a>
+<a id="__codelineno-5-82" name="__codelineno-5-82" href="#__codelineno-5-82"></a>
+<a id="__codelineno-5-83" name="__codelineno-5-83" href="#__codelineno-5-83"></a><span class="w">     </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<a id="__codelineno-5-84" name="__codelineno-5-84" href="#__codelineno-5-84"></a><span class="p">}</span>
+</code></pre></div>
+<h2 id="3linux">3、Linux 环境查看进程运行相关信息<a class="headerlink" href="#3linux" title="Permanent link">&para;</a></h2>
+<h3 id="31-ps">3.1、使用 ps 命令查看进程信息<a class="headerlink" href="#31-ps" title="Permanent link">&para;</a></h3>
+<p>几个常用参数：</p>
+<ul>
+<li><code>a</code>: 与终端无关的所有进程。</li>
+<li><code>u</code>: 有效用户（effective user）的相关进程。</li>
+<li><code>x</code>: 通常与 a 参数因使用，可列出较完整的信息。</li>
+<li><code>-e</code>: 选择所有进程。</li>
+<li><code>-L</code>: 显示线程，一般是 LWP 或 NLWP 列。</li>
+<li><code>-o</code>: 用户自定义显示选项。</li>
+</ul>
+<p>示例1）列出所有当前所有正在内存中的进程</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="o">[</span>root@rh<span class="w"> </span>~<span class="o">]</span>$<span class="w"> </span>ps<span class="w"> </span>aux
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>USER<span class="w"> </span>PID<span class="w"> </span>%CPU<span class="w"> </span>%MEM<span class="w"> </span>VSZ<span class="w"> </span>RSS<span class="w"> </span>TTY<span class="w"> </span>STAT<span class="w"> </span>START<span class="w"> </span>TIME<span class="w"> </span>COMMAND
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>root<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">19356</span><span class="w"> </span><span class="m">1536</span><span class="w"> </span>?<span class="w"> </span>Ss<span class="w"> </span>Apr22<span class="w"> </span><span class="m">0</span>:01<span class="w"> </span>/sbin/init
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>root<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>?<span class="w"> </span>S<span class="w"> </span>Apr22<span class="w"> </span><span class="m">0</span>:00<span class="w"> </span><span class="o">[</span>kthreadd<span class="o">]</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>root<span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>?<span class="w"> </span>S<span class="w"> </span>Apr22<span class="w"> </span><span class="m">0</span>:00<span class="w"> </span><span class="o">[</span>migration/0<span class="o">]</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>root<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>?<span class="w"> </span>S<span class="w"> </span>Apr22<span class="w"> </span><span class="m">0</span>:00<span class="w"> </span><span class="o">[</span>ksoftirqd/0<span class="o">]</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>root<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>?<span class="w"> </span>S<span class="w"> </span>Apr22<span class="w"> </span><span class="m">0</span>:00<span class="w"> </span><span class="o">[</span>migration/0<span class="o">]</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>root<span class="w"> </span><span class="m">6</span><span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>?<span class="w"> </span>S<span class="w"> </span>Apr22<span class="w"> </span><span class="m">0</span>:00<span class="w"> </span><span class="o">[</span>watchdog/0<span class="o">]</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>root<span class="w"> </span><span class="m">7</span><span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>?<span class="w"> </span>S<span class="w"> </span>Apr22<span class="w"> </span><span class="m">0</span>:00<span class="w"> </span><span class="o">[</span>migration/1<span class="o">]</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>root<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>?<span class="w"> </span>S<span class="w"> </span>Apr22<span class="w"> </span><span class="m">0</span>:00<span class="w"> </span><span class="o">[</span>migration/1<span class="o">]</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>......
+</code></pre></div>
+<p>示例2）列出进程号为 13560 这个进程的所有线程及 CPU 占用率</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>[root@rh ~]$ ps -eLo pid,lwp,pcpu | grep 1356013560 13560 49.5
+</code></pre></div>
+<h3 id="32-top">3.2、使用 top 命令查看进程信息<a class="headerlink" href="#32-top" title="Permanent link">&para;</a></h3>
+<p>几个常用的参数：</p>
+<ul>
+<li><code>-d</code>: 后面接秒数，就是整个进程画面更新的频率。默认是 5 秒。</li>
+<li><code>-b</code>: 以批处理的方式执行 top，还有更多的参数可用。通常会搭配数据流重导向，将批处理的结果输出为文件。</li>
+<li><code>-n</code>: 与 -b 搭配，意义是，需要进行几次 top 的输出结果。</li>
+<li><code>-p</code>: 指定某个 PID 来进行观察监测。</li>
+<li>在 top 执行过程中可以使用的按键命令：</li>
+<li><code>?</code>: 显示在 top 中可以输入的按键命令。</li>
+<li><code>P</code>: 按照 CPU 的使用资源排序显示。</li>
+<li><code>M</code>: 按内存（Memory）的使用资源排序显示。</li>
+<li><code>N</code>: 按 PID 来排序。</li>
+<li><code>T</code>: 按该进程使用的 CPU 时间积累（TIME+）排序。</li>
+<li><code>k</code>: 给某个 PID 一个信号（signal）。</li>
+<li><code>r</code>: 给某个 PID 重新确定一个值。</li>
+<li><code>1</code>: 显示所有 CPU 占用信息。</li>
+</ul>
+<p>示例1）将 top 命令执行两次，然后将结果输出到 <code>/top_result.data</code>。</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>[root@rh ~]$ top -b -n 2 &amp;gt; /top_result.data
+</code></pre></div>
+<p>示例2）监测进程 13620</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>[root@rh ~]$ top -d 2 -p 13620
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>top - 16:27:35 up 4 days, 7:43, 2 users, load average: 0.35, 0.47, 0.44
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>Tasks: 1 total, 1 running, 0 sleeping, 0 stopped, 0 zombie
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>Cpu(s): 0.1%us, 3.1%sy, 0.0%ni, 96.5%id, 0.0%wa, 0.0%hi, 0.3%si, 0.0%st
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>Mem: 16320632k total, 1790796k used, 14529836k free, 233168k buffers
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>Swap: 8232952k total, 0k used, 8232952k free, 941540k cached
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>PID USER PR NI VIRT RES SHR S %CPU %MEM TIME+ COMMAND
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>13620 test1370 20 0 11060 944 760 R 53.4 0.0 0:04.78 netperf
+</code></pre></div>
+<h2 id="_1">参考<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<p>摘自 <a href="http://www.samirchen.com/linux-cpu-performance/">http://www.samirchen.com/linux-cpu-performance/</a></p>
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var tab,labels=set.querySelector(".tabbed-labels");for(tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+            回到页面顶部
+          </button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2020 - 2026 Adison
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/adisonhuang" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://twitter.com/adisonhyh" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="mailto:adison5321@gmail.com" target="_blank" rel="noopener" title="" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M498.1 5.6c10.1 7 15.4 19.1 13.5 31.2l-64 416c-1.5 9.7-7.4 18.2-16 23s-18.9 5.4-28 1.6L284 427.7l-68.5 74.1c-8.9 9.7-22.9 12.9-35.2 8.1S160 493.2 160 480v-83.6c0-4 1.5-7.8 4.2-10.7l167.6-182.9c5.8-6.3 5.6-16-.4-22s-15.7-6.4-22-.7L106 360.8l-88.3-44.2C7.1 311.3.3 300.7 0 288.9s5.9-22.8 16.1-28.7l448-256c10.7-6.1 23.9-5.5 34 1.4z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../../../..", "features": ["content.tabs.link", "navigation.sections", "navigation.tabs", "navigation.top", "search.share", "search.suggest", "search.highlight", "header.autohide"], "search": "../../../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.a51614de.min.js"></script>
+      
+    
+  <script>document$.subscribe(() => {const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});})</script></body>
+</html>
